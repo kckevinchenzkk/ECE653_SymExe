@@ -1,0 +1,13 @@
+# Enter your personal information and delete unused entries
+--- 
+- first: Zhengkang
+  last: Chen
+  watiam: z585chen
+  student: 20789905
+  email: z585chen@uwaterloo.ca
+- first: Wenting
+  last: Ju
+  watiam: w2ju
+  student: 20777538
+  email: w2ju@uwaterloo.ca
+...
