@@ -1,0 +1,452 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/deh_bexstr.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - deh_bexstr.c<span style="font-size: 80%;"> (source / <a href="deh_bexstr.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">21</td>
+            <td class="headerCovTableEntry">28</td>
+            <td class="headerCovTableEntryMed">75.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : // Copyright(C) 2014 Fabian Greffrath
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : //
+<span class="lineNum">      16 </span>            : // Parses [STRINGS] sections in BEX files
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      20 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span>            : #include &quot;deh_defs.h&quot;
+<span class="lineNum">      23 </span>            : #include &quot;deh_io.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;deh_main.h&quot;
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span>            : #include &quot;dstrings.h&quot;
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span>            : typedef struct {
+<span class="lineNum">      29 </span>            :     const char *macro;
+<span class="lineNum">      30 </span>            :     const char *string;
+<span class="lineNum">      31 </span>            : } bex_string_t;
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : // mnemonic keys table
+<span class="lineNum">      34 </span>            : static const bex_string_t bex_stringtable[] = {
+<span class="lineNum">      35 </span>            :     // part 1 - general initialization and prompts
+<span class="lineNum">      36 </span>            :     {&quot;D_DEVSTR&quot;, D_DEVSTR},
+<span class="lineNum">      37 </span>            :     {&quot;D_CDROM&quot;, D_CDROM},
+<span class="lineNum">      38 </span>            :     {&quot;QUITMSG&quot;, QUITMSG},
+<span class="lineNum">      39 </span>            :     {&quot;LOADNET&quot;, LOADNET},
+<span class="lineNum">      40 </span>            :     {&quot;QLOADNET&quot;, QLOADNET},
+<span class="lineNum">      41 </span>            :     {&quot;QSAVESPOT&quot;, QSAVESPOT},
+<span class="lineNum">      42 </span>            :     {&quot;SAVEDEAD&quot;, SAVEDEAD},
+<span class="lineNum">      43 </span>            :     {&quot;QSPROMPT&quot;, QSPROMPT},
+<span class="lineNum">      44 </span>            :     {&quot;QLPROMPT&quot;, QLPROMPT},
+<span class="lineNum">      45 </span>            :     {&quot;NEWGAME&quot;, NEWGAME},
+<span class="lineNum">      46 </span>            :     {&quot;NIGHTMARE&quot;, NIGHTMARE},
+<span class="lineNum">      47 </span>            :     {&quot;SWSTRING&quot;, SWSTRING},
+<span class="lineNum">      48 </span>            :     {&quot;MSGOFF&quot;, MSGOFF},
+<span class="lineNum">      49 </span>            :     {&quot;MSGON&quot;, MSGON},
+<span class="lineNum">      50 </span>            :     {&quot;NETEND&quot;, NETEND},
+<span class="lineNum">      51 </span>            :     {&quot;ENDGAME&quot;, ENDGAME},
+<span class="lineNum">      52 </span>            :     {&quot;DETAILHI&quot;, DETAILHI},
+<span class="lineNum">      53 </span>            :     {&quot;DETAILLO&quot;, DETAILLO},
+<span class="lineNum">      54 </span>            :     {&quot;GAMMALVL0&quot;, GAMMALVL0},
+<span class="lineNum">      55 </span>            :     {&quot;GAMMALVL1&quot;, GAMMALVL1},
+<span class="lineNum">      56 </span>            :     {&quot;GAMMALVL2&quot;, GAMMALVL2},
+<span class="lineNum">      57 </span>            :     {&quot;GAMMALVL3&quot;, GAMMALVL3},
+<span class="lineNum">      58 </span>            :     {&quot;GAMMALVL4&quot;, GAMMALVL4},
+<span class="lineNum">      59 </span>            :     {&quot;EMPTYSTRING&quot;, EMPTYSTRING},
+<span class="lineNum">      60 </span>            :     {&quot;GGSAVED&quot;, GGSAVED},
+<span class="lineNum">      61 </span>            :     {&quot;SAVEGAMENAME&quot;, SAVEGAMENAME},
+<span class="lineNum">      62 </span>            :     // part 2 - messages when the player gets things
+<span class="lineNum">      63 </span>            :     {&quot;GOTARMOR&quot;, GOTARMOR},
+<span class="lineNum">      64 </span>            :     {&quot;GOTMEGA&quot;, GOTMEGA},
+<span class="lineNum">      65 </span>            :     {&quot;GOTHTHBONUS&quot;, GOTHTHBONUS},
+<span class="lineNum">      66 </span>            :     {&quot;GOTARMBONUS&quot;, GOTARMBONUS},
+<span class="lineNum">      67 </span>            :     {&quot;GOTSTIM&quot;, GOTSTIM},
+<span class="lineNum">      68 </span>            :     {&quot;GOTMEDINEED&quot;, GOTMEDINEED},
+<span class="lineNum">      69 </span>            :     {&quot;GOTMEDIKIT&quot;, GOTMEDIKIT},
+<span class="lineNum">      70 </span>            :     {&quot;GOTSUPER&quot;, GOTSUPER},
+<span class="lineNum">      71 </span>            :     {&quot;GOTBLUECARD&quot;, GOTBLUECARD},
+<span class="lineNum">      72 </span>            :     {&quot;GOTYELWCARD&quot;, GOTYELWCARD},
+<span class="lineNum">      73 </span>            :     {&quot;GOTREDCARD&quot;, GOTREDCARD},
+<span class="lineNum">      74 </span>            :     {&quot;GOTBLUESKUL&quot;, GOTBLUESKUL},
+<span class="lineNum">      75 </span>            :     {&quot;GOTYELWSKUL&quot;, GOTYELWSKUL},
+<span class="lineNum">      76 </span>            :     {&quot;GOTREDSKULL&quot;, GOTREDSKULL},
+<span class="lineNum">      77 </span>            :     {&quot;GOTINVUL&quot;, GOTINVUL},
+<span class="lineNum">      78 </span>            :     {&quot;GOTBERSERK&quot;, GOTBERSERK},
+<span class="lineNum">      79 </span>            :     {&quot;GOTINVIS&quot;, GOTINVIS},
+<span class="lineNum">      80 </span>            :     {&quot;GOTSUIT&quot;, GOTSUIT},
+<span class="lineNum">      81 </span>            :     {&quot;GOTMAP&quot;, GOTMAP},
+<span class="lineNum">      82 </span>            :     {&quot;GOTVISOR&quot;, GOTVISOR},
+<span class="lineNum">      83 </span>            :     {&quot;GOTMSPHERE&quot;, GOTMSPHERE},
+<span class="lineNum">      84 </span>            :     {&quot;GOTCLIP&quot;, GOTCLIP},
+<span class="lineNum">      85 </span>            :     {&quot;GOTCLIPBOX&quot;, GOTCLIPBOX},
+<span class="lineNum">      86 </span>            :     {&quot;GOTROCKET&quot;, GOTROCKET},
+<span class="lineNum">      87 </span>            :     {&quot;GOTROCKBOX&quot;, GOTROCKBOX},
+<span class="lineNum">      88 </span>            :     {&quot;GOTCELL&quot;, GOTCELL},
+<span class="lineNum">      89 </span>            :     {&quot;GOTCELLBOX&quot;, GOTCELLBOX},
+<span class="lineNum">      90 </span>            :     {&quot;GOTSHELLS&quot;, GOTSHELLS},
+<span class="lineNum">      91 </span>            :     {&quot;GOTSHELLBOX&quot;, GOTSHELLBOX},
+<span class="lineNum">      92 </span>            :     {&quot;GOTBACKPACK&quot;, GOTBACKPACK},
+<span class="lineNum">      93 </span>            :     {&quot;GOTBFG9000&quot;, GOTBFG9000},
+<span class="lineNum">      94 </span>            :     {&quot;GOTCHAINGUN&quot;, GOTCHAINGUN},
+<span class="lineNum">      95 </span>            :     {&quot;GOTCHAINSAW&quot;, GOTCHAINSAW},
+<span class="lineNum">      96 </span>            :     {&quot;GOTLAUNCHER&quot;, GOTLAUNCHER},
+<span class="lineNum">      97 </span>            :     {&quot;GOTPLASMA&quot;, GOTPLASMA},
+<span class="lineNum">      98 </span>            :     {&quot;GOTSHOTGUN&quot;, GOTSHOTGUN},
+<span class="lineNum">      99 </span>            :     {&quot;GOTSHOTGUN2&quot;, GOTSHOTGUN2},
+<span class="lineNum">     100 </span>            :     // part 3 - messages when keys are needed
+<span class="lineNum">     101 </span>            :     {&quot;PD_BLUEO&quot;, PD_BLUEO},
+<span class="lineNum">     102 </span>            :     {&quot;PD_REDO&quot;, PD_REDO},
+<span class="lineNum">     103 </span>            :     {&quot;PD_YELLOWO&quot;, PD_YELLOWO},
+<span class="lineNum">     104 </span>            :     {&quot;PD_BLUEK&quot;, PD_BLUEK},
+<span class="lineNum">     105 </span>            :     {&quot;PD_REDK&quot;, PD_REDK},
+<span class="lineNum">     106 </span>            :     {&quot;PD_YELLOWK&quot;, PD_YELLOWK},
+<span class="lineNum">     107 </span>            :     // part 4 - multiplayer messaging
+<span class="lineNum">     108 </span>            :     {&quot;HUSTR_MSGU&quot;, HUSTR_MSGU},
+<span class="lineNum">     109 </span>            :     {&quot;HUSTR_MESSAGESENT&quot;, HUSTR_MESSAGESENT},
+<span class="lineNum">     110 </span>            :     {&quot;HUSTR_CHATMACRO0&quot;, HUSTR_CHATMACRO0},
+<span class="lineNum">     111 </span>            :     {&quot;HUSTR_CHATMACRO1&quot;, HUSTR_CHATMACRO1},
+<span class="lineNum">     112 </span>            :     {&quot;HUSTR_CHATMACRO2&quot;, HUSTR_CHATMACRO2},
+<span class="lineNum">     113 </span>            :     {&quot;HUSTR_CHATMACRO3&quot;, HUSTR_CHATMACRO3},
+<span class="lineNum">     114 </span>            :     {&quot;HUSTR_CHATMACRO4&quot;, HUSTR_CHATMACRO4},
+<span class="lineNum">     115 </span>            :     {&quot;HUSTR_CHATMACRO5&quot;, HUSTR_CHATMACRO5},
+<span class="lineNum">     116 </span>            :     {&quot;HUSTR_CHATMACRO6&quot;, HUSTR_CHATMACRO6},
+<span class="lineNum">     117 </span>            :     {&quot;HUSTR_CHATMACRO7&quot;, HUSTR_CHATMACRO7},
+<span class="lineNum">     118 </span>            :     {&quot;HUSTR_CHATMACRO8&quot;, HUSTR_CHATMACRO8},
+<span class="lineNum">     119 </span>            :     {&quot;HUSTR_CHATMACRO9&quot;, HUSTR_CHATMACRO9},
+<span class="lineNum">     120 </span>            :     {&quot;HUSTR_TALKTOSELF1&quot;, HUSTR_TALKTOSELF1},
+<span class="lineNum">     121 </span>            :     {&quot;HUSTR_TALKTOSELF2&quot;, HUSTR_TALKTOSELF2},
+<span class="lineNum">     122 </span>            :     {&quot;HUSTR_TALKTOSELF3&quot;, HUSTR_TALKTOSELF3},
+<span class="lineNum">     123 </span>            :     {&quot;HUSTR_TALKTOSELF4&quot;, HUSTR_TALKTOSELF4},
+<span class="lineNum">     124 </span>            :     {&quot;HUSTR_TALKTOSELF5&quot;, HUSTR_TALKTOSELF5},
+<span class="lineNum">     125 </span>            :     {&quot;HUSTR_PLRGREEN&quot;, HUSTR_PLRGREEN},
+<span class="lineNum">     126 </span>            :     {&quot;HUSTR_PLRINDIGO&quot;, HUSTR_PLRINDIGO},
+<span class="lineNum">     127 </span>            :     {&quot;HUSTR_PLRBROWN&quot;, HUSTR_PLRBROWN},
+<span class="lineNum">     128 </span>            :     {&quot;HUSTR_PLRRED&quot;, HUSTR_PLRRED},
+<span class="lineNum">     129 </span>            :     // part 5 - level names in the automap
+<span class="lineNum">     130 </span>            :     {&quot;HUSTR_E1M1&quot;, HUSTR_E1M1},
+<span class="lineNum">     131 </span>            :     {&quot;HUSTR_E1M2&quot;, HUSTR_E1M2},
+<span class="lineNum">     132 </span>            :     {&quot;HUSTR_E1M3&quot;, HUSTR_E1M3},
+<span class="lineNum">     133 </span>            :     {&quot;HUSTR_E1M4&quot;, HUSTR_E1M4},
+<span class="lineNum">     134 </span>            :     {&quot;HUSTR_E1M5&quot;, HUSTR_E1M5},
+<span class="lineNum">     135 </span>            :     {&quot;HUSTR_E1M6&quot;, HUSTR_E1M6},
+<span class="lineNum">     136 </span>            :     {&quot;HUSTR_E1M7&quot;, HUSTR_E1M7},
+<span class="lineNum">     137 </span>            :     {&quot;HUSTR_E1M8&quot;, HUSTR_E1M8},
+<span class="lineNum">     138 </span>            :     {&quot;HUSTR_E1M9&quot;, HUSTR_E1M9},
+<span class="lineNum">     139 </span>            :     {&quot;HUSTR_E2M1&quot;, HUSTR_E2M1},
+<span class="lineNum">     140 </span>            :     {&quot;HUSTR_E2M2&quot;, HUSTR_E2M2},
+<span class="lineNum">     141 </span>            :     {&quot;HUSTR_E2M3&quot;, HUSTR_E2M3},
+<span class="lineNum">     142 </span>            :     {&quot;HUSTR_E2M4&quot;, HUSTR_E2M4},
+<span class="lineNum">     143 </span>            :     {&quot;HUSTR_E2M5&quot;, HUSTR_E2M5},
+<span class="lineNum">     144 </span>            :     {&quot;HUSTR_E2M6&quot;, HUSTR_E2M6},
+<span class="lineNum">     145 </span>            :     {&quot;HUSTR_E2M7&quot;, HUSTR_E2M7},
+<span class="lineNum">     146 </span>            :     {&quot;HUSTR_E2M8&quot;, HUSTR_E2M8},
+<span class="lineNum">     147 </span>            :     {&quot;HUSTR_E2M9&quot;, HUSTR_E2M9},
+<span class="lineNum">     148 </span>            :     {&quot;HUSTR_E3M1&quot;, HUSTR_E3M1},
+<span class="lineNum">     149 </span>            :     {&quot;HUSTR_E3M2&quot;, HUSTR_E3M2},
+<span class="lineNum">     150 </span>            :     {&quot;HUSTR_E3M3&quot;, HUSTR_E3M3},
+<span class="lineNum">     151 </span>            :     {&quot;HUSTR_E3M4&quot;, HUSTR_E3M4},
+<span class="lineNum">     152 </span>            :     {&quot;HUSTR_E3M5&quot;, HUSTR_E3M5},
+<span class="lineNum">     153 </span>            :     {&quot;HUSTR_E3M6&quot;, HUSTR_E3M6},
+<span class="lineNum">     154 </span>            :     {&quot;HUSTR_E3M7&quot;, HUSTR_E3M7},
+<span class="lineNum">     155 </span>            :     {&quot;HUSTR_E3M8&quot;, HUSTR_E3M8},
+<span class="lineNum">     156 </span>            :     {&quot;HUSTR_E3M9&quot;, HUSTR_E3M9},
+<span class="lineNum">     157 </span>            :     {&quot;HUSTR_E4M1&quot;, HUSTR_E4M1},
+<span class="lineNum">     158 </span>            :     {&quot;HUSTR_E4M2&quot;, HUSTR_E4M2},
+<span class="lineNum">     159 </span>            :     {&quot;HUSTR_E4M3&quot;, HUSTR_E4M3},
+<span class="lineNum">     160 </span>            :     {&quot;HUSTR_E4M4&quot;, HUSTR_E4M4},
+<span class="lineNum">     161 </span>            :     {&quot;HUSTR_E4M5&quot;, HUSTR_E4M5},
+<span class="lineNum">     162 </span>            :     {&quot;HUSTR_E4M6&quot;, HUSTR_E4M6},
+<span class="lineNum">     163 </span>            :     {&quot;HUSTR_E4M7&quot;, HUSTR_E4M7},
+<span class="lineNum">     164 </span>            :     {&quot;HUSTR_E4M8&quot;, HUSTR_E4M8},
+<span class="lineNum">     165 </span>            :     {&quot;HUSTR_E4M9&quot;, HUSTR_E4M9},
+<span class="lineNum">     166 </span>            :     {&quot;HUSTR_1&quot;, HUSTR_1},
+<span class="lineNum">     167 </span>            :     {&quot;HUSTR_2&quot;, HUSTR_2},
+<span class="lineNum">     168 </span>            :     {&quot;HUSTR_3&quot;, HUSTR_3},
+<span class="lineNum">     169 </span>            :     {&quot;HUSTR_4&quot;, HUSTR_4},
+<span class="lineNum">     170 </span>            :     {&quot;HUSTR_5&quot;, HUSTR_5},
+<span class="lineNum">     171 </span>            :     {&quot;HUSTR_6&quot;, HUSTR_6},
+<span class="lineNum">     172 </span>            :     {&quot;HUSTR_7&quot;, HUSTR_7},
+<span class="lineNum">     173 </span>            :     {&quot;HUSTR_8&quot;, HUSTR_8},
+<span class="lineNum">     174 </span>            :     {&quot;HUSTR_9&quot;, HUSTR_9},
+<span class="lineNum">     175 </span>            :     {&quot;HUSTR_10&quot;, HUSTR_10},
+<span class="lineNum">     176 </span>            :     {&quot;HUSTR_11&quot;, HUSTR_11},
+<span class="lineNum">     177 </span>            :     {&quot;HUSTR_12&quot;, HUSTR_12},
+<span class="lineNum">     178 </span>            :     {&quot;HUSTR_13&quot;, HUSTR_13},
+<span class="lineNum">     179 </span>            :     {&quot;HUSTR_14&quot;, HUSTR_14},
+<span class="lineNum">     180 </span>            :     {&quot;HUSTR_15&quot;, HUSTR_15},
+<span class="lineNum">     181 </span>            :     {&quot;HUSTR_16&quot;, HUSTR_16},
+<span class="lineNum">     182 </span>            :     {&quot;HUSTR_17&quot;, HUSTR_17},
+<span class="lineNum">     183 </span>            :     {&quot;HUSTR_18&quot;, HUSTR_18},
+<span class="lineNum">     184 </span>            :     {&quot;HUSTR_19&quot;, HUSTR_19},
+<span class="lineNum">     185 </span>            :     {&quot;HUSTR_20&quot;, HUSTR_20},
+<span class="lineNum">     186 </span>            :     {&quot;HUSTR_21&quot;, HUSTR_21},
+<span class="lineNum">     187 </span>            :     {&quot;HUSTR_22&quot;, HUSTR_22},
+<span class="lineNum">     188 </span>            :     {&quot;HUSTR_23&quot;, HUSTR_23},
+<span class="lineNum">     189 </span>            :     {&quot;HUSTR_24&quot;, HUSTR_24},
+<span class="lineNum">     190 </span>            :     {&quot;HUSTR_25&quot;, HUSTR_25},
+<span class="lineNum">     191 </span>            :     {&quot;HUSTR_26&quot;, HUSTR_26},
+<span class="lineNum">     192 </span>            :     {&quot;HUSTR_27&quot;, HUSTR_27},
+<span class="lineNum">     193 </span>            :     {&quot;HUSTR_28&quot;, HUSTR_28},
+<span class="lineNum">     194 </span>            :     {&quot;HUSTR_29&quot;, HUSTR_29},
+<span class="lineNum">     195 </span>            :     {&quot;HUSTR_30&quot;, HUSTR_30},
+<span class="lineNum">     196 </span>            :     {&quot;HUSTR_31&quot;, HUSTR_31},
+<span class="lineNum">     197 </span>            :     {&quot;HUSTR_32&quot;, HUSTR_32},
+<span class="lineNum">     198 </span>            :     {&quot;PHUSTR_1&quot;, PHUSTR_1},
+<span class="lineNum">     199 </span>            :     {&quot;PHUSTR_2&quot;, PHUSTR_2},
+<span class="lineNum">     200 </span>            :     {&quot;PHUSTR_3&quot;, PHUSTR_3},
+<span class="lineNum">     201 </span>            :     {&quot;PHUSTR_4&quot;, PHUSTR_4},
+<span class="lineNum">     202 </span>            :     {&quot;PHUSTR_5&quot;, PHUSTR_5},
+<span class="lineNum">     203 </span>            :     {&quot;PHUSTR_6&quot;, PHUSTR_6},
+<span class="lineNum">     204 </span>            :     {&quot;PHUSTR_7&quot;, PHUSTR_7},
+<span class="lineNum">     205 </span>            :     {&quot;PHUSTR_8&quot;, PHUSTR_8},
+<span class="lineNum">     206 </span>            :     {&quot;PHUSTR_9&quot;, PHUSTR_9},
+<span class="lineNum">     207 </span>            :     {&quot;PHUSTR_10&quot;, PHUSTR_10},
+<span class="lineNum">     208 </span>            :     {&quot;PHUSTR_11&quot;, PHUSTR_11},
+<span class="lineNum">     209 </span>            :     {&quot;PHUSTR_12&quot;, PHUSTR_12},
+<span class="lineNum">     210 </span>            :     {&quot;PHUSTR_13&quot;, PHUSTR_13},
+<span class="lineNum">     211 </span>            :     {&quot;PHUSTR_14&quot;, PHUSTR_14},
+<span class="lineNum">     212 </span>            :     {&quot;PHUSTR_15&quot;, PHUSTR_15},
+<span class="lineNum">     213 </span>            :     {&quot;PHUSTR_16&quot;, PHUSTR_16},
+<span class="lineNum">     214 </span>            :     {&quot;PHUSTR_17&quot;, PHUSTR_17},
+<span class="lineNum">     215 </span>            :     {&quot;PHUSTR_18&quot;, PHUSTR_18},
+<span class="lineNum">     216 </span>            :     {&quot;PHUSTR_19&quot;, PHUSTR_19},
+<span class="lineNum">     217 </span>            :     {&quot;PHUSTR_20&quot;, PHUSTR_20},
+<span class="lineNum">     218 </span>            :     {&quot;PHUSTR_21&quot;, PHUSTR_21},
+<span class="lineNum">     219 </span>            :     {&quot;PHUSTR_22&quot;, PHUSTR_22},
+<span class="lineNum">     220 </span>            :     {&quot;PHUSTR_23&quot;, PHUSTR_23},
+<span class="lineNum">     221 </span>            :     {&quot;PHUSTR_24&quot;, PHUSTR_24},
+<span class="lineNum">     222 </span>            :     {&quot;PHUSTR_25&quot;, PHUSTR_25},
+<span class="lineNum">     223 </span>            :     {&quot;PHUSTR_26&quot;, PHUSTR_26},
+<span class="lineNum">     224 </span>            :     {&quot;PHUSTR_27&quot;, PHUSTR_27},
+<span class="lineNum">     225 </span>            :     {&quot;PHUSTR_28&quot;, PHUSTR_28},
+<span class="lineNum">     226 </span>            :     {&quot;PHUSTR_29&quot;, PHUSTR_29},
+<span class="lineNum">     227 </span>            :     {&quot;PHUSTR_30&quot;, PHUSTR_30},
+<span class="lineNum">     228 </span>            :     {&quot;PHUSTR_31&quot;, PHUSTR_31},
+<span class="lineNum">     229 </span>            :     {&quot;PHUSTR_32&quot;, PHUSTR_32},
+<span class="lineNum">     230 </span>            :     {&quot;THUSTR_1&quot;, THUSTR_1},
+<span class="lineNum">     231 </span>            :     {&quot;THUSTR_2&quot;, THUSTR_2},
+<span class="lineNum">     232 </span>            :     {&quot;THUSTR_3&quot;, THUSTR_3},
+<span class="lineNum">     233 </span>            :     {&quot;THUSTR_4&quot;, THUSTR_4},
+<span class="lineNum">     234 </span>            :     {&quot;THUSTR_5&quot;, THUSTR_5},
+<span class="lineNum">     235 </span>            :     {&quot;THUSTR_6&quot;, THUSTR_6},
+<span class="lineNum">     236 </span>            :     {&quot;THUSTR_7&quot;, THUSTR_7},
+<span class="lineNum">     237 </span>            :     {&quot;THUSTR_8&quot;, THUSTR_8},
+<span class="lineNum">     238 </span>            :     {&quot;THUSTR_9&quot;, THUSTR_9},
+<span class="lineNum">     239 </span>            :     {&quot;THUSTR_10&quot;, THUSTR_10},
+<span class="lineNum">     240 </span>            :     {&quot;THUSTR_11&quot;, THUSTR_11},
+<span class="lineNum">     241 </span>            :     {&quot;THUSTR_12&quot;, THUSTR_12},
+<span class="lineNum">     242 </span>            :     {&quot;THUSTR_13&quot;, THUSTR_13},
+<span class="lineNum">     243 </span>            :     {&quot;THUSTR_14&quot;, THUSTR_14},
+<span class="lineNum">     244 </span>            :     {&quot;THUSTR_15&quot;, THUSTR_15},
+<span class="lineNum">     245 </span>            :     {&quot;THUSTR_16&quot;, THUSTR_16},
+<span class="lineNum">     246 </span>            :     {&quot;THUSTR_17&quot;, THUSTR_17},
+<span class="lineNum">     247 </span>            :     {&quot;THUSTR_18&quot;, THUSTR_18},
+<span class="lineNum">     248 </span>            :     {&quot;THUSTR_19&quot;, THUSTR_19},
+<span class="lineNum">     249 </span>            :     {&quot;THUSTR_20&quot;, THUSTR_20},
+<span class="lineNum">     250 </span>            :     {&quot;THUSTR_21&quot;, THUSTR_21},
+<span class="lineNum">     251 </span>            :     {&quot;THUSTR_22&quot;, THUSTR_22},
+<span class="lineNum">     252 </span>            :     {&quot;THUSTR_23&quot;, THUSTR_23},
+<span class="lineNum">     253 </span>            :     {&quot;THUSTR_24&quot;, THUSTR_24},
+<span class="lineNum">     254 </span>            :     {&quot;THUSTR_25&quot;, THUSTR_25},
+<span class="lineNum">     255 </span>            :     {&quot;THUSTR_26&quot;, THUSTR_26},
+<span class="lineNum">     256 </span>            :     {&quot;THUSTR_27&quot;, THUSTR_27},
+<span class="lineNum">     257 </span>            :     {&quot;THUSTR_28&quot;, THUSTR_28},
+<span class="lineNum">     258 </span>            :     {&quot;THUSTR_29&quot;, THUSTR_29},
+<span class="lineNum">     259 </span>            :     {&quot;THUSTR_30&quot;, THUSTR_30},
+<span class="lineNum">     260 </span>            :     {&quot;THUSTR_31&quot;, THUSTR_31},
+<span class="lineNum">     261 </span>            :     {&quot;THUSTR_32&quot;, THUSTR_32},
+<span class="lineNum">     262 </span>            :     // part 6 - messages as a result of toggling states
+<span class="lineNum">     263 </span>            :     {&quot;AMSTR_FOLLOWON&quot;, AMSTR_FOLLOWON},
+<span class="lineNum">     264 </span>            :     {&quot;AMSTR_FOLLOWOFF&quot;, AMSTR_FOLLOWOFF},
+<span class="lineNum">     265 </span>            :     {&quot;AMSTR_GRIDON&quot;, AMSTR_GRIDON},
+<span class="lineNum">     266 </span>            :     {&quot;AMSTR_GRIDOFF&quot;, AMSTR_GRIDOFF},
+<span class="lineNum">     267 </span>            :     {&quot;AMSTR_MARKEDSPOT&quot;, AMSTR_MARKEDSPOT},
+<span class="lineNum">     268 </span>            :     {&quot;AMSTR_MARKSCLEARED&quot;, AMSTR_MARKSCLEARED},
+<span class="lineNum">     269 </span>            :     {&quot;STSTR_MUS&quot;, STSTR_MUS},
+<span class="lineNum">     270 </span>            :     {&quot;STSTR_NOMUS&quot;, STSTR_NOMUS},
+<span class="lineNum">     271 </span>            :     {&quot;STSTR_DQDON&quot;, STSTR_DQDON},
+<span class="lineNum">     272 </span>            :     {&quot;STSTR_DQDOFF&quot;, STSTR_DQDOFF},
+<span class="lineNum">     273 </span>            :     {&quot;STSTR_KFAADDED&quot;, STSTR_KFAADDED},
+<span class="lineNum">     274 </span>            :     {&quot;STSTR_FAADDED&quot;, STSTR_FAADDED},
+<span class="lineNum">     275 </span>            :     {&quot;STSTR_NCON&quot;, STSTR_NCON},
+<span class="lineNum">     276 </span>            :     {&quot;STSTR_NCOFF&quot;, STSTR_NCOFF},
+<span class="lineNum">     277 </span>            :     {&quot;STSTR_BEHOLD&quot;, STSTR_BEHOLD},
+<span class="lineNum">     278 </span>            :     {&quot;STSTR_BEHOLDX&quot;, STSTR_BEHOLDX},
+<span class="lineNum">     279 </span>            :     {&quot;STSTR_CHOPPERS&quot;, STSTR_CHOPPERS},
+<span class="lineNum">     280 </span>            :     {&quot;STSTR_CLEV&quot;, STSTR_CLEV},
+<span class="lineNum">     281 </span>            :     // part 7 - episode intermission texts
+<span class="lineNum">     282 </span>            :     {&quot;E1TEXT&quot;, E1TEXT},
+<span class="lineNum">     283 </span>            :     {&quot;E2TEXT&quot;, E2TEXT},
+<span class="lineNum">     284 </span>            :     {&quot;E3TEXT&quot;, E3TEXT},
+<span class="lineNum">     285 </span>            :     {&quot;E4TEXT&quot;, E4TEXT},
+<span class="lineNum">     286 </span>            :     {&quot;C1TEXT&quot;, C1TEXT},
+<span class="lineNum">     287 </span>            :     {&quot;C2TEXT&quot;, C2TEXT},
+<span class="lineNum">     288 </span>            :     {&quot;C3TEXT&quot;, C3TEXT},
+<span class="lineNum">     289 </span>            :     {&quot;C4TEXT&quot;, C4TEXT},
+<span class="lineNum">     290 </span>            :     {&quot;C5TEXT&quot;, C5TEXT},
+<span class="lineNum">     291 </span>            :     {&quot;C6TEXT&quot;, C6TEXT},
+<span class="lineNum">     292 </span>            :     {&quot;P1TEXT&quot;, P1TEXT},
+<span class="lineNum">     293 </span>            :     {&quot;P2TEXT&quot;, P2TEXT},
+<span class="lineNum">     294 </span>            :     {&quot;P3TEXT&quot;, P3TEXT},
+<span class="lineNum">     295 </span>            :     {&quot;P4TEXT&quot;, P4TEXT},
+<span class="lineNum">     296 </span>            :     {&quot;P5TEXT&quot;, P5TEXT},
+<span class="lineNum">     297 </span>            :     {&quot;P6TEXT&quot;, P6TEXT},
+<span class="lineNum">     298 </span>            :     {&quot;T1TEXT&quot;, T1TEXT},
+<span class="lineNum">     299 </span>            :     {&quot;T2TEXT&quot;, T2TEXT},
+<span class="lineNum">     300 </span>            :     {&quot;T3TEXT&quot;, T3TEXT},
+<span class="lineNum">     301 </span>            :     {&quot;T4TEXT&quot;, T4TEXT},
+<span class="lineNum">     302 </span>            :     {&quot;T5TEXT&quot;, T5TEXT},
+<span class="lineNum">     303 </span>            :     {&quot;T6TEXT&quot;, T6TEXT},
+<span class="lineNum">     304 </span>            :     // part 8 - creature names for the finale
+<span class="lineNum">     305 </span>            :     {&quot;CC_ZOMBIE&quot;, CC_ZOMBIE},
+<span class="lineNum">     306 </span>            :     {&quot;CC_SHOTGUN&quot;, CC_SHOTGUN},
+<span class="lineNum">     307 </span>            :     {&quot;CC_HEAVY&quot;, CC_HEAVY},
+<span class="lineNum">     308 </span>            :     {&quot;CC_IMP&quot;, CC_IMP},
+<span class="lineNum">     309 </span>            :     {&quot;CC_DEMON&quot;, CC_DEMON},
+<span class="lineNum">     310 </span>            :     {&quot;CC_LOST&quot;, CC_LOST},
+<span class="lineNum">     311 </span>            :     {&quot;CC_CACO&quot;, CC_CACO},
+<span class="lineNum">     312 </span>            :     {&quot;CC_HELL&quot;, CC_HELL},
+<span class="lineNum">     313 </span>            :     {&quot;CC_BARON&quot;, CC_BARON},
+<span class="lineNum">     314 </span>            :     {&quot;CC_ARACH&quot;, CC_ARACH},
+<span class="lineNum">     315 </span>            :     {&quot;CC_PAIN&quot;, CC_PAIN},
+<span class="lineNum">     316 </span>            :     {&quot;CC_REVEN&quot;, CC_REVEN},
+<span class="lineNum">     317 </span>            :     {&quot;CC_MANCU&quot;, CC_MANCU},
+<span class="lineNum">     318 </span>            :     {&quot;CC_ARCH&quot;, CC_ARCH},
+<span class="lineNum">     319 </span>            :     {&quot;CC_SPIDER&quot;, CC_SPIDER},
+<span class="lineNum">     320 </span>            :     {&quot;CC_CYBER&quot;, CC_CYBER},
+<span class="lineNum">     321 </span>            :     {&quot;CC_HERO&quot;, CC_HERO},
+<span class="lineNum">     322 </span>            :     // part 9 - intermission tiled backgrounds
+<span class="lineNum">     323 </span>            :     {&quot;BGFLATE1&quot;, &quot;FLOOR4_8&quot;},
+<span class="lineNum">     324 </span>            :     {&quot;BGFLATE2&quot;, &quot;SFLR6_1&quot;},
+<span class="lineNum">     325 </span>            :     {&quot;BGFLATE3&quot;, &quot;MFLR8_4&quot;},
+<span class="lineNum">     326 </span>            :     {&quot;BGFLATE4&quot;, &quot;MFLR8_3&quot;},
+<span class="lineNum">     327 </span>            :     {&quot;BGFLAT06&quot;, &quot;SLIME16&quot;},
+<span class="lineNum">     328 </span>            :     {&quot;BGFLAT11&quot;, &quot;RROCK14&quot;},
+<span class="lineNum">     329 </span>            :     {&quot;BGFLAT20&quot;, &quot;RROCK07&quot;},
+<span class="lineNum">     330 </span>            :     {&quot;BGFLAT30&quot;, &quot;RROCK17&quot;},
+<span class="lineNum">     331 </span>            :     {&quot;BGFLAT15&quot;, &quot;RROCK13&quot;},
+<span class="lineNum">     332 </span>            :     {&quot;BGFLAT31&quot;, &quot;RROCK19&quot;},
+<span class="lineNum">     333 </span>            :     {&quot;BGCASTCALL&quot;, &quot;BOSSBACK&quot;},
+<span class="lineNum">     334 </span>            : };
+<a name="335"><span class="lineNum">     335 </span>            : </a>
+<span class="lineNum">     336 </span>            : static void *DEH_BEXStrStart(deh_context_t *context, char *line)
+<span class="lineNum">     337 </span><span class="lineCov">      16618 : {</span>
+<span class="lineNum">     338 </span><span class="lineCov">      16618 :     char s[10];</span>
+<span class="lineNum">     339 </span><span class="lineCov">      16618 : </span>
+<span class="lineNum">     340 </span><span class="lineCov">      16618 :     if (sscanf(line, &quot;%9s&quot;, s) == 0 || strncmp(&quot;[STRINGS]&quot;, s, sizeof(s)))</span>
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 :         DEH_Warning(context, &quot;Parse error on section start&quot;);</span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     344 </span><span class="lineCov">      16618 : </span>
+<span class="lineNum">     345 </span><span class="lineCov">      16618 :     return NULL;</span>
+<span class="lineNum">     346 </span><span class="lineCov">      16618 : }</span>
+<a name="347"><span class="lineNum">     347 </span>            : </a>
+<span class="lineNum">     348 </span>            : static void DEH_BEXStrParseLine(deh_context_t *context, char *line, void *tag)
+<span class="lineNum">     349 </span><span class="lineCov">    4968782 : {</span>
+<span class="lineNum">     350 </span><span class="lineCov">    4968782 :     char *variable_name, *value;</span>
+<span class="lineNum">     351 </span><span class="lineCov">    4968782 :     int i;</span>
+<span class="lineNum">     352 </span><span class="lineCov">    4968782 : </span>
+<span class="lineNum">     353 </span><span class="lineCov">    4968782 :     if (!DEH_ParseAssignment(line, &amp;variable_name, &amp;value))</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :         DEH_Warning(context, &quot;Failed to parse assignment&quot;);</span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     358 </span><span class="lineCov">    4968782 : </span>
+<span class="lineNum">     359 </span><span class="lineCov"> 1445915562 :     for (i = 0; i &lt; arrlen(bex_stringtable); i++)</span>
+<span class="lineNum">     360 </span><span class="lineCov"> 1440946780 :     {</span>
+<span class="lineNum">     361 </span><span class="lineCov"> 1440946780 :         if (!strcmp(bex_stringtable[i].macro, variable_name))</span>
+<span class="lineNum">     362 </span><span class="lineCov">    3871994 :         {</span>
+<span class="lineNum">     363 </span><span class="lineCov">    3871994 :             DEH_AddStringReplacement(bex_stringtable[i].string, value);</span>
+<span class="lineNum">     364 </span><span class="lineCov">    3871994 :         }</span>
+<span class="lineNum">     365 </span><span class="lineCov"> 1440946780 :     }</span>
+<span class="lineNum">     366 </span><span class="lineCov">    4968782 : }</span>
+<span class="lineNum">     367 </span>            : 
+<span class="lineNum">     368 </span>            : deh_section_t deh_section_bexstr =
+<span class="lineNum">     369 </span>            : {
+<span class="lineNum">     370 </span>            :     &quot;[STRINGS]&quot;,
+<span class="lineNum">     371 </span>            :     NULL,
+<span class="lineNum">     372 </span>            :     DEH_BEXStrStart,
+<span class="lineNum">     373 </span>            :     DEH_BEXStrParseLine,
+<span class="lineNum">     374 </span>            :     NULL,
+<span class="lineNum">     375 </span>            :     NULL,
+<span class="lineNum">     376 </span>            : };
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

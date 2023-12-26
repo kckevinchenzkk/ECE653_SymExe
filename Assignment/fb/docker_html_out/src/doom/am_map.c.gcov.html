@@ -1,0 +1,1454 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/am_map.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - am_map.c<span style="font-size: 80%;"> (source / <a href="am_map.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntry">936</td>
+            <td class="headerCovTableEntryLo">0.6 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">34</td>
+            <td class="headerCovTableEntryLo">5.9 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : //
+<span class="lineNum">      16 </span>            : // DESCRIPTION:  the automap code
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span>            : #include &quot;deh_main.h&quot;
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #include &quot;z_zone.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;doomkeys.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;doomdef.h&quot;
+<span class="lineNum">      27 </span>            : #include &quot;st_stuff.h&quot;
+<span class="lineNum">      28 </span>            : #include &quot;p_local.h&quot;
+<span class="lineNum">      29 </span>            : #include &quot;w_wad.h&quot;
+<span class="lineNum">      30 </span>            : 
+<span class="lineNum">      31 </span>            : #include &quot;m_cheat.h&quot;
+<span class="lineNum">      32 </span>            : #include &quot;m_controls.h&quot;
+<span class="lineNum">      33 </span>            : #include &quot;m_misc.h&quot;
+<span class="lineNum">      34 </span>            : #include &quot;i_system.h&quot;
+<span class="lineNum">      35 </span>            : #include &quot;i_timer.h&quot;
+<span class="lineNum">      36 </span>            : #include &quot;i_video.h&quot;
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            : // Needs access to LFB.
+<span class="lineNum">      39 </span>            : #include &quot;v_video.h&quot;
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            : // State.
+<span class="lineNum">      42 </span>            : #include &quot;doomstat.h&quot;
+<span class="lineNum">      43 </span>            : #include &quot;r_state.h&quot;
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span>            : // Data.
+<span class="lineNum">      46 </span>            : #include &quot;dstrings.h&quot;
+<span class="lineNum">      47 </span>            : 
+<span class="lineNum">      48 </span>            : #include &quot;am_map.h&quot;
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span>            : 
+<span class="lineNum">      51 </span>            : // For use if I do walls with outsides/insides
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 : #define REDS            (256-5*16)</span>
+<span class="lineNum">      53 </span><span class="lineNoCov">          0 : #define REDRANGE        16</span>
+<span class="lineNum">      54 </span>            : #define BLUES           (256-4*16+8)
+<span class="lineNum">      55 </span>            : #define BLUERANGE       8
+<span class="lineNum">      56 </span><span class="lineNoCov">          0 : #define GREENS          (7*16)</span>
+<span class="lineNum">      57 </span><span class="lineNoCov">          0 : #define GREENRANGE      16</span>
+<span class="lineNum">      58 </span><span class="lineNoCov">          0 : #define GRAYS           (6*16)</span>
+<span class="lineNum">      59 </span><span class="lineNoCov">          0 : #define GRAYSRANGE      16</span>
+<span class="lineNum">      60 </span><span class="lineNoCov">          0 : #define BROWNS          (4*16)</span>
+<span class="lineNum">      61 </span>            : #define BROWNRANGE      16
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 : #define YELLOWS         (256-32+7)</span>
+<span class="lineNum">      63 </span>            : #define YELLOWRANGE     1
+<span class="lineNum">      64 </span><span class="lineNoCov">          0 : #define BLACK           0</span>
+<span class="lineNum">      65 </span><span class="lineNoCov">          0 : #define WHITE           (256-47)</span>
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span>            : // Automap colors
+<span class="lineNum">      68 </span><span class="lineNoCov">          0 : #define BACKGROUND      BLACK</span>
+<span class="lineNum">      69 </span>            : #define YOURCOLORS      WHITE
+<span class="lineNum">      70 </span>            : #define YOURRANGE       0
+<span class="lineNum">      71 </span><span class="lineNoCov">          0 : #define WALLCOLORS      REDS</span>
+<span class="lineNum">      72 </span><span class="lineNoCov">          0 : #define WALLRANGE       REDRANGE</span>
+<span class="lineNum">      73 </span><span class="lineNoCov">          0 : #define TSWALLCOLORS    GRAYS</span>
+<span class="lineNum">      74 </span>            : #define TSWALLRANGE     GRAYSRANGE
+<span class="lineNum">      75 </span><span class="lineNoCov">          0 : #define FDWALLCOLORS    BROWNS</span>
+<span class="lineNum">      76 </span>            : #define FDWALLRANGE     BROWNRANGE
+<span class="lineNum">      77 </span><span class="lineNoCov">          0 : #define CDWALLCOLORS    YELLOWS</span>
+<span class="lineNum">      78 </span>            : #define CDWALLRANGE     YELLOWRANGE
+<span class="lineNum">      79 </span><span class="lineNoCov">          0 : #define THINGCOLORS     GREENS</span>
+<span class="lineNum">      80 </span><span class="lineNoCov">          0 : #define THINGRANGE      GREENRANGE</span>
+<span class="lineNum">      81 </span><span class="lineNoCov">          0 : #define SECRETWALLCOLORS WALLCOLORS</span>
+<span class="lineNum">      82 </span>            : #define SECRETWALLRANGE WALLRANGE
+<span class="lineNum">      83 </span><span class="lineNoCov">          0 : #define GRIDCOLORS      (GRAYS + GRAYSRANGE/2)</span>
+<span class="lineNum">      84 </span>            : #define GRIDRANGE       0
+<span class="lineNum">      85 </span><span class="lineNoCov">          0 : #define XHAIRCOLORS     GRAYS</span>
+<span class="lineNum">      86 </span>            : 
+<span class="lineNum">      87 </span>            : // drawing stuff
+<span class="lineNum">      88 </span>            : 
+<span class="lineNum">      89 </span><span class="lineNoCov">          0 : #define AM_NUMMARKPOINTS 10</span>
+<span class="lineNum">      90 </span>            : 
+<span class="lineNum">      91 </span>            : // scale on entry
+<span class="lineNum">      92 </span>            : #define INITSCALEMTOF (.2*FRACUNIT)
+<span class="lineNum">      93 </span>            : // how much the automap moves window per tic in frame-buffer coordinates
+<span class="lineNum">      94 </span>            : // moves 140 pixels in 1 second
+<span class="lineNum">      95 </span>            : #define F_PANINC        4
+<span class="lineNum">      96 </span>            : // how much zoom-in per tic
+<span class="lineNum">      97 </span>            : // goes to 2x in 1 second
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 : #define M_ZOOMIN        ((int) (1.02*FRACUNIT))</span>
+<span class="lineNum">      99 </span>            : // how much zoom-out per tic
+<span class="lineNum">     100 </span>            : // pulls out to 0.5x in 1 second
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 : #define M_ZOOMOUT       ((int) (FRACUNIT/1.02))</span>
+<span class="lineNum">     102 </span>            : 
+<span class="lineNum">     103 </span>            : // translates between frame-buffer and map distances
+<span class="lineNum">     104 </span><span class="lineNoCov">          0 : #define FTOM(x) FixedMul(((x)&lt;&lt;FRACBITS),scale_ftom)</span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 : #define MTOF(x) (FixedMul((x),scale_mtof)&gt;&gt;FRACBITS)</span>
+<span class="lineNum">     106 </span>            : // translates between frame-buffer and map coordinates
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 : #define CXMTOF(x)  (f_x + MTOF((x)-m_x))</span>
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 : #define CYMTOF(y)  (f_y + (f_h - MTOF((y)-m_y)))</span>
+<span class="lineNum">     109 </span>            : 
+<span class="lineNum">     110 </span>            : // the following is crap
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 : #define LINE_NEVERSEE ML_DONTDRAW</span>
+<span class="lineNum">     112 </span>            : 
+<span class="lineNum">     113 </span>            : typedef struct
+<span class="lineNum">     114 </span>            : {
+<span class="lineNum">     115 </span>            :     int x, y;
+<span class="lineNum">     116 </span>            : } fpoint_t;
+<span class="lineNum">     117 </span>            : 
+<span class="lineNum">     118 </span>            : typedef struct
+<span class="lineNum">     119 </span>            : {
+<span class="lineNum">     120 </span>            :     fpoint_t a, b;
+<span class="lineNum">     121 </span>            : } fline_t;
+<span class="lineNum">     122 </span>            : 
+<span class="lineNum">     123 </span>            : typedef struct
+<span class="lineNum">     124 </span>            : {
+<span class="lineNum">     125 </span>            :     fixed_t             x,y;
+<span class="lineNum">     126 </span>            : } mpoint_t;
+<span class="lineNum">     127 </span>            : 
+<span class="lineNum">     128 </span>            : typedef struct
+<span class="lineNum">     129 </span>            : {
+<span class="lineNum">     130 </span>            :     mpoint_t a, b;
+<span class="lineNum">     131 </span>            : } mline_t;
+<span class="lineNum">     132 </span>            : 
+<span class="lineNum">     133 </span>            : typedef struct
+<span class="lineNum">     134 </span>            : {
+<span class="lineNum">     135 </span>            :     fixed_t slp, islp;
+<span class="lineNum">     136 </span>            : } islope_t;
+<span class="lineNum">     137 </span>            : 
+<span class="lineNum">     138 </span>            : 
+<span class="lineNum">     139 </span>            : 
+<span class="lineNum">     140 </span>            : //
+<span class="lineNum">     141 </span>            : // The vector graphics for the automap.
+<span class="lineNum">     142 </span>            : //  A line drawing of the player pointing right,
+<span class="lineNum">     143 </span>            : //   starting from the middle.
+<span class="lineNum">     144 </span>            : //
+<span class="lineNum">     145 </span>            : #define R ((8*PLAYERRADIUS)/7)
+<span class="lineNum">     146 </span>            : mline_t player_arrow[] = {
+<span class="lineNum">     147 </span>            :     { { -R+R/8, 0 }, { R, 0 } }, // -----
+<span class="lineNum">     148 </span>            :     { { R, 0 }, { R-R/2, R/4 } },  // -----&gt;
+<span class="lineNum">     149 </span>            :     { { R, 0 }, { R-R/2, -R/4 } },
+<span class="lineNum">     150 </span>            :     { { -R+R/8, 0 }, { -R-R/8, R/4 } }, // &gt;----&gt;
+<span class="lineNum">     151 </span>            :     { { -R+R/8, 0 }, { -R-R/8, -R/4 } },
+<span class="lineNum">     152 </span>            :     { { -R+3*R/8, 0 }, { -R+R/8, R/4 } }, // &gt;&gt;---&gt;
+<span class="lineNum">     153 </span>            :     { { -R+3*R/8, 0 }, { -R+R/8, -R/4 } }
+<span class="lineNum">     154 </span>            : };
+<span class="lineNum">     155 </span>            : #undef R
+<span class="lineNum">     156 </span>            : 
+<span class="lineNum">     157 </span>            : #define R ((8*PLAYERRADIUS)/7)
+<span class="lineNum">     158 </span>            : mline_t cheat_player_arrow[] = {
+<span class="lineNum">     159 </span>            :     { { -R+R/8, 0 }, { R, 0 } }, // -----
+<span class="lineNum">     160 </span>            :     { { R, 0 }, { R-R/2, R/6 } },  // -----&gt;
+<span class="lineNum">     161 </span>            :     { { R, 0 }, { R-R/2, -R/6 } },
+<span class="lineNum">     162 </span>            :     { { -R+R/8, 0 }, { -R-R/8, R/6 } }, // &gt;-----&gt;
+<span class="lineNum">     163 </span>            :     { { -R+R/8, 0 }, { -R-R/8, -R/6 } },
+<span class="lineNum">     164 </span>            :     { { -R+3*R/8, 0 }, { -R+R/8, R/6 } }, // &gt;&gt;-----&gt;
+<span class="lineNum">     165 </span>            :     { { -R+3*R/8, 0 }, { -R+R/8, -R/6 } },
+<span class="lineNum">     166 </span>            :     { { -R/2, 0 }, { -R/2, -R/6 } }, // &gt;&gt;-d---&gt;
+<span class="lineNum">     167 </span>            :     { { -R/2, -R/6 }, { -R/2+R/6, -R/6 } },
+<span class="lineNum">     168 </span>            :     { { -R/2+R/6, -R/6 }, { -R/2+R/6, R/4 } },
+<span class="lineNum">     169 </span>            :     { { -R/6, 0 }, { -R/6, -R/6 } }, // &gt;&gt;-dd--&gt;
+<span class="lineNum">     170 </span>            :     { { -R/6, -R/6 }, { 0, -R/6 } },
+<span class="lineNum">     171 </span>            :     { { 0, -R/6 }, { 0, R/4 } },
+<span class="lineNum">     172 </span>            :     { { R/6, R/4 }, { R/6, -R/7 } }, // &gt;&gt;-ddt-&gt;
+<span class="lineNum">     173 </span>            :     { { R/6, -R/7 }, { R/6+R/32, -R/7-R/32 } },
+<span class="lineNum">     174 </span>            :     { { R/6+R/32, -R/7-R/32 }, { R/6+R/10, -R/7 } }
+<span class="lineNum">     175 </span>            : };
+<span class="lineNum">     176 </span>            : #undef R
+<span class="lineNum">     177 </span>            : 
+<span class="lineNum">     178 </span>            : #define R (FRACUNIT)
+<span class="lineNum">     179 </span>            : mline_t triangle_guy[] = {
+<span class="lineNum">     180 </span>            :     { { (fixed_t)(-.867*R), (fixed_t)(-.5*R) }, { (fixed_t)(.867*R ), (fixed_t)(-.5*R) } },
+<span class="lineNum">     181 </span>            :     { { (fixed_t)(.867*R ), (fixed_t)(-.5*R) }, { (fixed_t)(0      ), (fixed_t)(R    ) } },
+<span class="lineNum">     182 </span>            :     { { (fixed_t)(0      ), (fixed_t)(R    ) }, { (fixed_t)(-.867*R), (fixed_t)(-.5*R) } }
+<span class="lineNum">     183 </span>            : };
+<span class="lineNum">     184 </span>            : #undef R
+<span class="lineNum">     185 </span>            : 
+<span class="lineNum">     186 </span>            : #define R (FRACUNIT)
+<span class="lineNum">     187 </span>            : mline_t thintriangle_guy[] = {
+<span class="lineNum">     188 </span>            :     { { (fixed_t)(-.5*R), (fixed_t)(-.7*R) }, { (fixed_t)(R    ), (fixed_t)(0    ) } },
+<span class="lineNum">     189 </span>            :     { { (fixed_t)(R    ), (fixed_t)(0    ) }, { (fixed_t)(-.5*R), (fixed_t)(.7*R ) } },
+<span class="lineNum">     190 </span>            :     { { (fixed_t)(-.5*R), (fixed_t)(.7*R ) }, { (fixed_t)(-.5*R), (fixed_t)(-.7*R) } }
+<span class="lineNum">     191 </span>            : };
+<span class="lineNum">     192 </span>            : #undef R
+<span class="lineNum">     193 </span>            : 
+<span class="lineNum">     194 </span>            : 
+<span class="lineNum">     195 </span>            : 
+<span class="lineNum">     196 </span>            : 
+<span class="lineNum">     197 </span>            : static int      cheating = 0;
+<span class="lineNum">     198 </span>            : static int      grid = 0;
+<span class="lineNum">     199 </span>            : 
+<span class="lineNum">     200 </span>            : static int      leveljuststarted = 1;   // kluge until AM_LevelInit() is called
+<span class="lineNum">     201 </span>            : 
+<span class="lineNum">     202 </span>            : boolean         automapactive = false;
+<span class="lineNum">     203 </span>            : static int      finit_width = SCREENWIDTH;
+<span class="lineNum">     204 </span>            : static int      finit_height = SCREENHEIGHT - ST_HEIGHT;
+<span class="lineNum">     205 </span>            : 
+<span class="lineNum">     206 </span>            : // location of window on screen
+<span class="lineNum">     207 </span>            : static int      f_x;
+<span class="lineNum">     208 </span>            : static int      f_y;
+<span class="lineNum">     209 </span>            : 
+<span class="lineNum">     210 </span>            : // size of window on screen
+<span class="lineNum">     211 </span>            : static int      f_w;
+<span class="lineNum">     212 </span>            : static int      f_h;
+<span class="lineNum">     213 </span>            : 
+<span class="lineNum">     214 </span>            : static int      lightlev;               // used for funky strobing effect
+<span class="lineNum">     215 </span>            : static pixel_t* fb;                     // pseudo-frame buffer
+<span class="lineNum">     216 </span>            : static int      amclock;
+<span class="lineNum">     217 </span>            : 
+<span class="lineNum">     218 </span>            : static mpoint_t m_paninc; // how far the window pans each tic (map coords)
+<span class="lineNum">     219 </span>            : static fixed_t  mtof_zoommul; // how far the window zooms in each tic (map coords)
+<span class="lineNum">     220 </span>            : static fixed_t  ftom_zoommul; // how far the window zooms in each tic (fb coords)
+<span class="lineNum">     221 </span>            : 
+<span class="lineNum">     222 </span>            : static fixed_t  m_x, m_y;   // LL x,y where the window is on the map (map coords)
+<span class="lineNum">     223 </span>            : static fixed_t  m_x2, m_y2; // UR x,y where the window is on the map (map coords)
+<span class="lineNum">     224 </span>            : 
+<span class="lineNum">     225 </span>            : //
+<span class="lineNum">     226 </span>            : // width/height of window on map (map coords)
+<span class="lineNum">     227 </span>            : //
+<span class="lineNum">     228 </span>            : static fixed_t  m_w;
+<span class="lineNum">     229 </span>            : static fixed_t  m_h;
+<span class="lineNum">     230 </span>            : 
+<span class="lineNum">     231 </span>            : // based on level size
+<span class="lineNum">     232 </span>            : static fixed_t  min_x;
+<span class="lineNum">     233 </span>            : static fixed_t  min_y; 
+<span class="lineNum">     234 </span>            : static fixed_t  max_x;
+<span class="lineNum">     235 </span>            : static fixed_t  max_y;
+<span class="lineNum">     236 </span>            : 
+<span class="lineNum">     237 </span>            : static fixed_t  max_w; // max_x-min_x,
+<span class="lineNum">     238 </span>            : static fixed_t  max_h; // max_y-min_y
+<span class="lineNum">     239 </span>            : 
+<span class="lineNum">     240 </span>            : // based on player size
+<span class="lineNum">     241 </span>            : static fixed_t  min_w;
+<span class="lineNum">     242 </span>            : static fixed_t  min_h;
+<span class="lineNum">     243 </span>            : 
+<span class="lineNum">     244 </span>            : 
+<span class="lineNum">     245 </span>            : static fixed_t  min_scale_mtof; // used to tell when to stop zooming out
+<span class="lineNum">     246 </span>            : static fixed_t  max_scale_mtof; // used to tell when to stop zooming in
+<span class="lineNum">     247 </span>            : 
+<span class="lineNum">     248 </span>            : // old stuff for recovery later
+<span class="lineNum">     249 </span>            : static fixed_t old_m_w, old_m_h;
+<span class="lineNum">     250 </span>            : static fixed_t old_m_x, old_m_y;
+<span class="lineNum">     251 </span>            : 
+<span class="lineNum">     252 </span>            : // old location used by the Follower routine
+<span class="lineNum">     253 </span>            : static mpoint_t f_oldloc;
+<span class="lineNum">     254 </span>            : 
+<span class="lineNum">     255 </span>            : // used by MTOF to scale from map-to-frame-buffer coords
+<span class="lineNum">     256 </span>            : static fixed_t scale_mtof = (fixed_t)INITSCALEMTOF;
+<span class="lineNum">     257 </span>            : // used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
+<span class="lineNum">     258 </span>            : static fixed_t scale_ftom;
+<span class="lineNum">     259 </span>            : 
+<span class="lineNum">     260 </span>            : static player_t *plr; // the player represented by an arrow
+<span class="lineNum">     261 </span>            : 
+<span class="lineNum">     262 </span>            : static patch_t *marknums[10]; // numbers used for marking by the automap
+<span class="lineNum">     263 </span>            : static mpoint_t markpoints[AM_NUMMARKPOINTS]; // where the points are
+<span class="lineNum">     264 </span>            : static int markpointnum = 0; // next point to be assigned
+<span class="lineNum">     265 </span>            : 
+<span class="lineNum">     266 </span>            : static int followplayer = 1; // specifies whether to follow the player around
+<span class="lineNum">     267 </span>            : 
+<span class="lineNum">     268 </span>            : cheatseq_t cheat_amap = CHEAT(&quot;iddt&quot;, 0);
+<span class="lineNum">     269 </span>            : 
+<span class="lineNum">     270 </span>            : static boolean stopped = true;
+<span class="lineNum">     271 </span>            : 
+<span class="lineNum">     272 </span>            : // Calculates the slope and slope according to the x-axis of a line
+<span class="lineNum">     273 </span>            : // segment in map coordinates (with the upright y-axis n' all) so
+<span class="lineNum">     274 </span>            : // that it can be used with the brain-dead drawing stuff.
+<span class="lineNum">     275 </span>            : 
+<span class="lineNum">     276 </span>            : void
+<span class="lineNum">     277 </span>            : AM_getIslope
+<a name="278"><span class="lineNum">     278 </span>            : ( mline_t*      ml,</a>
+<span class="lineNum">     279 </span>            :   islope_t*     is )
+<span class="lineNum">     280 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 :     int dx, dy;</span>
+<span class="lineNum">     282 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     283 </span><span class="lineNoCov">          0 :     dy = ml-&gt;a.y - ml-&gt;b.y;</span>
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 :     dx = ml-&gt;b.x - ml-&gt;a.x;</span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 :     if (!dy) is-&gt;islp = (dx&lt;0?-INT_MAX:INT_MAX);</span>
+<span class="lineNum">     286 </span><span class="lineNoCov">          0 :     else is-&gt;islp = FixedDiv(dx, dy);</span>
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 :     if (!dx) is-&gt;slp = (dy&lt;0?-INT_MAX:INT_MAX);</span>
+<span class="lineNum">     288 </span><span class="lineNoCov">          0 :     else is-&gt;slp = FixedDiv(dy, dx);</span>
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     291 </span>            : 
+<span class="lineNum">     292 </span>            : //
+<span class="lineNum">     293 </span>            : //
+<a name="294"><span class="lineNum">     294 </span>            : //</a>
+<span class="lineNum">     295 </span>            : void AM_activateNewScale(void)
+<span class="lineNum">     296 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     297 </span><span class="lineNoCov">          0 :     m_x += m_w/2;</span>
+<span class="lineNum">     298 </span><span class="lineNoCov">          0 :     m_y += m_h/2;</span>
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 :     m_w = FTOM(f_w);</span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :     m_h = FTOM(f_h);</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 :     m_x -= m_w/2;</span>
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 :     m_y -= m_h/2;</span>
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 :     m_x2 = m_x + m_w;</span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :     m_y2 = m_y + m_h;</span>
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     306 </span>            : 
+<span class="lineNum">     307 </span>            : //
+<span class="lineNum">     308 </span>            : //
+<a name="309"><span class="lineNum">     309 </span>            : //</a>
+<span class="lineNum">     310 </span>            : void AM_saveScaleAndLoc(void)
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :     old_m_x = m_x;</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :     old_m_y = m_y;</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :     old_m_w = m_w;</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :     old_m_h = m_h;</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     317 </span>            : 
+<span class="lineNum">     318 </span>            : //
+<span class="lineNum">     319 </span>            : //
+<a name="320"><span class="lineNum">     320 </span>            : //</a>
+<span class="lineNum">     321 </span>            : void AM_restoreScaleAndLoc(void)
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 :     m_w = old_m_w;</span>
+<span class="lineNum">     325 </span><span class="lineNoCov">          0 :     m_h = old_m_h;</span>
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 :     if (!followplayer)</span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     328 </span><span class="lineNoCov">          0 :         m_x = old_m_x;</span>
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 :         m_y = old_m_y;</span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 :     } else {</span>
+<span class="lineNum">     331 </span><span class="lineNoCov">          0 :         m_x = plr-&gt;mo-&gt;x - m_w/2;</span>
+<span class="lineNum">     332 </span><span class="lineNoCov">          0 :         m_y = plr-&gt;mo-&gt;y - m_h/2;</span>
+<span class="lineNum">     333 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     334 </span><span class="lineNoCov">          0 :     m_x2 = m_x + m_w;</span>
+<span class="lineNum">     335 </span><span class="lineNoCov">          0 :     m_y2 = m_y + m_h;</span>
+<span class="lineNum">     336 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 :     // Change the scaling multipliers</span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :     scale_mtof = FixedDiv(f_w&lt;&lt;FRACBITS, m_w);</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 :     scale_ftom = FixedDiv(FRACUNIT, scale_mtof);</span>
+<span class="lineNum">     340 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     341 </span>            : 
+<span class="lineNum">     342 </span>            : //
+<span class="lineNum">     343 </span>            : // adds a marker at the current location
+<a name="344"><span class="lineNum">     344 </span>            : //</a>
+<span class="lineNum">     345 </span>            : void AM_addMark(void)
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :     markpoints[markpointnum].x = m_x + m_w/2;</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :     markpoints[markpointnum].y = m_y + m_h/2;</span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :     markpointnum = (markpointnum + 1) % AM_NUMMARKPOINTS;</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     352 </span>            : 
+<span class="lineNum">     353 </span>            : //
+<span class="lineNum">     354 </span>            : // Determines bounding box of all vertices,
+<span class="lineNum">     355 </span>            : // sets global variables controlling zoom range.
+<a name="356"><span class="lineNum">     356 </span>            : //</a>
+<span class="lineNum">     357 </span>            : void AM_findMinMaxBoundaries(void)
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     359 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 :     fixed_t a;</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 :     fixed_t b;</span>
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :     min_x = min_y =  INT_MAX;</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 :     max_x = max_y = -INT_MAX;</span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :   </span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :     for (i=0;i&lt;numvertexes;i++)</span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 :         if (vertexes[i].x &lt; min_x)</span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :             min_x = vertexes[i].x;</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 :         else if (vertexes[i].x &gt; max_x)</span>
+<span class="lineNum">     371 </span><span class="lineNoCov">          0 :             max_x = vertexes[i].x;</span>
+<span class="lineNum">     372 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     373 </span><span class="lineNoCov">          0 :         if (vertexes[i].y &lt; min_y)</span>
+<span class="lineNum">     374 </span><span class="lineNoCov">          0 :             min_y = vertexes[i].y;</span>
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 :         else if (vertexes[i].y &gt; max_y)</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 :             max_y = vertexes[i].y;</span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :   </span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 :     max_w = max_x - min_x;</span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :     max_h = max_y - min_y;</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     382 </span><span class="lineNoCov">          0 :     min_w = 2*PLAYERRADIUS; // const? never changed?</span>
+<span class="lineNum">     383 </span><span class="lineNoCov">          0 :     min_h = 2*PLAYERRADIUS;</span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 :     a = FixedDiv(f_w&lt;&lt;FRACBITS, max_w);</span>
+<span class="lineNum">     386 </span><span class="lineNoCov">          0 :     b = FixedDiv(f_h&lt;&lt;FRACBITS, max_h);</span>
+<span class="lineNum">     387 </span><span class="lineNoCov">          0 :   </span>
+<span class="lineNum">     388 </span><span class="lineNoCov">          0 :     min_scale_mtof = a &lt; b ? a : b;</span>
+<span class="lineNum">     389 </span><span class="lineNoCov">          0 :     max_scale_mtof = FixedDiv(f_h&lt;&lt;FRACBITS, 2*PLAYERRADIUS);</span>
+<span class="lineNum">     390 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     391 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     392 </span>            : 
+<span class="lineNum">     393 </span>            : 
+<span class="lineNum">     394 </span>            : //
+<span class="lineNum">     395 </span>            : //
+<a name="396"><span class="lineNum">     396 </span>            : //</a>
+<span class="lineNum">     397 </span>            : void AM_changeWindowLoc(void)
+<span class="lineNum">     398 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 :     if (m_paninc.x || m_paninc.y)</span>
+<span class="lineNum">     400 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 :         followplayer = 0;</span>
+<span class="lineNum">     402 </span><span class="lineNoCov">          0 :         f_oldloc.x = INT_MAX;</span>
+<span class="lineNum">     403 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 :     m_x += m_paninc.x;</span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 :     m_y += m_paninc.y;</span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 :     if (m_x + m_w/2 &gt; max_x)</span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :         m_x = max_x - m_w/2;</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 :     else if (m_x + m_w/2 &lt; min_x)</span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 :         m_x = min_x - m_w/2;</span>
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 :   </span>
+<span class="lineNum">     413 </span><span class="lineNoCov">          0 :     if (m_y + m_h/2 &gt; max_y)</span>
+<span class="lineNum">     414 </span><span class="lineNoCov">          0 :         m_y = max_y - m_h/2;</span>
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 :     else if (m_y + m_h/2 &lt; min_y)</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 :         m_y = min_y - m_h/2;</span>
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 :     m_x2 = m_x + m_w;</span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :     m_y2 = m_y + m_h;</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     421 </span>            : 
+<span class="lineNum">     422 </span>            : 
+<span class="lineNum">     423 </span>            : //
+<span class="lineNum">     424 </span>            : //
+<a name="425"><span class="lineNum">     425 </span>            : //</a>
+<span class="lineNum">     426 </span>            : void AM_initVariables(void)
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     428 </span><span class="lineNoCov">          0 :     int pnum;</span>
+<span class="lineNum">     429 </span><span class="lineNoCov">          0 :     static event_t st_notify = { ev_keyup, AM_MSGENTERED, 0, 0 };</span>
+<span class="lineNum">     430 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     431 </span><span class="lineNoCov">          0 :     automapactive = true;</span>
+<span class="lineNum">     432 </span><span class="lineNoCov">          0 :     fb = I_VideoBuffer;</span>
+<span class="lineNum">     433 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 :     f_oldloc.x = INT_MAX;</span>
+<span class="lineNum">     435 </span><span class="lineNoCov">          0 :     amclock = 0;</span>
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 :     lightlev = 0;</span>
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 :     m_paninc.x = m_paninc.y = 0;</span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 :     ftom_zoommul = FRACUNIT;</span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :     mtof_zoommul = FRACUNIT;</span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 :     m_w = FTOM(f_w);</span>
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 :     m_h = FTOM(f_h);</span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :     // find player to center on initially</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 :     if (playeringame[consoleplayer])</span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 :         plr = &amp;players[consoleplayer];</span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 :         plr = &amp;players[0];</span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 :         for (pnum=0;pnum&lt;MAXPLAYERS;pnum++)</span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :             if (playeringame[pnum])</span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     458 </span><span class="lineNoCov">          0 :                 plr = &amp;players[pnum];</span>
+<span class="lineNum">     459 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     460 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     461 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     462 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     463 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     464 </span><span class="lineNoCov">          0 :     m_x = plr-&gt;mo-&gt;x - m_w/2;</span>
+<span class="lineNum">     465 </span><span class="lineNoCov">          0 :     m_y = plr-&gt;mo-&gt;y - m_h/2;</span>
+<span class="lineNum">     466 </span><span class="lineNoCov">          0 :     AM_changeWindowLoc();</span>
+<span class="lineNum">     467 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     468 </span><span class="lineNoCov">          0 :     // for saving &amp; restoring</span>
+<span class="lineNum">     469 </span><span class="lineNoCov">          0 :     old_m_x = m_x;</span>
+<span class="lineNum">     470 </span><span class="lineNoCov">          0 :     old_m_y = m_y;</span>
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 :     old_m_w = m_w;</span>
+<span class="lineNum">     472 </span><span class="lineNoCov">          0 :     old_m_h = m_h;</span>
+<span class="lineNum">     473 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     474 </span><span class="lineNoCov">          0 :     // inform the status bar of the change</span>
+<span class="lineNum">     475 </span><span class="lineNoCov">          0 :     ST_Responder(&amp;st_notify);</span>
+<span class="lineNum">     476 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     477 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     478 </span>            : 
+<span class="lineNum">     479 </span>            : //
+<span class="lineNum">     480 </span>            : // 
+<a name="481"><span class="lineNum">     481 </span>            : //</a>
+<span class="lineNum">     482 </span>            : void AM_loadPics(void)
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     485 </span><span class="lineNoCov">          0 :     char namebuf[9];</span>
+<span class="lineNum">     486 </span><span class="lineNoCov">          0 :   </span>
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 :     for (i=0;i&lt;10;i++)</span>
+<span class="lineNum">     488 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :         DEH_snprintf(namebuf, 9, &quot;AMMNUM%d&quot;, i);</span>
+<span class="lineNum">     490 </span><span class="lineNoCov">          0 :         marknums[i] = W_CacheLumpName(namebuf, PU_STATIC);</span>
+<span class="lineNum">     491 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     492 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     493 </span><span class="lineNoCov">          0 : }</span>
+<a name="494"><span class="lineNum">     494 </span>            : </a>
+<span class="lineNum">     495 </span>            : void AM_unloadPics(void)
+<span class="lineNum">     496 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     497 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     498 </span><span class="lineNoCov">          0 :     char namebuf[9];</span>
+<span class="lineNum">     499 </span><span class="lineNoCov">          0 :   </span>
+<span class="lineNum">     500 </span><span class="lineNoCov">          0 :     for (i=0;i&lt;10;i++)</span>
+<span class="lineNum">     501 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     502 </span><span class="lineNoCov">          0 :         DEH_snprintf(namebuf, 9, &quot;AMMNUM%d&quot;, i);</span>
+<span class="lineNum">     503 </span><span class="lineNoCov">          0 :         W_ReleaseLumpName(namebuf);</span>
+<span class="lineNum">     504 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     505 </span><span class="lineNoCov">          0 : }</span>
+<a name="506"><span class="lineNum">     506 </span>            : </a>
+<span class="lineNum">     507 </span>            : void AM_clearMarks(void)
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     509 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     510 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 :     for (i=0;i&lt;AM_NUMMARKPOINTS;i++)</span>
+<span class="lineNum">     512 </span><span class="lineNoCov">          0 :         markpoints[i].x = -1; // means empty</span>
+<span class="lineNum">     513 </span><span class="lineNoCov">          0 :     markpointnum = 0;</span>
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     515 </span>            : 
+<span class="lineNum">     516 </span>            : //
+<span class="lineNum">     517 </span>            : // should be called at the start of every level
+<span class="lineNum">     518 </span>            : // right now, i figure it out myself
+<a name="519"><span class="lineNum">     519 </span>            : //</a>
+<span class="lineNum">     520 </span>            : void AM_LevelInit(void)
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     522 </span><span class="lineNoCov">          0 :     leveljuststarted = 0;</span>
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     524 </span><span class="lineNoCov">          0 :     f_x = f_y = 0;</span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :     f_w = finit_width;</span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 :     f_h = finit_height;</span>
+<span class="lineNum">     527 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 :     AM_clearMarks();</span>
+<span class="lineNum">     529 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     530 </span><span class="lineNoCov">          0 :     AM_findMinMaxBoundaries();</span>
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 :     scale_mtof = FixedDiv(min_scale_mtof, (int) (0.7*FRACUNIT));</span>
+<span class="lineNum">     532 </span><span class="lineNoCov">          0 :     if (scale_mtof &gt; max_scale_mtof)</span>
+<span class="lineNum">     533 </span><span class="lineNoCov">          0 :         scale_mtof = min_scale_mtof;</span>
+<span class="lineNum">     534 </span><span class="lineNoCov">          0 :     scale_ftom = FixedDiv(FRACUNIT, scale_mtof);</span>
+<span class="lineNum">     535 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     536 </span>            : 
+<span class="lineNum">     537 </span>            : 
+<span class="lineNum">     538 </span>            : 
+<span class="lineNum">     539 </span>            : 
+<span class="lineNum">     540 </span>            : //
+<span class="lineNum">     541 </span>            : //
+<a name="542"><span class="lineNum">     542 </span>            : //</a>
+<span class="lineNum">     543 </span>            : void AM_Stop (void)
+<span class="lineNum">     544 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     545 </span><span class="lineNoCov">          0 :     static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED, 0 };</span>
+<span class="lineNum">     546 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     547 </span><span class="lineNoCov">          0 :     AM_unloadPics();</span>
+<span class="lineNum">     548 </span><span class="lineNoCov">          0 :     automapactive = false;</span>
+<span class="lineNum">     549 </span><span class="lineNoCov">          0 :     ST_Responder(&amp;st_notify);</span>
+<span class="lineNum">     550 </span><span class="lineNoCov">          0 :     stopped = true;</span>
+<span class="lineNum">     551 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     552 </span>            : 
+<span class="lineNum">     553 </span>            : //
+<span class="lineNum">     554 </span>            : //
+<a name="555"><span class="lineNum">     555 </span>            : //</a>
+<span class="lineNum">     556 </span>            : void AM_Start (void)
+<span class="lineNum">     557 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     558 </span><span class="lineNoCov">          0 :     static int lastlevel = -1, lastepisode = -1;</span>
+<span class="lineNum">     559 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     560 </span><span class="lineNoCov">          0 :     if (!stopped) AM_Stop();</span>
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 :     stopped = false;</span>
+<span class="lineNum">     562 </span><span class="lineNoCov">          0 :     if (lastlevel != gamemap || lastepisode != gameepisode)</span>
+<span class="lineNum">     563 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     564 </span><span class="lineNoCov">          0 :         AM_LevelInit();</span>
+<span class="lineNum">     565 </span><span class="lineNoCov">          0 :         lastlevel = gamemap;</span>
+<span class="lineNum">     566 </span><span class="lineNoCov">          0 :         lastepisode = gameepisode;</span>
+<span class="lineNum">     567 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 :     AM_initVariables();</span>
+<span class="lineNum">     569 </span><span class="lineNoCov">          0 :     AM_loadPics();</span>
+<span class="lineNum">     570 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     571 </span>            : 
+<span class="lineNum">     572 </span>            : //
+<span class="lineNum">     573 </span>            : // set the window scale to the maximum size
+<a name="574"><span class="lineNum">     574 </span>            : //</a>
+<span class="lineNum">     575 </span>            : void AM_minOutWindowScale(void)
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     577 </span><span class="lineNoCov">          0 :     scale_mtof = min_scale_mtof;</span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :     scale_ftom = FixedDiv(FRACUNIT, scale_mtof);</span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :     AM_activateNewScale();</span>
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     581 </span>            : 
+<span class="lineNum">     582 </span>            : //
+<span class="lineNum">     583 </span>            : // set the window scale to the minimum size
+<a name="584"><span class="lineNum">     584 </span>            : //</a>
+<span class="lineNum">     585 </span>            : void AM_maxOutWindowScale(void)
+<span class="lineNum">     586 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     587 </span><span class="lineNoCov">          0 :     scale_mtof = max_scale_mtof;</span>
+<span class="lineNum">     588 </span><span class="lineNoCov">          0 :     scale_ftom = FixedDiv(FRACUNIT, scale_mtof);</span>
+<span class="lineNum">     589 </span><span class="lineNoCov">          0 :     AM_activateNewScale();</span>
+<span class="lineNum">     590 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     591 </span>            : 
+<span class="lineNum">     592 </span>            : 
+<span class="lineNum">     593 </span>            : //
+<span class="lineNum">     594 </span>            : // Handle events (user inputs) in automap mode
+<span class="lineNum">     595 </span>            : //
+<span class="lineNum">     596 </span>            : boolean
+<a name="597"><span class="lineNum">     597 </span>            : AM_Responder</a>
+<span class="lineNum">     598 </span>            : ( event_t*      ev )
+<span class="lineNum">     599 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     601 </span><span class="lineNoCov">          0 :     int rc;</span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 :     static int bigstate=0;</span>
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 :     static char buffer[20];</span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 :     int key;</span>
+<span class="lineNum">     605 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 :     rc = false;</span>
+<span class="lineNum">     607 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     608 </span><span class="lineNoCov">          0 :     if (ev-&gt;type == ev_joystick &amp;&amp; joybautomap &gt;= 0</span>
+<span class="lineNum">     609 </span><span class="lineNoCov">          0 :         &amp;&amp; (ev-&gt;data1 &amp; (1 &lt;&lt; joybautomap)) != 0)</span>
+<span class="lineNum">     610 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     611 </span><span class="lineNoCov">          0 :         joywait = I_GetTime() + 5;</span>
+<span class="lineNum">     612 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 :         if (!automapactive)</span>
+<span class="lineNum">     614 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 :             AM_Start ();</span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :             viewactive = false;</span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     620 </span><span class="lineNoCov">          0 :             bigstate = 0;</span>
+<span class="lineNum">     621 </span><span class="lineNoCov">          0 :             viewactive = true;</span>
+<span class="lineNum">     622 </span><span class="lineNoCov">          0 :             AM_Stop ();</span>
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     624 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     625 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 :     if (!automapactive)</span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 :         if (ev-&gt;type == ev_keydown &amp;&amp; ev-&gt;data1 == key_map_toggle)</span>
+<span class="lineNum">     631 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     632 </span><span class="lineNoCov">          0 :             AM_Start ();</span>
+<span class="lineNum">     633 </span><span class="lineNoCov">          0 :             viewactive = false;</span>
+<span class="lineNum">     634 </span><span class="lineNoCov">          0 :             rc = true;</span>
+<span class="lineNum">     635 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     636 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     637 </span><span class="lineNoCov">          0 :     else if (ev-&gt;type == ev_keydown)</span>
+<span class="lineNum">     638 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     639 </span><span class="lineNoCov">          0 :         rc = true;</span>
+<span class="lineNum">     640 </span><span class="lineNoCov">          0 :         key = ev-&gt;data1;</span>
+<span class="lineNum">     641 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     642 </span><span class="lineNoCov">          0 :         if (key == key_map_east)          // pan right</span>
+<span class="lineNum">     643 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     644 </span><span class="lineNoCov">          0 :             if (!followplayer) m_paninc.x = FTOM(F_PANINC);</span>
+<span class="lineNum">     645 </span><span class="lineNoCov">          0 :             else rc = false;</span>
+<span class="lineNum">     646 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     647 </span><span class="lineNoCov">          0 :         else if (key == key_map_west)     // pan left</span>
+<span class="lineNum">     648 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     649 </span><span class="lineNoCov">          0 :             if (!followplayer) m_paninc.x = -FTOM(F_PANINC);</span>
+<span class="lineNum">     650 </span><span class="lineNoCov">          0 :             else rc = false;</span>
+<span class="lineNum">     651 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     652 </span><span class="lineNoCov">          0 :         else if (key == key_map_north)    // pan up</span>
+<span class="lineNum">     653 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     654 </span><span class="lineNoCov">          0 :             if (!followplayer) m_paninc.y = FTOM(F_PANINC);</span>
+<span class="lineNum">     655 </span><span class="lineNoCov">          0 :             else rc = false;</span>
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 :         else if (key == key_map_south)    // pan down</span>
+<span class="lineNum">     658 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     659 </span><span class="lineNoCov">          0 :             if (!followplayer) m_paninc.y = -FTOM(F_PANINC);</span>
+<span class="lineNum">     660 </span><span class="lineNoCov">          0 :             else rc = false;</span>
+<span class="lineNum">     661 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     662 </span><span class="lineNoCov">          0 :         else if (key == key_map_zoomout)  // zoom out</span>
+<span class="lineNum">     663 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     664 </span><span class="lineNoCov">          0 :             mtof_zoommul = M_ZOOMOUT;</span>
+<span class="lineNum">     665 </span><span class="lineNoCov">          0 :             ftom_zoommul = M_ZOOMIN;</span>
+<span class="lineNum">     666 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     667 </span><span class="lineNoCov">          0 :         else if (key == key_map_zoomin)   // zoom in</span>
+<span class="lineNum">     668 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     669 </span><span class="lineNoCov">          0 :             mtof_zoommul = M_ZOOMIN;</span>
+<span class="lineNum">     670 </span><span class="lineNoCov">          0 :             ftom_zoommul = M_ZOOMOUT;</span>
+<span class="lineNum">     671 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     672 </span><span class="lineNoCov">          0 :         else if (key == key_map_toggle)</span>
+<span class="lineNum">     673 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     674 </span><span class="lineNoCov">          0 :             bigstate = 0;</span>
+<span class="lineNum">     675 </span><span class="lineNoCov">          0 :             viewactive = true;</span>
+<span class="lineNum">     676 </span><span class="lineNoCov">          0 :             AM_Stop ();</span>
+<span class="lineNum">     677 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     678 </span><span class="lineNoCov">          0 :         else if (key == key_map_maxzoom)</span>
+<span class="lineNum">     679 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     680 </span><span class="lineNoCov">          0 :             bigstate = !bigstate;</span>
+<span class="lineNum">     681 </span><span class="lineNoCov">          0 :             if (bigstate)</span>
+<span class="lineNum">     682 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     683 </span><span class="lineNoCov">          0 :                 AM_saveScaleAndLoc();</span>
+<span class="lineNum">     684 </span><span class="lineNoCov">          0 :                 AM_minOutWindowScale();</span>
+<span class="lineNum">     685 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     686 </span><span class="lineNoCov">          0 :             else AM_restoreScaleAndLoc();</span>
+<span class="lineNum">     687 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     688 </span><span class="lineNoCov">          0 :         else if (key == key_map_follow)</span>
+<span class="lineNum">     689 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     690 </span><span class="lineNoCov">          0 :             followplayer = !followplayer;</span>
+<span class="lineNum">     691 </span><span class="lineNoCov">          0 :             f_oldloc.x = INT_MAX;</span>
+<span class="lineNum">     692 </span><span class="lineNoCov">          0 :             if (followplayer)</span>
+<span class="lineNum">     693 </span><span class="lineNoCov">          0 :                 plr-&gt;message = DEH_String(AMSTR_FOLLOWON);</span>
+<span class="lineNum">     694 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     695 </span><span class="lineNoCov">          0 :                 plr-&gt;message = DEH_String(AMSTR_FOLLOWOFF);</span>
+<span class="lineNum">     696 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     697 </span><span class="lineNoCov">          0 :         else if (key == key_map_grid)</span>
+<span class="lineNum">     698 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     699 </span><span class="lineNoCov">          0 :             grid = !grid;</span>
+<span class="lineNum">     700 </span><span class="lineNoCov">          0 :             if (grid)</span>
+<span class="lineNum">     701 </span><span class="lineNoCov">          0 :                 plr-&gt;message = DEH_String(AMSTR_GRIDON);</span>
+<span class="lineNum">     702 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     703 </span><span class="lineNoCov">          0 :                 plr-&gt;message = DEH_String(AMSTR_GRIDOFF);</span>
+<span class="lineNum">     704 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     705 </span><span class="lineNoCov">          0 :         else if (key == key_map_mark)</span>
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     707 </span><span class="lineNoCov">          0 :             M_snprintf(buffer, sizeof(buffer), &quot;%s %d&quot;,</span>
+<span class="lineNum">     708 </span><span class="lineNoCov">          0 :                        DEH_String(AMSTR_MARKEDSPOT), markpointnum);</span>
+<span class="lineNum">     709 </span><span class="lineNoCov">          0 :             plr-&gt;message = buffer;</span>
+<span class="lineNum">     710 </span><span class="lineNoCov">          0 :             AM_addMark();</span>
+<span class="lineNum">     711 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     712 </span><span class="lineNoCov">          0 :         else if (key == key_map_clearmark)</span>
+<span class="lineNum">     713 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     714 </span><span class="lineNoCov">          0 :             AM_clearMarks();</span>
+<span class="lineNum">     715 </span><span class="lineNoCov">          0 :             plr-&gt;message = DEH_String(AMSTR_MARKSCLEARED);</span>
+<span class="lineNum">     716 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     717 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     718 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     719 </span><span class="lineNoCov">          0 :             rc = false;</span>
+<span class="lineNum">     720 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     721 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     722 </span><span class="lineNoCov">          0 :         if ((!deathmatch || gameversion &lt;= exe_doom_1_8)</span>
+<span class="lineNum">     723 </span><span class="lineNoCov">          0 :          &amp;&amp; cht_CheckCheat(&amp;cheat_amap, ev-&gt;data2))</span>
+<span class="lineNum">     724 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     725 </span><span class="lineNoCov">          0 :             rc = false;</span>
+<span class="lineNum">     726 </span><span class="lineNoCov">          0 :             cheating = (cheating + 1) % 3;</span>
+<span class="lineNum">     727 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     728 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     729 </span><span class="lineNoCov">          0 :     else if (ev-&gt;type == ev_keyup)</span>
+<span class="lineNum">     730 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     731 </span><span class="lineNoCov">          0 :         rc = false;</span>
+<span class="lineNum">     732 </span><span class="lineNoCov">          0 :         key = ev-&gt;data1;</span>
+<span class="lineNum">     733 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     734 </span><span class="lineNoCov">          0 :         if (key == key_map_east)</span>
+<span class="lineNum">     735 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     736 </span><span class="lineNoCov">          0 :             if (!followplayer) m_paninc.x = 0;</span>
+<span class="lineNum">     737 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     738 </span><span class="lineNoCov">          0 :         else if (key == key_map_west)</span>
+<span class="lineNum">     739 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     740 </span><span class="lineNoCov">          0 :             if (!followplayer) m_paninc.x = 0;</span>
+<span class="lineNum">     741 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     742 </span><span class="lineNoCov">          0 :         else if (key == key_map_north)</span>
+<span class="lineNum">     743 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     744 </span><span class="lineNoCov">          0 :             if (!followplayer) m_paninc.y = 0;</span>
+<span class="lineNum">     745 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     746 </span><span class="lineNoCov">          0 :         else if (key == key_map_south)</span>
+<span class="lineNum">     747 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     748 </span><span class="lineNoCov">          0 :             if (!followplayer) m_paninc.y = 0;</span>
+<span class="lineNum">     749 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     750 </span><span class="lineNoCov">          0 :         else if (key == key_map_zoomout || key == key_map_zoomin)</span>
+<span class="lineNum">     751 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     752 </span><span class="lineNoCov">          0 :             mtof_zoommul = FRACUNIT;</span>
+<span class="lineNum">     753 </span><span class="lineNoCov">          0 :             ftom_zoommul = FRACUNIT;</span>
+<span class="lineNum">     754 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     755 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     756 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     757 </span><span class="lineNoCov">          0 :     return rc;</span>
+<span class="lineNum">     758 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     759 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     760 </span>            : 
+<span class="lineNum">     761 </span>            : 
+<span class="lineNum">     762 </span>            : //
+<span class="lineNum">     763 </span>            : // Zooming
+<a name="764"><span class="lineNum">     764 </span>            : //</a>
+<span class="lineNum">     765 </span>            : void AM_changeWindowScale(void)
+<span class="lineNum">     766 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     767 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     768 </span><span class="lineNoCov">          0 :     // Change the scaling multipliers</span>
+<span class="lineNum">     769 </span><span class="lineNoCov">          0 :     scale_mtof = FixedMul(scale_mtof, mtof_zoommul);</span>
+<span class="lineNum">     770 </span><span class="lineNoCov">          0 :     scale_ftom = FixedDiv(FRACUNIT, scale_mtof);</span>
+<span class="lineNum">     771 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     772 </span><span class="lineNoCov">          0 :     if (scale_mtof &lt; min_scale_mtof)</span>
+<span class="lineNum">     773 </span><span class="lineNoCov">          0 :         AM_minOutWindowScale();</span>
+<span class="lineNum">     774 </span><span class="lineNoCov">          0 :     else if (scale_mtof &gt; max_scale_mtof)</span>
+<span class="lineNum">     775 </span><span class="lineNoCov">          0 :         AM_maxOutWindowScale();</span>
+<span class="lineNum">     776 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     777 </span><span class="lineNoCov">          0 :         AM_activateNewScale();</span>
+<span class="lineNum">     778 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     779 </span>            : 
+<span class="lineNum">     780 </span>            : 
+<span class="lineNum">     781 </span>            : //
+<span class="lineNum">     782 </span>            : //
+<a name="783"><span class="lineNum">     783 </span>            : //</a>
+<span class="lineNum">     784 </span>            : void AM_doFollowPlayer(void)
+<span class="lineNum">     785 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     786 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     787 </span><span class="lineNoCov">          0 :     if (f_oldloc.x != plr-&gt;mo-&gt;x || f_oldloc.y != plr-&gt;mo-&gt;y)</span>
+<span class="lineNum">     788 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     789 </span><span class="lineNoCov">          0 :         m_x = FTOM(MTOF(plr-&gt;mo-&gt;x)) - m_w/2;</span>
+<span class="lineNum">     790 </span><span class="lineNoCov">          0 :         m_y = FTOM(MTOF(plr-&gt;mo-&gt;y)) - m_h/2;</span>
+<span class="lineNum">     791 </span><span class="lineNoCov">          0 :         m_x2 = m_x + m_w;</span>
+<span class="lineNum">     792 </span><span class="lineNoCov">          0 :         m_y2 = m_y + m_h;</span>
+<span class="lineNum">     793 </span><span class="lineNoCov">          0 :         f_oldloc.x = plr-&gt;mo-&gt;x;</span>
+<span class="lineNum">     794 </span><span class="lineNoCov">          0 :         f_oldloc.y = plr-&gt;mo-&gt;y;</span>
+<span class="lineNum">     795 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     796 </span><span class="lineNoCov">          0 :         //  m_x = FTOM(MTOF(plr-&gt;mo-&gt;x - m_w/2));</span>
+<span class="lineNum">     797 </span><span class="lineNoCov">          0 :         //  m_y = FTOM(MTOF(plr-&gt;mo-&gt;y - m_h/2));</span>
+<span class="lineNum">     798 </span><span class="lineNoCov">          0 :         //  m_x = plr-&gt;mo-&gt;x - m_w/2;</span>
+<span class="lineNum">     799 </span><span class="lineNoCov">          0 :         //  m_y = plr-&gt;mo-&gt;y - m_h/2;</span>
+<span class="lineNum">     800 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     801 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     802 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     803 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     804 </span>            : 
+<span class="lineNum">     805 </span>            : //
+<span class="lineNum">     806 </span>            : //
+<a name="807"><span class="lineNum">     807 </span>            : //</a>
+<span class="lineNum">     808 </span>            : void AM_updateLightLev(void)
+<span class="lineNum">     809 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     810 </span><span class="lineNoCov">          0 :     static int nexttic = 0;</span>
+<span class="lineNum">     811 </span><span class="lineNoCov">          0 :     //static int litelevels[] = { 0, 3, 5, 6, 6, 7, 7, 7 };</span>
+<span class="lineNum">     812 </span><span class="lineNoCov">          0 :     static int litelevels[] = { 0, 4, 7, 10, 12, 14, 15, 15 };</span>
+<span class="lineNum">     813 </span><span class="lineNoCov">          0 :     static int litelevelscnt = 0;</span>
+<span class="lineNum">     814 </span><span class="lineNoCov">          0 :    </span>
+<span class="lineNum">     815 </span><span class="lineNoCov">          0 :     // Change light level</span>
+<span class="lineNum">     816 </span><span class="lineNoCov">          0 :     if (amclock&gt;nexttic)</span>
+<span class="lineNum">     817 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     818 </span><span class="lineNoCov">          0 :         lightlev = litelevels[litelevelscnt++];</span>
+<span class="lineNum">     819 </span><span class="lineNoCov">          0 :         if (litelevelscnt == arrlen(litelevels)) litelevelscnt = 0;</span>
+<span class="lineNum">     820 </span><span class="lineNoCov">          0 :         nexttic = amclock + 6 - (amclock % 6);</span>
+<span class="lineNum">     821 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     822 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     823 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     824 </span>            : 
+<span class="lineNum">     825 </span>            : 
+<span class="lineNum">     826 </span>            : //
+<span class="lineNum">     827 </span>            : // Updates on Game Tick
+<a name="828"><span class="lineNum">     828 </span>            : //</a>
+<span class="lineNum">     829 </span>            : void AM_Ticker (void)
+<span class="lineNum">     830 </span><span class="lineCov">       1855 : {</span>
+<span class="lineNum">     831 </span><span class="lineCov">       1855 : </span>
+<span class="lineNum">     832 </span><span class="lineCov">       1855 :     if (!automapactive)</span>
+<span class="lineNum">     833 </span><span class="lineCov">       1855 :         return;</span>
+<span class="lineNum">     834 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     835 </span><span class="lineNoCov">          0 :     amclock++;</span>
+<span class="lineNum">     836 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     837 </span><span class="lineNoCov">          0 :     if (followplayer)</span>
+<span class="lineNum">     838 </span><span class="lineNoCov">          0 :         AM_doFollowPlayer();</span>
+<span class="lineNum">     839 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     840 </span><span class="lineNoCov">          0 :     // Change the zoom if necessary</span>
+<span class="lineNum">     841 </span><span class="lineNoCov">          0 :     if (ftom_zoommul != FRACUNIT)</span>
+<span class="lineNum">     842 </span><span class="lineNoCov">          0 :         AM_changeWindowScale();</span>
+<span class="lineNum">     843 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     844 </span><span class="lineNoCov">          0 :     // Change x,y location</span>
+<span class="lineNum">     845 </span><span class="lineNoCov">          0 :     if (m_paninc.x || m_paninc.y)</span>
+<span class="lineNum">     846 </span><span class="lineNoCov">          0 :         AM_changeWindowLoc();</span>
+<span class="lineNum">     847 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     848 </span><span class="lineNoCov">          0 :     // Update light level</span>
+<span class="lineNum">     849 </span><span class="lineNoCov">          0 :     // AM_updateLightLev();</span>
+<span class="lineNum">     850 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     851 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     852 </span>            : 
+<span class="lineNum">     853 </span>            : 
+<span class="lineNum">     854 </span>            : //
+<span class="lineNum">     855 </span>            : // Clear automap frame buffer.
+<a name="856"><span class="lineNum">     856 </span>            : //</a>
+<span class="lineNum">     857 </span>            : void AM_clearFB(int color)
+<span class="lineNum">     858 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     859 </span><span class="lineNoCov">          0 :     memset(fb, color, f_w*f_h*sizeof(*fb));</span>
+<span class="lineNum">     860 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     861 </span>            : 
+<span class="lineNum">     862 </span>            : 
+<span class="lineNum">     863 </span>            : //
+<span class="lineNum">     864 </span>            : // Automap clipping of lines.
+<span class="lineNum">     865 </span>            : //
+<span class="lineNum">     866 </span>            : // Based on Cohen-Sutherland clipping algorithm but with a slightly
+<span class="lineNum">     867 </span>            : // faster reject and precalculated slopes.  If the speed is needed,
+<span class="lineNum">     868 </span>            : // use a hash algorithm to handle  the common cases.
+<span class="lineNum">     869 </span>            : //
+<span class="lineNum">     870 </span>            : boolean
+<span class="lineNum">     871 </span>            : AM_clipMline
+<a name="872"><span class="lineNum">     872 </span>            : ( mline_t*      ml,</a>
+<span class="lineNum">     873 </span>            :   fline_t*      fl )
+<span class="lineNum">     874 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     875 </span><span class="lineNoCov">          0 :     enum</span>
+<span class="lineNum">     876 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     877 </span><span class="lineNoCov">          0 :         LEFT    =1,</span>
+<span class="lineNum">     878 </span><span class="lineNoCov">          0 :         RIGHT   =2,</span>
+<span class="lineNum">     879 </span><span class="lineNoCov">          0 :         BOTTOM  =4,</span>
+<span class="lineNum">     880 </span><span class="lineNoCov">          0 :         TOP     =8</span>
+<span class="lineNum">     881 </span><span class="lineNoCov">          0 :     };</span>
+<span class="lineNum">     882 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     883 </span><span class="lineNoCov">          0 :     register int        outcode1 = 0;</span>
+<span class="lineNum">     884 </span><span class="lineNoCov">          0 :     register int        outcode2 = 0;</span>
+<span class="lineNum">     885 </span><span class="lineNoCov">          0 :     register int        outside;</span>
+<span class="lineNum">     886 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     887 </span><span class="lineNoCov">          0 :     fpoint_t    tmp;</span>
+<span class="lineNum">     888 </span><span class="lineNoCov">          0 :     int         dx;</span>
+<span class="lineNum">     889 </span><span class="lineNoCov">          0 :     int         dy;</span>
+<span class="lineNum">     890 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     891 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     892 </span><span class="lineNoCov">          0 : #define DOOUTCODE(oc, mx, my) \</span>
+<span class="lineNum">     893 </span><span class="lineNoCov">          0 :     (oc) = 0; \</span>
+<span class="lineNum">     894 </span><span class="lineNoCov">          0 :     if ((my) &lt; 0) (oc) |= TOP; \</span>
+<span class="lineNum">     895 </span><span class="lineNoCov">          0 :     else if ((my) &gt;= f_h) (oc) |= BOTTOM; \</span>
+<span class="lineNum">     896 </span><span class="lineNoCov">          0 :     if ((mx) &lt; 0) (oc) |= LEFT; \</span>
+<span class="lineNum">     897 </span><span class="lineNoCov">          0 :     else if ((mx) &gt;= f_w) (oc) |= RIGHT;</span>
+<span class="lineNum">     898 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     899 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     900 </span><span class="lineNoCov">          0 :     // do trivial rejects and outcodes</span>
+<span class="lineNum">     901 </span><span class="lineNoCov">          0 :     if (ml-&gt;a.y &gt; m_y2)</span>
+<span class="lineNum">     902 </span><span class="lineNoCov">          0 :         outcode1 = TOP;</span>
+<span class="lineNum">     903 </span><span class="lineNoCov">          0 :     else if (ml-&gt;a.y &lt; m_y)</span>
+<span class="lineNum">     904 </span><span class="lineNoCov">          0 :         outcode1 = BOTTOM;</span>
+<span class="lineNum">     905 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     906 </span><span class="lineNoCov">          0 :     if (ml-&gt;b.y &gt; m_y2)</span>
+<span class="lineNum">     907 </span><span class="lineNoCov">          0 :         outcode2 = TOP;</span>
+<span class="lineNum">     908 </span><span class="lineNoCov">          0 :     else if (ml-&gt;b.y &lt; m_y)</span>
+<span class="lineNum">     909 </span><span class="lineNoCov">          0 :         outcode2 = BOTTOM;</span>
+<span class="lineNum">     910 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     911 </span><span class="lineNoCov">          0 :     if (outcode1 &amp; outcode2)</span>
+<span class="lineNum">     912 </span><span class="lineNoCov">          0 :         return false; // trivially outside</span>
+<span class="lineNum">     913 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     914 </span><span class="lineNoCov">          0 :     if (ml-&gt;a.x &lt; m_x)</span>
+<span class="lineNum">     915 </span><span class="lineNoCov">          0 :         outcode1 |= LEFT;</span>
+<span class="lineNum">     916 </span><span class="lineNoCov">          0 :     else if (ml-&gt;a.x &gt; m_x2)</span>
+<span class="lineNum">     917 </span><span class="lineNoCov">          0 :         outcode1 |= RIGHT;</span>
+<span class="lineNum">     918 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     919 </span><span class="lineNoCov">          0 :     if (ml-&gt;b.x &lt; m_x)</span>
+<span class="lineNum">     920 </span><span class="lineNoCov">          0 :         outcode2 |= LEFT;</span>
+<span class="lineNum">     921 </span><span class="lineNoCov">          0 :     else if (ml-&gt;b.x &gt; m_x2)</span>
+<span class="lineNum">     922 </span><span class="lineNoCov">          0 :         outcode2 |= RIGHT;</span>
+<span class="lineNum">     923 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     924 </span><span class="lineNoCov">          0 :     if (outcode1 &amp; outcode2)</span>
+<span class="lineNum">     925 </span><span class="lineNoCov">          0 :         return false; // trivially outside</span>
+<span class="lineNum">     926 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     927 </span><span class="lineNoCov">          0 :     // transform to frame-buffer coordinates.</span>
+<span class="lineNum">     928 </span><span class="lineNoCov">          0 :     fl-&gt;a.x = CXMTOF(ml-&gt;a.x);</span>
+<span class="lineNum">     929 </span><span class="lineNoCov">          0 :     fl-&gt;a.y = CYMTOF(ml-&gt;a.y);</span>
+<span class="lineNum">     930 </span><span class="lineNoCov">          0 :     fl-&gt;b.x = CXMTOF(ml-&gt;b.x);</span>
+<span class="lineNum">     931 </span><span class="lineNoCov">          0 :     fl-&gt;b.y = CYMTOF(ml-&gt;b.y);</span>
+<span class="lineNum">     932 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     933 </span><span class="lineNoCov">          0 :     DOOUTCODE(outcode1, fl-&gt;a.x, fl-&gt;a.y);</span>
+<span class="lineNum">     934 </span><span class="lineNoCov">          0 :     DOOUTCODE(outcode2, fl-&gt;b.x, fl-&gt;b.y);</span>
+<span class="lineNum">     935 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     936 </span><span class="lineNoCov">          0 :     if (outcode1 &amp; outcode2)</span>
+<span class="lineNum">     937 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     938 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     939 </span><span class="lineNoCov">          0 :     while (outcode1 | outcode2)</span>
+<span class="lineNum">     940 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     941 </span><span class="lineNoCov">          0 :         // may be partially inside box</span>
+<span class="lineNum">     942 </span><span class="lineNoCov">          0 :         // find an outside point</span>
+<span class="lineNum">     943 </span><span class="lineNoCov">          0 :         if (outcode1)</span>
+<span class="lineNum">     944 </span><span class="lineNoCov">          0 :             outside = outcode1;</span>
+<span class="lineNum">     945 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     946 </span><span class="lineNoCov">          0 :             outside = outcode2;</span>
+<span class="lineNum">     947 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     948 </span><span class="lineNoCov">          0 :         // clip to each side</span>
+<span class="lineNum">     949 </span><span class="lineNoCov">          0 :         if (outside &amp; TOP)</span>
+<span class="lineNum">     950 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     951 </span><span class="lineNoCov">          0 :             dy = fl-&gt;a.y - fl-&gt;b.y;</span>
+<span class="lineNum">     952 </span><span class="lineNoCov">          0 :             dx = fl-&gt;b.x - fl-&gt;a.x;</span>
+<span class="lineNum">     953 </span><span class="lineNoCov">          0 :             tmp.x = fl-&gt;a.x + (dx*(fl-&gt;a.y))/dy;</span>
+<span class="lineNum">     954 </span><span class="lineNoCov">          0 :             tmp.y = 0;</span>
+<span class="lineNum">     955 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     956 </span><span class="lineNoCov">          0 :         else if (outside &amp; BOTTOM)</span>
+<span class="lineNum">     957 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     958 </span><span class="lineNoCov">          0 :             dy = fl-&gt;a.y - fl-&gt;b.y;</span>
+<span class="lineNum">     959 </span><span class="lineNoCov">          0 :             dx = fl-&gt;b.x - fl-&gt;a.x;</span>
+<span class="lineNum">     960 </span><span class="lineNoCov">          0 :             tmp.x = fl-&gt;a.x + (dx*(fl-&gt;a.y-f_h))/dy;</span>
+<span class="lineNum">     961 </span><span class="lineNoCov">          0 :             tmp.y = f_h-1;</span>
+<span class="lineNum">     962 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     963 </span><span class="lineNoCov">          0 :         else if (outside &amp; RIGHT)</span>
+<span class="lineNum">     964 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     965 </span><span class="lineNoCov">          0 :             dy = fl-&gt;b.y - fl-&gt;a.y;</span>
+<span class="lineNum">     966 </span><span class="lineNoCov">          0 :             dx = fl-&gt;b.x - fl-&gt;a.x;</span>
+<span class="lineNum">     967 </span><span class="lineNoCov">          0 :             tmp.y = fl-&gt;a.y + (dy*(f_w-1 - fl-&gt;a.x))/dx;</span>
+<span class="lineNum">     968 </span><span class="lineNoCov">          0 :             tmp.x = f_w-1;</span>
+<span class="lineNum">     969 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     970 </span><span class="lineNoCov">          0 :         else if (outside &amp; LEFT)</span>
+<span class="lineNum">     971 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     972 </span><span class="lineNoCov">          0 :             dy = fl-&gt;b.y - fl-&gt;a.y;</span>
+<span class="lineNum">     973 </span><span class="lineNoCov">          0 :             dx = fl-&gt;b.x - fl-&gt;a.x;</span>
+<span class="lineNum">     974 </span><span class="lineNoCov">          0 :             tmp.y = fl-&gt;a.y + (dy*(-fl-&gt;a.x))/dx;</span>
+<span class="lineNum">     975 </span><span class="lineNoCov">          0 :             tmp.x = 0;</span>
+<span class="lineNum">     976 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     977 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     978 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     979 </span><span class="lineNoCov">          0 :             tmp.x = 0;</span>
+<span class="lineNum">     980 </span><span class="lineNoCov">          0 :             tmp.y = 0;</span>
+<span class="lineNum">     981 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     982 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     983 </span><span class="lineNoCov">          0 :         if (outside == outcode1)</span>
+<span class="lineNum">     984 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     985 </span><span class="lineNoCov">          0 :             fl-&gt;a = tmp;</span>
+<span class="lineNum">     986 </span><span class="lineNoCov">          0 :             DOOUTCODE(outcode1, fl-&gt;a.x, fl-&gt;a.y);</span>
+<span class="lineNum">     987 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     988 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     989 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     990 </span><span class="lineNoCov">          0 :             fl-&gt;b = tmp;</span>
+<span class="lineNum">     991 </span><span class="lineNoCov">          0 :             DOOUTCODE(outcode2, fl-&gt;b.x, fl-&gt;b.y);</span>
+<span class="lineNum">     992 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     993 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     994 </span><span class="lineNoCov">          0 :         if (outcode1 &amp; outcode2)</span>
+<span class="lineNum">     995 </span><span class="lineNoCov">          0 :             return false; // trivially outside</span>
+<span class="lineNum">     996 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     997 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     998 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     999 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1000 </span>            : #undef DOOUTCODE
+<span class="lineNum">    1001 </span>            : 
+<span class="lineNum">    1002 </span>            : 
+<span class="lineNum">    1003 </span>            : //
+<span class="lineNum">    1004 </span>            : // Classic Bresenham w/ whatever optimizations needed for speed
+<span class="lineNum">    1005 </span>            : //
+<span class="lineNum">    1006 </span>            : void
+<span class="lineNum">    1007 </span>            : AM_drawFline
+<a name="1008"><span class="lineNum">    1008 </span>            : ( fline_t*      fl,</a>
+<span class="lineNum">    1009 </span>            :   int           color )
+<span class="lineNum">    1010 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1011 </span><span class="lineNoCov">          0 :     register int x;</span>
+<span class="lineNum">    1012 </span><span class="lineNoCov">          0 :     register int y;</span>
+<span class="lineNum">    1013 </span><span class="lineNoCov">          0 :     register int dx;</span>
+<span class="lineNum">    1014 </span><span class="lineNoCov">          0 :     register int dy;</span>
+<span class="lineNum">    1015 </span><span class="lineNoCov">          0 :     register int sx;</span>
+<span class="lineNum">    1016 </span><span class="lineNoCov">          0 :     register int sy;</span>
+<span class="lineNum">    1017 </span><span class="lineNoCov">          0 :     register int ax;</span>
+<span class="lineNum">    1018 </span><span class="lineNoCov">          0 :     register int ay;</span>
+<span class="lineNum">    1019 </span><span class="lineNoCov">          0 :     register int d;</span>
+<span class="lineNum">    1020 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1021 </span><span class="lineNoCov">          0 :     static int fuck = 0;</span>
+<span class="lineNum">    1022 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1023 </span><span class="lineNoCov">          0 :     // For debugging only</span>
+<span class="lineNum">    1024 </span><span class="lineNoCov">          0 :     if (      fl-&gt;a.x &lt; 0 || fl-&gt;a.x &gt;= f_w</span>
+<span class="lineNum">    1025 </span><span class="lineNoCov">          0 :            || fl-&gt;a.y &lt; 0 || fl-&gt;a.y &gt;= f_h</span>
+<span class="lineNum">    1026 </span><span class="lineNoCov">          0 :            || fl-&gt;b.x &lt; 0 || fl-&gt;b.x &gt;= f_w</span>
+<span class="lineNum">    1027 </span><span class="lineNoCov">          0 :            || fl-&gt;b.y &lt; 0 || fl-&gt;b.y &gt;= f_h)</span>
+<span class="lineNum">    1028 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1029 </span><span class="lineNoCov">          0 :         DEH_fprintf(stderr, &quot;fuck %d \r&quot;, fuck++);</span>
+<span class="lineNum">    1030 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1031 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1032 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1033 </span><span class="lineNoCov">          0 : #define PUTDOT(xx,yy,cc) fb[(yy)*f_w+(xx)]=(cc)</span>
+<span class="lineNum">    1034 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1035 </span><span class="lineNoCov">          0 :     dx = fl-&gt;b.x - fl-&gt;a.x;</span>
+<span class="lineNum">    1036 </span><span class="lineNoCov">          0 :     ax = 2 * (dx&lt;0 ? -dx : dx);</span>
+<span class="lineNum">    1037 </span><span class="lineNoCov">          0 :     sx = dx&lt;0 ? -1 : 1;</span>
+<span class="lineNum">    1038 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1039 </span><span class="lineNoCov">          0 :     dy = fl-&gt;b.y - fl-&gt;a.y;</span>
+<span class="lineNum">    1040 </span><span class="lineNoCov">          0 :     ay = 2 * (dy&lt;0 ? -dy : dy);</span>
+<span class="lineNum">    1041 </span><span class="lineNoCov">          0 :     sy = dy&lt;0 ? -1 : 1;</span>
+<span class="lineNum">    1042 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1043 </span><span class="lineNoCov">          0 :     x = fl-&gt;a.x;</span>
+<span class="lineNum">    1044 </span><span class="lineNoCov">          0 :     y = fl-&gt;a.y;</span>
+<span class="lineNum">    1045 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1046 </span><span class="lineNoCov">          0 :     if (ax &gt; ay)</span>
+<span class="lineNum">    1047 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1048 </span><span class="lineNoCov">          0 :         d = ay - ax/2;</span>
+<span class="lineNum">    1049 </span><span class="lineNoCov">          0 :         while (1)</span>
+<span class="lineNum">    1050 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1051 </span><span class="lineNoCov">          0 :             PUTDOT(x,y,color);</span>
+<span class="lineNum">    1052 </span><span class="lineNoCov">          0 :             if (x == fl-&gt;b.x) return;</span>
+<span class="lineNum">    1053 </span><span class="lineNoCov">          0 :             if (d&gt;=0)</span>
+<span class="lineNum">    1054 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1055 </span><span class="lineNoCov">          0 :                 y += sy;</span>
+<span class="lineNum">    1056 </span><span class="lineNoCov">          0 :                 d -= ax;</span>
+<span class="lineNum">    1057 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1058 </span><span class="lineNoCov">          0 :             x += sx;</span>
+<span class="lineNum">    1059 </span><span class="lineNoCov">          0 :             d += ay;</span>
+<span class="lineNum">    1060 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1061 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1062 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">    1063 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1064 </span><span class="lineNoCov">          0 :         d = ax - ay/2;</span>
+<span class="lineNum">    1065 </span><span class="lineNoCov">          0 :         while (1)</span>
+<span class="lineNum">    1066 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1067 </span><span class="lineNoCov">          0 :             PUTDOT(x, y, color);</span>
+<span class="lineNum">    1068 </span><span class="lineNoCov">          0 :             if (y == fl-&gt;b.y) return;</span>
+<span class="lineNum">    1069 </span><span class="lineNoCov">          0 :             if (d &gt;= 0)</span>
+<span class="lineNum">    1070 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1071 </span><span class="lineNoCov">          0 :                 x += sx;</span>
+<span class="lineNum">    1072 </span><span class="lineNoCov">          0 :                 d -= ay;</span>
+<span class="lineNum">    1073 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1074 </span><span class="lineNoCov">          0 :             y += sy;</span>
+<span class="lineNum">    1075 </span><span class="lineNoCov">          0 :             d += ax;</span>
+<span class="lineNum">    1076 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1077 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1078 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1079 </span>            : 
+<span class="lineNum">    1080 </span>            : 
+<span class="lineNum">    1081 </span>            : //
+<span class="lineNum">    1082 </span>            : // Clip lines, draw visible part sof lines.
+<span class="lineNum">    1083 </span>            : //
+<span class="lineNum">    1084 </span>            : void
+<span class="lineNum">    1085 </span>            : AM_drawMline
+<a name="1086"><span class="lineNum">    1086 </span>            : ( mline_t*      ml,</a>
+<span class="lineNum">    1087 </span>            :   int           color )
+<span class="lineNum">    1088 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1089 </span><span class="lineNoCov">          0 :     static fline_t fl;</span>
+<span class="lineNum">    1090 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1091 </span><span class="lineNoCov">          0 :     if (AM_clipMline(ml, &amp;fl))</span>
+<span class="lineNum">    1092 </span><span class="lineNoCov">          0 :         AM_drawFline(&amp;fl, color); // draws it on frame buffer using fb coords</span>
+<span class="lineNum">    1093 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1094 </span>            : 
+<span class="lineNum">    1095 </span>            : 
+<span class="lineNum">    1096 </span>            : 
+<span class="lineNum">    1097 </span>            : //
+<span class="lineNum">    1098 </span>            : // Draws flat (floor/ceiling tile) aligned grid lines.
+<a name="1099"><span class="lineNum">    1099 </span>            : //</a>
+<span class="lineNum">    1100 </span>            : void AM_drawGrid(int color)
+<span class="lineNum">    1101 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1102 </span><span class="lineNoCov">          0 :     fixed_t x, y;</span>
+<span class="lineNum">    1103 </span><span class="lineNoCov">          0 :     fixed_t start, end;</span>
+<span class="lineNum">    1104 </span><span class="lineNoCov">          0 :     mline_t ml;</span>
+<span class="lineNum">    1105 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1106 </span><span class="lineNoCov">          0 :     // Figure out start of vertical gridlines</span>
+<span class="lineNum">    1107 </span><span class="lineNoCov">          0 :     start = m_x;</span>
+<span class="lineNum">    1108 </span><span class="lineNoCov">          0 :     if ((start-bmaporgx)%(MAPBLOCKUNITS&lt;&lt;FRACBITS))</span>
+<span class="lineNum">    1109 </span><span class="lineNoCov">          0 :         start += (MAPBLOCKUNITS&lt;&lt;FRACBITS)</span>
+<span class="lineNum">    1110 </span><span class="lineNoCov">          0 :             - ((start-bmaporgx)%(MAPBLOCKUNITS&lt;&lt;FRACBITS));</span>
+<span class="lineNum">    1111 </span><span class="lineNoCov">          0 :     end = m_x + m_w;</span>
+<span class="lineNum">    1112 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1113 </span><span class="lineNoCov">          0 :     // draw vertical gridlines</span>
+<span class="lineNum">    1114 </span><span class="lineNoCov">          0 :     ml.a.y = m_y;</span>
+<span class="lineNum">    1115 </span><span class="lineNoCov">          0 :     ml.b.y = m_y+m_h;</span>
+<span class="lineNum">    1116 </span><span class="lineNoCov">          0 :     for (x=start; x&lt;end; x+=(MAPBLOCKUNITS&lt;&lt;FRACBITS))</span>
+<span class="lineNum">    1117 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1118 </span><span class="lineNoCov">          0 :         ml.a.x = x;</span>
+<span class="lineNum">    1119 </span><span class="lineNoCov">          0 :         ml.b.x = x;</span>
+<span class="lineNum">    1120 </span><span class="lineNoCov">          0 :         AM_drawMline(&amp;ml, color);</span>
+<span class="lineNum">    1121 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1122 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1123 </span><span class="lineNoCov">          0 :     // Figure out start of horizontal gridlines</span>
+<span class="lineNum">    1124 </span><span class="lineNoCov">          0 :     start = m_y;</span>
+<span class="lineNum">    1125 </span><span class="lineNoCov">          0 :     if ((start-bmaporgy)%(MAPBLOCKUNITS&lt;&lt;FRACBITS))</span>
+<span class="lineNum">    1126 </span><span class="lineNoCov">          0 :         start += (MAPBLOCKUNITS&lt;&lt;FRACBITS)</span>
+<span class="lineNum">    1127 </span><span class="lineNoCov">          0 :             - ((start-bmaporgy)%(MAPBLOCKUNITS&lt;&lt;FRACBITS));</span>
+<span class="lineNum">    1128 </span><span class="lineNoCov">          0 :     end = m_y + m_h;</span>
+<span class="lineNum">    1129 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1130 </span><span class="lineNoCov">          0 :     // draw horizontal gridlines</span>
+<span class="lineNum">    1131 </span><span class="lineNoCov">          0 :     ml.a.x = m_x;</span>
+<span class="lineNum">    1132 </span><span class="lineNoCov">          0 :     ml.b.x = m_x + m_w;</span>
+<span class="lineNum">    1133 </span><span class="lineNoCov">          0 :     for (y=start; y&lt;end; y+=(MAPBLOCKUNITS&lt;&lt;FRACBITS))</span>
+<span class="lineNum">    1134 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1135 </span><span class="lineNoCov">          0 :         ml.a.y = y;</span>
+<span class="lineNum">    1136 </span><span class="lineNoCov">          0 :         ml.b.y = y;</span>
+<span class="lineNum">    1137 </span><span class="lineNoCov">          0 :         AM_drawMline(&amp;ml, color);</span>
+<span class="lineNum">    1138 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1139 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1140 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1141 </span>            : 
+<span class="lineNum">    1142 </span>            : //
+<span class="lineNum">    1143 </span>            : // Determines visible lines, draws them.
+<span class="lineNum">    1144 </span>            : // This is LineDef based, not LineSeg based.
+<a name="1145"><span class="lineNum">    1145 </span>            : //</a>
+<span class="lineNum">    1146 </span>            : void AM_drawWalls(void)
+<span class="lineNum">    1147 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1148 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">    1149 </span><span class="lineNoCov">          0 :     static mline_t l;</span>
+<span class="lineNum">    1150 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1151 </span><span class="lineNoCov">          0 :     for (i=0;i&lt;numlines;i++)</span>
+<span class="lineNum">    1152 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1153 </span><span class="lineNoCov">          0 :         l.a.x = lines[i].v1-&gt;x;</span>
+<span class="lineNum">    1154 </span><span class="lineNoCov">          0 :         l.a.y = lines[i].v1-&gt;y;</span>
+<span class="lineNum">    1155 </span><span class="lineNoCov">          0 :         l.b.x = lines[i].v2-&gt;x;</span>
+<span class="lineNum">    1156 </span><span class="lineNoCov">          0 :         l.b.y = lines[i].v2-&gt;y;</span>
+<span class="lineNum">    1157 </span><span class="lineNoCov">          0 :         if (cheating || (lines[i].flags &amp; ML_MAPPED))</span>
+<span class="lineNum">    1158 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1159 </span><span class="lineNoCov">          0 :             if ((lines[i].flags &amp; LINE_NEVERSEE) &amp;&amp; !cheating)</span>
+<span class="lineNum">    1160 </span><span class="lineNoCov">          0 :                 continue;</span>
+<span class="lineNum">    1161 </span><span class="lineNoCov">          0 :             if (!lines[i].backsector)</span>
+<span class="lineNum">    1162 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1163 </span><span class="lineNoCov">          0 :                 AM_drawMline(&amp;l, WALLCOLORS+lightlev);</span>
+<span class="lineNum">    1164 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1165 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">    1166 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1167 </span><span class="lineNoCov">          0 :                 if (lines[i].special == 39)</span>
+<span class="lineNum">    1168 </span><span class="lineNoCov">          0 :                 { // teleporters</span>
+<span class="lineNum">    1169 </span><span class="lineNoCov">          0 :                     AM_drawMline(&amp;l, WALLCOLORS+WALLRANGE/2);</span>
+<span class="lineNum">    1170 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">    1171 </span><span class="lineNoCov">          0 :                 else if (lines[i].flags &amp; ML_SECRET) // secret door</span>
+<span class="lineNum">    1172 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">    1173 </span><span class="lineNoCov">          0 :                     if (cheating) AM_drawMline(&amp;l, SECRETWALLCOLORS + lightlev);</span>
+<span class="lineNum">    1174 </span><span class="lineNoCov">          0 :                     else AM_drawMline(&amp;l, WALLCOLORS+lightlev);</span>
+<span class="lineNum">    1175 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">    1176 </span><span class="lineNoCov">          0 :                 else if (lines[i].backsector-&gt;floorheight</span>
+<span class="lineNum">    1177 </span><span class="lineNoCov">          0 :                            != lines[i].frontsector-&gt;floorheight) {</span>
+<span class="lineNum">    1178 </span><span class="lineNoCov">          0 :                     AM_drawMline(&amp;l, FDWALLCOLORS + lightlev); // floor level change</span>
+<span class="lineNum">    1179 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">    1180 </span><span class="lineNoCov">          0 :                 else if (lines[i].backsector-&gt;ceilingheight</span>
+<span class="lineNum">    1181 </span><span class="lineNoCov">          0 :                            != lines[i].frontsector-&gt;ceilingheight) {</span>
+<span class="lineNum">    1182 </span><span class="lineNoCov">          0 :                     AM_drawMline(&amp;l, CDWALLCOLORS+lightlev); // ceiling level change</span>
+<span class="lineNum">    1183 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">    1184 </span><span class="lineNoCov">          0 :                 else if (cheating) {</span>
+<span class="lineNum">    1185 </span><span class="lineNoCov">          0 :                     AM_drawMline(&amp;l, TSWALLCOLORS+lightlev);</span>
+<span class="lineNum">    1186 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">    1187 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1188 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1189 </span><span class="lineNoCov">          0 :         else if (plr-&gt;powers[pw_allmap])</span>
+<span class="lineNum">    1190 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1191 </span><span class="lineNoCov">          0 :             if (!(lines[i].flags &amp; LINE_NEVERSEE)) AM_drawMline(&amp;l, GRAYS+3);</span>
+<span class="lineNum">    1192 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1193 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1194 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1195 </span>            : 
+<span class="lineNum">    1196 </span>            : 
+<span class="lineNum">    1197 </span>            : //
+<span class="lineNum">    1198 </span>            : // Rotation in 2D.
+<span class="lineNum">    1199 </span>            : // Used to rotate player arrow line character.
+<span class="lineNum">    1200 </span>            : //
+<span class="lineNum">    1201 </span>            : void
+<span class="lineNum">    1202 </span>            : AM_rotate
+<span class="lineNum">    1203 </span>            : ( fixed_t*      x,
+<a name="1204"><span class="lineNum">    1204 </span>            :   fixed_t*      y,</a>
+<span class="lineNum">    1205 </span>            :   angle_t       a )
+<span class="lineNum">    1206 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1207 </span><span class="lineNoCov">          0 :     fixed_t tmpx;</span>
+<span class="lineNum">    1208 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1209 </span><span class="lineNoCov">          0 :     tmpx =</span>
+<span class="lineNum">    1210 </span><span class="lineNoCov">          0 :         FixedMul(*x,finecosine[a&gt;&gt;ANGLETOFINESHIFT])</span>
+<span class="lineNum">    1211 </span><span class="lineNoCov">          0 :         - FixedMul(*y,finesine[a&gt;&gt;ANGLETOFINESHIFT]);</span>
+<span class="lineNum">    1212 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1213 </span><span class="lineNoCov">          0 :     *y   =</span>
+<span class="lineNum">    1214 </span><span class="lineNoCov">          0 :         FixedMul(*x,finesine[a&gt;&gt;ANGLETOFINESHIFT])</span>
+<span class="lineNum">    1215 </span><span class="lineNoCov">          0 :         + FixedMul(*y,finecosine[a&gt;&gt;ANGLETOFINESHIFT]);</span>
+<span class="lineNum">    1216 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1217 </span><span class="lineNoCov">          0 :     *x = tmpx;</span>
+<span class="lineNum">    1218 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1219 </span>            : 
+<span class="lineNum">    1220 </span>            : void
+<span class="lineNum">    1221 </span>            : AM_drawLineCharacter
+<span class="lineNum">    1222 </span>            : ( mline_t*      lineguy,
+<span class="lineNum">    1223 </span>            :   int           lineguylines,
+<span class="lineNum">    1224 </span>            :   fixed_t       scale,
+<span class="lineNum">    1225 </span>            :   angle_t       angle,
+<span class="lineNum">    1226 </span>            :   int           color,
+<a name="1227"><span class="lineNum">    1227 </span>            :   fixed_t       x,</a>
+<span class="lineNum">    1228 </span>            :   fixed_t       y )
+<span class="lineNum">    1229 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1230 </span><span class="lineNoCov">          0 :     int         i;</span>
+<span class="lineNum">    1231 </span><span class="lineNoCov">          0 :     mline_t     l;</span>
+<span class="lineNum">    1232 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1233 </span><span class="lineNoCov">          0 :     for (i=0;i&lt;lineguylines;i++)</span>
+<span class="lineNum">    1234 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1235 </span><span class="lineNoCov">          0 :         l.a.x = lineguy[i].a.x;</span>
+<span class="lineNum">    1236 </span><span class="lineNoCov">          0 :         l.a.y = lineguy[i].a.y;</span>
+<span class="lineNum">    1237 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1238 </span><span class="lineNoCov">          0 :         if (scale)</span>
+<span class="lineNum">    1239 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1240 </span><span class="lineNoCov">          0 :             l.a.x = FixedMul(scale, l.a.x);</span>
+<span class="lineNum">    1241 </span><span class="lineNoCov">          0 :             l.a.y = FixedMul(scale, l.a.y);</span>
+<span class="lineNum">    1242 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1243 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1244 </span><span class="lineNoCov">          0 :         if (angle)</span>
+<span class="lineNum">    1245 </span><span class="lineNoCov">          0 :             AM_rotate(&amp;l.a.x, &amp;l.a.y, angle);</span>
+<span class="lineNum">    1246 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1247 </span><span class="lineNoCov">          0 :         l.a.x += x;</span>
+<span class="lineNum">    1248 </span><span class="lineNoCov">          0 :         l.a.y += y;</span>
+<span class="lineNum">    1249 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1250 </span><span class="lineNoCov">          0 :         l.b.x = lineguy[i].b.x;</span>
+<span class="lineNum">    1251 </span><span class="lineNoCov">          0 :         l.b.y = lineguy[i].b.y;</span>
+<span class="lineNum">    1252 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1253 </span><span class="lineNoCov">          0 :         if (scale)</span>
+<span class="lineNum">    1254 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1255 </span><span class="lineNoCov">          0 :             l.b.x = FixedMul(scale, l.b.x);</span>
+<span class="lineNum">    1256 </span><span class="lineNoCov">          0 :             l.b.y = FixedMul(scale, l.b.y);</span>
+<span class="lineNum">    1257 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1258 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1259 </span><span class="lineNoCov">          0 :         if (angle)</span>
+<span class="lineNum">    1260 </span><span class="lineNoCov">          0 :             AM_rotate(&amp;l.b.x, &amp;l.b.y, angle);</span>
+<span class="lineNum">    1261 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1262 </span><span class="lineNoCov">          0 :         l.b.x += x;</span>
+<span class="lineNum">    1263 </span><span class="lineNoCov">          0 :         l.b.y += y;</span>
+<span class="lineNum">    1264 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1265 </span><span class="lineNoCov">          0 :         AM_drawMline(&amp;l, color);</span>
+<span class="lineNum">    1266 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1267 </span><span class="lineNoCov">          0 : }</span>
+<a name="1268"><span class="lineNum">    1268 </span>            : </a>
+<span class="lineNum">    1269 </span>            : void AM_drawPlayers(void)
+<span class="lineNum">    1270 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1271 </span><span class="lineNoCov">          0 :     int         i;</span>
+<span class="lineNum">    1272 </span><span class="lineNoCov">          0 :     player_t*   p;</span>
+<span class="lineNum">    1273 </span><span class="lineNoCov">          0 :     static int  their_colors[] = { GREENS, GRAYS, BROWNS, REDS };</span>
+<span class="lineNum">    1274 </span><span class="lineNoCov">          0 :     int         their_color = -1;</span>
+<span class="lineNum">    1275 </span><span class="lineNoCov">          0 :     int         color;</span>
+<span class="lineNum">    1276 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1277 </span><span class="lineNoCov">          0 :     if (!netgame)</span>
+<span class="lineNum">    1278 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1279 </span><span class="lineNoCov">          0 :         if (cheating)</span>
+<span class="lineNum">    1280 </span><span class="lineNoCov">          0 :             AM_drawLineCharacter</span>
+<span class="lineNum">    1281 </span><span class="lineNoCov">          0 :                 (cheat_player_arrow, arrlen(cheat_player_arrow), 0,</span>
+<span class="lineNum">    1282 </span><span class="lineNoCov">          0 :                  plr-&gt;mo-&gt;angle, WHITE, plr-&gt;mo-&gt;x, plr-&gt;mo-&gt;y);</span>
+<span class="lineNum">    1283 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">    1284 </span><span class="lineNoCov">          0 :             AM_drawLineCharacter</span>
+<span class="lineNum">    1285 </span><span class="lineNoCov">          0 :                 (player_arrow, arrlen(player_arrow), 0, plr-&gt;mo-&gt;angle,</span>
+<span class="lineNum">    1286 </span><span class="lineNoCov">          0 :                  WHITE, plr-&gt;mo-&gt;x, plr-&gt;mo-&gt;y);</span>
+<span class="lineNum">    1287 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1288 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1289 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1290 </span><span class="lineNoCov">          0 :     for (i=0;i&lt;MAXPLAYERS;i++)</span>
+<span class="lineNum">    1291 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1292 </span><span class="lineNoCov">          0 :         their_color++;</span>
+<span class="lineNum">    1293 </span><span class="lineNoCov">          0 :         p = &amp;players[i];</span>
+<span class="lineNum">    1294 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1295 </span><span class="lineNoCov">          0 :         if ( (deathmatch &amp;&amp; !singledemo) &amp;&amp; p != plr)</span>
+<span class="lineNum">    1296 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1297 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1298 </span><span class="lineNoCov">          0 :         if (!playeringame[i])</span>
+<span class="lineNum">    1299 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1300 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1301 </span><span class="lineNoCov">          0 :         if (p-&gt;powers[pw_invisibility])</span>
+<span class="lineNum">    1302 </span><span class="lineNoCov">          0 :             color = 246; // *close* to black</span>
+<span class="lineNum">    1303 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">    1304 </span><span class="lineNoCov">          0 :             color = their_colors[their_color];</span>
+<span class="lineNum">    1305 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1306 </span><span class="lineNoCov">          0 :         AM_drawLineCharacter</span>
+<span class="lineNum">    1307 </span><span class="lineNoCov">          0 :             (player_arrow, arrlen(player_arrow), 0, p-&gt;mo-&gt;angle,</span>
+<span class="lineNum">    1308 </span><span class="lineNoCov">          0 :              color, p-&gt;mo-&gt;x, p-&gt;mo-&gt;y);</span>
+<span class="lineNum">    1309 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1310 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1311 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1312 </span>            : 
+<span class="lineNum">    1313 </span>            : void
+<span class="lineNum">    1314 </span>            : AM_drawThings
+<a name="1315"><span class="lineNum">    1315 </span>            : ( int   colors,</a>
+<span class="lineNum">    1316 </span>            :   int   colorrange)
+<span class="lineNum">    1317 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1318 </span><span class="lineNoCov">          0 :     int         i;</span>
+<span class="lineNum">    1319 </span><span class="lineNoCov">          0 :     mobj_t*     t;</span>
+<span class="lineNum">    1320 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1321 </span><span class="lineNoCov">          0 :     for (i=0;i&lt;numsectors;i++)</span>
+<span class="lineNum">    1322 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1323 </span><span class="lineNoCov">          0 :         t = sectors[i].thinglist;</span>
+<span class="lineNum">    1324 </span><span class="lineNoCov">          0 :         while (t)</span>
+<span class="lineNum">    1325 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1326 </span><span class="lineNoCov">          0 :             AM_drawLineCharacter</span>
+<span class="lineNum">    1327 </span><span class="lineNoCov">          0 :                 (thintriangle_guy, arrlen(thintriangle_guy),</span>
+<span class="lineNum">    1328 </span><span class="lineNoCov">          0 :                  16&lt;&lt;FRACBITS, t-&gt;angle, colors+lightlev, t-&gt;x, t-&gt;y);</span>
+<span class="lineNum">    1329 </span><span class="lineNoCov">          0 :             t = t-&gt;snext;</span>
+<span class="lineNum">    1330 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1331 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1332 </span><span class="lineNoCov">          0 : }</span>
+<a name="1333"><span class="lineNum">    1333 </span>            : </a>
+<span class="lineNum">    1334 </span>            : void AM_drawMarks(void)
+<span class="lineNum">    1335 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1336 </span><span class="lineNoCov">          0 :     int i, fx, fy, w, h;</span>
+<span class="lineNum">    1337 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1338 </span><span class="lineNoCov">          0 :     for (i=0;i&lt;AM_NUMMARKPOINTS;i++)</span>
+<span class="lineNum">    1339 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1340 </span><span class="lineNoCov">          0 :         if (markpoints[i].x != -1)</span>
+<span class="lineNum">    1341 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1342 </span><span class="lineNoCov">          0 :             //      w = SHORT(marknums[i]-&gt;width);</span>
+<span class="lineNum">    1343 </span><span class="lineNoCov">          0 :             //      h = SHORT(marknums[i]-&gt;height);</span>
+<span class="lineNum">    1344 </span><span class="lineNoCov">          0 :             w = 5; // because something's wrong with the wad, i guess</span>
+<span class="lineNum">    1345 </span><span class="lineNoCov">          0 :             h = 6; // because something's wrong with the wad, i guess</span>
+<span class="lineNum">    1346 </span><span class="lineNoCov">          0 :             fx = CXMTOF(markpoints[i].x);</span>
+<span class="lineNum">    1347 </span><span class="lineNoCov">          0 :             fy = CYMTOF(markpoints[i].y);</span>
+<span class="lineNum">    1348 </span><span class="lineNoCov">          0 :             if (fx &gt;= f_x &amp;&amp; fx &lt;= f_w - w &amp;&amp; fy &gt;= f_y &amp;&amp; fy &lt;= f_h - h)</span>
+<span class="lineNum">    1349 </span><span class="lineNoCov">          0 :                 V_DrawPatch(fx, fy, marknums[i]);</span>
+<span class="lineNum">    1350 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1351 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1352 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1353 </span><span class="lineNoCov">          0 : }</span>
+<a name="1354"><span class="lineNum">    1354 </span>            : </a>
+<span class="lineNum">    1355 </span>            : void AM_drawCrosshair(int color)
+<span class="lineNum">    1356 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1357 </span><span class="lineNoCov">          0 :     fb[(f_w*(f_h+1))/2] = color; // single point for now</span>
+<span class="lineNum">    1358 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1359 </span><span class="lineNoCov">          0 : }</span>
+<a name="1360"><span class="lineNum">    1360 </span>            : </a>
+<span class="lineNum">    1361 </span>            : void AM_Drawer (void)
+<span class="lineNum">    1362 </span><span class="lineCov">       1855 : {</span>
+<span class="lineNum">    1363 </span><span class="lineCov">       1855 :     if (!automapactive) return;</span>
+<span class="lineNum">    1364 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1365 </span><span class="lineNoCov">          0 :     AM_clearFB(BACKGROUND);</span>
+<span class="lineNum">    1366 </span><span class="lineNoCov">          0 :     if (grid)</span>
+<span class="lineNum">    1367 </span><span class="lineNoCov">          0 :         AM_drawGrid(GRIDCOLORS);</span>
+<span class="lineNum">    1368 </span><span class="lineNoCov">          0 :     AM_drawWalls();</span>
+<span class="lineNum">    1369 </span><span class="lineNoCov">          0 :     AM_drawPlayers();</span>
+<span class="lineNum">    1370 </span><span class="lineNoCov">          0 :     if (cheating==2)</span>
+<span class="lineNum">    1371 </span><span class="lineNoCov">          0 :         AM_drawThings(THINGCOLORS, THINGRANGE);</span>
+<span class="lineNum">    1372 </span><span class="lineNoCov">          0 :     AM_drawCrosshair(XHAIRCOLORS);</span>
+<span class="lineNum">    1373 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1374 </span><span class="lineNoCov">          0 :     AM_drawMarks();</span>
+<span class="lineNum">    1375 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1376 </span><span class="lineNoCov">          0 :     V_MarkRect(f_x, f_y, f_w, f_h);</span>
+<span class="lineNum">    1377 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1378 </span><span class="lineNoCov">          0 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

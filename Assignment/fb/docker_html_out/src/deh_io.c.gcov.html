@@ -1,0 +1,413 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/deh_io.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - deh_io.c<span style="font-size: 80%;"> (source / <a href="deh_io.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">199</td>
+            <td class="headerCovTableEntry">236</td>
+            <td class="headerCovTableEntryMed">84.3 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryMed">83.3 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // Dehacked I/O code (does all reads from dehacked files)
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #include &lt;stdarg.h&gt;
+<span class="lineNum">      19 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      20 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      22 </span>            : #include &lt;ctype.h&gt;
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #include &quot;m_misc.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;w_wad.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;z_zone.h&quot;
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span>            : #include &quot;deh_defs.h&quot;
+<span class="lineNum">      29 </span>            : #include &quot;deh_io.h&quot;
+<span class="lineNum">      30 </span>            : 
+<span class="lineNum">      31 </span>            : typedef enum
+<span class="lineNum">      32 </span>            : {
+<span class="lineNum">      33 </span>            :     DEH_INPUT_FILE,
+<span class="lineNum">      34 </span>            :     DEH_INPUT_LUMP
+<span class="lineNum">      35 </span>            : } deh_input_type_t;
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span>            : struct deh_context_s
+<span class="lineNum">      38 </span>            : {
+<span class="lineNum">      39 </span>            :     deh_input_type_t type;
+<span class="lineNum">      40 </span>            :     char *filename;
+<span class="lineNum">      41 </span>            : 
+<span class="lineNum">      42 </span>            :     // If the input comes from a memory buffer, pointer to the memory
+<span class="lineNum">      43 </span>            :     // buffer.
+<span class="lineNum">      44 </span>            :     unsigned char *input_buffer;
+<span class="lineNum">      45 </span>            :     size_t input_buffer_len;
+<span class="lineNum">      46 </span>            :     unsigned int input_buffer_pos;
+<span class="lineNum">      47 </span>            :     int lumpnum;
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            :     // If the input comes from a file, the file stream for reading
+<span class="lineNum">      50 </span>            :     // data.
+<span class="lineNum">      51 </span>            :     FILE *stream;
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span>            :     // Current line number that we have reached:
+<span class="lineNum">      54 </span>            :     int linenum;
+<span class="lineNum">      55 </span>            : 
+<span class="lineNum">      56 </span>            :     // Used by DEH_ReadLine:
+<span class="lineNum">      57 </span>            :     boolean last_was_newline;
+<span class="lineNum">      58 </span>            :     char *readbuffer;
+<span class="lineNum">      59 </span>            :     int readbuffer_size;
+<span class="lineNum">      60 </span>            : 
+<span class="lineNum">      61 </span>            :     // Error handling.
+<span class="lineNum">      62 </span>            :     boolean had_error;
+<span class="lineNum">      63 </span>            : };
+<a name="64"><span class="lineNum">      64 </span>            : </a>
+<span class="lineNum">      65 </span>            : static deh_context_t *DEH_NewContext(void)
+<span class="lineNum">      66 </span><span class="lineCov">      16703 : {</span>
+<span class="lineNum">      67 </span><span class="lineCov">      16703 :     deh_context_t *context;</span>
+<span class="lineNum">      68 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">      69 </span><span class="lineCov">      16703 :     context = Z_Malloc(sizeof(*context), PU_STATIC, NULL);</span>
+<span class="lineNum">      70 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">      71 </span><span class="lineCov">      16703 :     // Initial read buffer size of 128 bytes</span>
+<span class="lineNum">      72 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">      73 </span><span class="lineCov">      16703 :     context-&gt;readbuffer_size = 128;</span>
+<span class="lineNum">      74 </span><span class="lineCov">      16703 :     context-&gt;readbuffer = Z_Malloc(context-&gt;readbuffer_size, PU_STATIC, NULL);</span>
+<span class="lineNum">      75 </span><span class="lineCov">      16703 :     context-&gt;linenum = 0;</span>
+<span class="lineNum">      76 </span><span class="lineCov">      16703 :     context-&gt;last_was_newline = true;</span>
+<span class="lineNum">      77 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">      78 </span><span class="lineCov">      16703 :     context-&gt;had_error = false;</span>
+<span class="lineNum">      79 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">      80 </span><span class="lineCov">      16703 :     return context;</span>
+<span class="lineNum">      81 </span><span class="lineCov">      16703 : }</span>
+<span class="lineNum">      82 </span>            : 
+<span class="lineNum">      83 </span>            : // Open a dehacked file for reading
+<span class="lineNum">      84 </span>            : // Returns NULL if open failed
+<a name="85"><span class="lineNum">      85 </span>            : </a>
+<span class="lineNum">      86 </span>            : deh_context_t *DEH_OpenFile(const char *filename)
+<span class="lineNum">      87 </span><span class="lineCov">       1855 : {</span>
+<span class="lineNum">      88 </span><span class="lineCov">       1855 :     FILE *fstream;</span>
+<span class="lineNum">      89 </span><span class="lineCov">       1855 :     deh_context_t *context;</span>
+<span class="lineNum">      90 </span><span class="lineCov">       1855 : </span>
+<span class="lineNum">      91 </span><span class="lineCov">       1855 :     fstream = fopen(filename, &quot;r&quot;);</span>
+<span class="lineNum">      92 </span><span class="lineCov">       1855 : </span>
+<span class="lineNum">      93 </span><span class="lineCov">       1855 :     if (fstream == NULL)</span>
+<span class="lineNum">      94 </span><span class="lineCov">       1855 :         return NULL;</span>
+<span class="lineNum">      95 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 :     context = DEH_NewContext();</span>
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 :     context-&gt;type = DEH_INPUT_FILE;</span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 :     context-&gt;stream = fstream;</span>
+<span class="lineNum">     100 </span><span class="lineNoCov">          0 :     context-&gt;filename = M_StringDuplicate(filename);</span>
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 :     return context;</span>
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     104 </span>            : 
+<span class="lineNum">     105 </span>            : // Open a WAD lump for reading.
+<a name="106"><span class="lineNum">     106 </span>            : </a>
+<span class="lineNum">     107 </span>            : deh_context_t *DEH_OpenLump(int lumpnum)
+<span class="lineNum">     108 </span><span class="lineCov">      16703 : {</span>
+<span class="lineNum">     109 </span><span class="lineCov">      16703 :     deh_context_t *context;</span>
+<span class="lineNum">     110 </span><span class="lineCov">      16703 :     void *lump;</span>
+<span class="lineNum">     111 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">     112 </span><span class="lineCov">      16703 :     lump = W_CacheLumpNum(lumpnum, PU_STATIC);</span>
+<span class="lineNum">     113 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">     114 </span><span class="lineCov">      16703 :     context = DEH_NewContext();</span>
+<span class="lineNum">     115 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">     116 </span><span class="lineCov">      16703 :     context-&gt;type = DEH_INPUT_LUMP;</span>
+<span class="lineNum">     117 </span><span class="lineCov">      16703 :     context-&gt;lumpnum = lumpnum;</span>
+<span class="lineNum">     118 </span><span class="lineCov">      16703 :     context-&gt;input_buffer = lump;</span>
+<span class="lineNum">     119 </span><span class="lineCov">      16703 :     context-&gt;input_buffer_len = W_LumpLength(lumpnum);</span>
+<span class="lineNum">     120 </span><span class="lineCov">      16703 :     context-&gt;input_buffer_pos = 0;</span>
+<span class="lineNum">     121 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">     122 </span><span class="lineCov">      16703 :     context-&gt;filename = malloc(9);</span>
+<span class="lineNum">     123 </span><span class="lineCov">      16703 :     M_StringCopy(context-&gt;filename, lumpinfo[lumpnum]-&gt;name, 9);</span>
+<span class="lineNum">     124 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">     125 </span><span class="lineCov">      16703 :     return context;</span>
+<span class="lineNum">     126 </span><span class="lineCov">      16703 : }</span>
+<span class="lineNum">     127 </span>            : 
+<span class="lineNum">     128 </span>            : // Close dehacked file
+<a name="129"><span class="lineNum">     129 </span>            : </a>
+<span class="lineNum">     130 </span>            : void DEH_CloseFile(deh_context_t *context)
+<span class="lineNum">     131 </span><span class="lineCov">      16703 : {</span>
+<span class="lineNum">     132 </span><span class="lineCov">      16703 :     if (context-&gt;type == DEH_INPUT_FILE)</span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 :         fclose(context-&gt;stream);</span>
+<span class="lineNum">     135 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     136 </span><span class="lineCov">      16703 :     else if (context-&gt;type == DEH_INPUT_LUMP)</span>
+<span class="lineNum">     137 </span><span class="lineCov">      16703 :     {</span>
+<span class="lineNum">     138 </span><span class="lineCov">      16703 :         W_ReleaseLumpNum(context-&gt;lumpnum);</span>
+<span class="lineNum">     139 </span><span class="lineCov">      16703 :     }</span>
+<span class="lineNum">     140 </span><span class="lineCov">      16703 : </span>
+<span class="lineNum">     141 </span><span class="lineCov">      16703 :     free(context-&gt;filename);</span>
+<span class="lineNum">     142 </span><span class="lineCov">      16703 :     Z_Free(context-&gt;readbuffer);</span>
+<span class="lineNum">     143 </span><span class="lineCov">      16703 :     Z_Free(context);</span>
+<span class="lineNum">     144 </span><span class="lineCov">      16703 : }</span>
+<a name="145"><span class="lineNum">     145 </span>            : </a>
+<span class="lineNum">     146 </span>            : int DEH_GetCharFile(deh_context_t *context)
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 :     if (feof(context-&gt;stream))</span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 :         // end of file</span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :         return -1;</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 :     return fgetc(context-&gt;stream);</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 : }</span>
+<a name="157"><span class="lineNum">     157 </span>            : </a>
+<span class="lineNum">     158 </span>            : int DEH_GetCharLump(deh_context_t *context)
+<span class="lineNum">     159 </span><span class="lineCov">  328471558 : {</span>
+<span class="lineNum">     160 </span><span class="lineCov">  328471558 :     int result;</span>
+<span class="lineNum">     161 </span><span class="lineCov">  328471558 : </span>
+<span class="lineNum">     162 </span><span class="lineCov">  328471558 :     if (context-&gt;input_buffer_pos &gt;= context-&gt;input_buffer_len)</span>
+<span class="lineNum">     163 </span><span class="lineCov">      16618 :     {</span>
+<span class="lineNum">     164 </span><span class="lineCov">      16618 :         return -1;</span>
+<span class="lineNum">     165 </span><span class="lineCov">      16618 :     }</span>
+<span class="lineNum">     166 </span><span class="lineCov">  328454940 : </span>
+<span class="lineNum">     167 </span><span class="lineCov">  328454940 :     result = context-&gt;input_buffer[context-&gt;input_buffer_pos];</span>
+<span class="lineNum">     168 </span><span class="lineCov">  328454940 :     ++context-&gt;input_buffer_pos;</span>
+<span class="lineNum">     169 </span><span class="lineCov">  328454940 : </span>
+<span class="lineNum">     170 </span><span class="lineCov">  328454940 :     return result;</span>
+<span class="lineNum">     171 </span><span class="lineCov">  328454940 : }</span>
+<span class="lineNum">     172 </span>            : 
+<span class="lineNum">     173 </span>            : // Reads a single character from a dehacked file
+<a name="174"><span class="lineNum">     174 </span>            : </a>
+<span class="lineNum">     175 </span>            : int DEH_GetChar(deh_context_t *context)
+<span class="lineNum">     176 </span><span class="lineCov">  328471473 : {</span>
+<span class="lineNum">     177 </span><span class="lineCov">  328471473 :     int result = 0;</span>
+<span class="lineNum">     178 </span><span class="lineCov">  328471473 : </span>
+<span class="lineNum">     179 </span><span class="lineCov">  328471473 :     // Read characters, but ignore carriage returns</span>
+<span class="lineNum">     180 </span><span class="lineCov">  328471473 :     // Essentially this is a DOS-&gt;Unix conversion</span>
+<span class="lineNum">     181 </span><span class="lineCov">  328471473 : </span>
+<span class="lineNum">     182 </span><span class="lineCov">  328471473 :     do</span>
+<span class="lineNum">     183 </span><span class="lineCov">  328471558 :     {</span>
+<span class="lineNum">     184 </span><span class="lineCov">  328471558 :         switch (context-&gt;type)</span>
+<span class="lineNum">     185 </span><span class="lineCov">  328471558 :         {</span>
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :             case DEH_INPUT_FILE:</span>
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :                 result = DEH_GetCharFile(context);</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     190 </span><span class="lineCov">  328471558 :             case DEH_INPUT_LUMP:</span>
+<span class="lineNum">     191 </span><span class="lineCov">  328471558 :                 result = DEH_GetCharLump(context);</span>
+<span class="lineNum">     192 </span><span class="lineCov">  328471558 :                 break;</span>
+<span class="lineNum">     193 </span><span class="lineCov">  328471558 :         }</span>
+<span class="lineNum">     194 </span><span class="lineCov">  328471558 :     } while (result == '\r');</span>
+<span class="lineNum">     195 </span><span class="lineCov">  328471473 : </span>
+<span class="lineNum">     196 </span><span class="lineCov">  328471473 :     // Track the current line number</span>
+<span class="lineNum">     197 </span><span class="lineCov">  328471473 : </span>
+<span class="lineNum">     198 </span><span class="lineCov">  328471473 :     if (context-&gt;last_was_newline)</span>
+<span class="lineNum">     199 </span><span class="lineCov">    8807625 :     {</span>
+<span class="lineNum">     200 </span><span class="lineCov">    8807625 :         ++context-&gt;linenum;</span>
+<span class="lineNum">     201 </span><span class="lineCov">    8807625 :     }</span>
+<span class="lineNum">     202 </span><span class="lineCov">  328471473 : </span>
+<span class="lineNum">     203 </span><span class="lineCov">  328471473 :     context-&gt;last_was_newline = result == '\n';</span>
+<span class="lineNum">     204 </span><span class="lineCov">  328471473 : </span>
+<span class="lineNum">     205 </span><span class="lineCov">  328471473 :     return result;</span>
+<span class="lineNum">     206 </span><span class="lineCov">  328471473 : }</span>
+<span class="lineNum">     207 </span>            : 
+<span class="lineNum">     208 </span>            : // Increase the read buffer size
+<a name="209"><span class="lineNum">     209 </span>            : </a>
+<span class="lineNum">     210 </span>            : static void IncreaseReadBuffer(deh_context_t *context)
+<span class="lineNum">     211 </span><span class="lineCov">      49854 : {</span>
+<span class="lineNum">     212 </span><span class="lineCov">      49854 :     char *newbuffer;</span>
+<span class="lineNum">     213 </span><span class="lineCov">      49854 :     int newbuffer_size;</span>
+<span class="lineNum">     214 </span><span class="lineCov">      49854 : </span>
+<span class="lineNum">     215 </span><span class="lineCov">      49854 :     newbuffer_size = context-&gt;readbuffer_size * 2;</span>
+<span class="lineNum">     216 </span><span class="lineCov">      49854 :     newbuffer = Z_Malloc(newbuffer_size, PU_STATIC, NULL);</span>
+<span class="lineNum">     217 </span><span class="lineCov">      49854 : </span>
+<span class="lineNum">     218 </span><span class="lineCov">      49854 :     memcpy(newbuffer, context-&gt;readbuffer, context-&gt;readbuffer_size);</span>
+<span class="lineNum">     219 </span><span class="lineCov">      49854 : </span>
+<span class="lineNum">     220 </span><span class="lineCov">      49854 :     Z_Free(context-&gt;readbuffer);</span>
+<span class="lineNum">     221 </span><span class="lineCov">      49854 : </span>
+<span class="lineNum">     222 </span><span class="lineCov">      49854 :     context-&gt;readbuffer = newbuffer;</span>
+<span class="lineNum">     223 </span><span class="lineCov">      49854 :     context-&gt;readbuffer_size = newbuffer_size;</span>
+<span class="lineNum">     224 </span><span class="lineCov">      49854 : }</span>
+<span class="lineNum">     225 </span>            : 
+<span class="lineNum">     226 </span>            : // Read a whole line
+<a name="227"><span class="lineNum">     227 </span>            : </a>
+<span class="lineNum">     228 </span>            : char *DEH_ReadLine(deh_context_t *context, boolean extended)
+<span class="lineNum">     229 </span><span class="lineCov">    6879937 : {</span>
+<span class="lineNum">     230 </span><span class="lineCov">    6879937 :     int c;</span>
+<span class="lineNum">     231 </span><span class="lineCov">    6879937 :     int pos;</span>
+<span class="lineNum">     232 </span><span class="lineCov">    6879937 :     boolean escaped = false;</span>
+<span class="lineNum">     233 </span><span class="lineCov">    6879937 : </span>
+<span class="lineNum">     234 </span><span class="lineCov">    6879937 :     for (pos = 0;;)</span>
+<span class="lineNum">     235 </span><span class="lineCov">  324001231 :     {</span>
+<span class="lineNum">     236 </span><span class="lineCov">  324001231 :         c = DEH_GetChar(context);</span>
+<span class="lineNum">     237 </span><span class="lineCov">  324001231 : </span>
+<span class="lineNum">     238 </span><span class="lineCov">  324001231 :         if (c &lt; 0 &amp;&amp; pos == 0)</span>
+<span class="lineNum">     239 </span><span class="lineCov">      16618 :         {</span>
+<span class="lineNum">     240 </span><span class="lineCov">      16618 :             // end of file</span>
+<span class="lineNum">     241 </span><span class="lineCov">      16618 : </span>
+<span class="lineNum">     242 </span><span class="lineCov">      16618 :             return NULL;</span>
+<span class="lineNum">     243 </span><span class="lineCov">      16618 :         }</span>
+<span class="lineNum">     244 </span><span class="lineCov">  323984613 : </span>
+<span class="lineNum">     245 </span><span class="lineCov">  323984613 :         // cope with lines of any length: increase the buffer size</span>
+<span class="lineNum">     246 </span><span class="lineCov">  323984613 : </span>
+<span class="lineNum">     247 </span><span class="lineCov">  323984613 :         if (pos &gt;= context-&gt;readbuffer_size)</span>
+<span class="lineNum">     248 </span><span class="lineCov">      49854 :         {</span>
+<span class="lineNum">     249 </span><span class="lineCov">      49854 :             IncreaseReadBuffer(context);</span>
+<span class="lineNum">     250 </span><span class="lineCov">      49854 :         }</span>
+<span class="lineNum">     251 </span><span class="lineCov">  323984613 : </span>
+<span class="lineNum">     252 </span><span class="lineCov">  323984613 :         // extended string support</span>
+<span class="lineNum">     253 </span><span class="lineCov">  323984613 :         if (extended &amp;&amp; c == '\\')</span>
+<span class="lineNum">     254 </span><span class="lineCov">    4470242 :         {</span>
+<span class="lineNum">     255 </span><span class="lineCov">    4470242 :             c = DEH_GetChar(context);</span>
+<span class="lineNum">     256 </span><span class="lineCov">    4470242 : </span>
+<span class="lineNum">     257 </span><span class="lineCov">    4470242 :             // &quot;\n&quot; in the middle of a string indicates an internal linefeed</span>
+<span class="lineNum">     258 </span><span class="lineCov">    4470242 :             if (c == 'n')</span>
+<span class="lineNum">     259 </span><span class="lineCov">    2542554 :             {</span>
+<span class="lineNum">     260 </span><span class="lineCov">    2542554 :                 context-&gt;readbuffer[pos] = '\n';</span>
+<span class="lineNum">     261 </span><span class="lineCov">    2542554 :                 ++pos;</span>
+<span class="lineNum">     262 </span><span class="lineCov">    2542554 :                 continue;</span>
+<span class="lineNum">     263 </span><span class="lineCov">    2542554 :             }</span>
+<span class="lineNum">     264 </span><span class="lineCov">    1927688 : </span>
+<span class="lineNum">     265 </span><span class="lineCov">    1927688 :             // values to be assigned may be split onto multiple lines by ending</span>
+<span class="lineNum">     266 </span><span class="lineCov">    1927688 :             // each line that is to be continued with a backslash</span>
+<span class="lineNum">     267 </span><span class="lineCov">    1927688 :             if (c == '\n')</span>
+<span class="lineNum">     268 </span><span class="lineCov">    1927688 :             {</span>
+<span class="lineNum">     269 </span><span class="lineCov">    1927688 :                 escaped = true;</span>
+<span class="lineNum">     270 </span><span class="lineCov">    1927688 :                 continue;</span>
+<span class="lineNum">     271 </span><span class="lineCov">    1927688 :             }</span>
+<span class="lineNum">     272 </span><span class="lineCov">  319514371 :         }</span>
+<span class="lineNum">     273 </span><span class="lineCov">  319514371 : </span>
+<span class="lineNum">     274 </span><span class="lineCov">  319514371 :         // blanks before the backslash are included in the string</span>
+<span class="lineNum">     275 </span><span class="lineCov">  319514371 :         // but indentation after the linefeed is not</span>
+<span class="lineNum">     276 </span><span class="lineCov">  319514371 :         if (escaped &amp;&amp; c &gt;= 0 &amp;&amp; isspace(c) &amp;&amp; c != '\n')</span>
+<span class="lineNum">     277 </span><span class="lineCov">   17448900 :         {</span>
+<span class="lineNum">     278 </span><span class="lineCov">   17448900 :             continue;</span>
+<span class="lineNum">     279 </span><span class="lineCov">   17448900 :         }</span>
+<span class="lineNum">     280 </span><span class="lineCov">  302065471 :         else</span>
+<span class="lineNum">     281 </span><span class="lineCov">  302065471 :         {</span>
+<span class="lineNum">     282 </span><span class="lineCov">  302065471 :             escaped = false;</span>
+<span class="lineNum">     283 </span><span class="lineCov">  302065471 :         }</span>
+<span class="lineNum">     284 </span><span class="lineCov">  319514371 : </span>
+<span class="lineNum">     285 </span><span class="lineCov">  319514371 :         if (c == '\n' || c &lt; 0)</span>
+<span class="lineNum">     286 </span><span class="lineCov">    6863319 :         {</span>
+<span class="lineNum">     287 </span><span class="lineCov">    6863319 :             // end of line: a full line has been read</span>
+<span class="lineNum">     288 </span><span class="lineCov">    6863319 : </span>
+<span class="lineNum">     289 </span><span class="lineCov">    6863319 :             context-&gt;readbuffer[pos] = '\0';</span>
+<span class="lineNum">     290 </span><span class="lineCov">    6863319 :             break;</span>
+<span class="lineNum">     291 </span><span class="lineCov">    6863319 :         }</span>
+<span class="lineNum">     292 </span><span class="lineCov">  295202152 :         else if (c != '\0')</span>
+<span class="lineNum">     293 </span><span class="lineCov">  295202152 :         {</span>
+<span class="lineNum">     294 </span><span class="lineCov">  295202152 :             // normal character; don't allow NUL characters to be</span>
+<span class="lineNum">     295 </span><span class="lineCov">  295202152 :             // added.</span>
+<span class="lineNum">     296 </span><span class="lineCov">  295202152 : </span>
+<span class="lineNum">     297 </span><span class="lineCov">  295202152 :             context-&gt;readbuffer[pos] = (char) c;</span>
+<span class="lineNum">     298 </span><span class="lineCov">  295202152 :             ++pos;</span>
+<span class="lineNum">     299 </span><span class="lineCov">  295202152 :         }</span>
+<span class="lineNum">     300 </span><span class="lineCov">  302065471 :     }</span>
+<span class="lineNum">     301 </span><span class="lineCov">    6879937 :     </span>
+<span class="lineNum">     302 </span><span class="lineCov">    6879937 :     return context-&gt;readbuffer;</span>
+<span class="lineNum">     303 </span><span class="lineCov">    6879937 : }</span>
+<a name="304"><span class="lineNum">     304 </span>            : </a>
+<span class="lineNum">     305 </span>            : void DEH_Warning(deh_context_t *context, const char *msg, ...)
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 :     va_list args;</span>
+<span class="lineNum">     308 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     309 </span><span class="lineNoCov">          0 :     va_start(args, msg);</span>
+<span class="lineNum">     310 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :     fprintf(stderr, &quot;%s:%i: warning: &quot;, context-&gt;filename, context-&gt;linenum);</span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :     vfprintf(stderr, msg, args);</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :     fprintf(stderr, &quot;\n&quot;);</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :     va_end(args);</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 : }</span>
+<a name="317"><span class="lineNum">     317 </span>            : </a>
+<span class="lineNum">     318 </span>            : void DEH_Error(deh_context_t *context, const char *msg, ...)
+<span class="lineNum">     319 </span><span class="lineCov">         85 : {</span>
+<span class="lineNum">     320 </span><span class="lineCov">         85 :     va_list args;</span>
+<span class="lineNum">     321 </span><span class="lineCov">         85 : </span>
+<span class="lineNum">     322 </span><span class="lineCov">         85 :     va_start(args, msg);</span>
+<span class="lineNum">     323 </span><span class="lineCov">         85 : </span>
+<span class="lineNum">     324 </span><span class="lineCov">         85 :     fprintf(stderr, &quot;%s:%i: &quot;, context-&gt;filename, context-&gt;linenum);</span>
+<span class="lineNum">     325 </span><span class="lineCov">         85 :     vfprintf(stderr, msg, args);</span>
+<span class="lineNum">     326 </span><span class="lineCov">         85 :     fprintf(stderr, &quot;\n&quot;);</span>
+<span class="lineNum">     327 </span><span class="lineCov">         85 : </span>
+<span class="lineNum">     328 </span><span class="lineCov">         85 :     va_end(args);</span>
+<span class="lineNum">     329 </span><span class="lineCov">         85 : </span>
+<span class="lineNum">     330 </span><span class="lineCov">         85 :     context-&gt;had_error = true;</span>
+<span class="lineNum">     331 </span><span class="lineCov">         85 : }</span>
+<a name="332"><span class="lineNum">     332 </span>            : </a>
+<span class="lineNum">     333 </span>            : boolean DEH_HadError(deh_context_t *context)
+<span class="lineNum">     334 </span><span class="lineCov">    6863319 : {</span>
+<span class="lineNum">     335 </span><span class="lineCov">    6863319 :     return context-&gt;had_error;</span>
+<span class="lineNum">     336 </span><span class="lineCov">    6863319 : }</span>
+<span class="lineNum">     337 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

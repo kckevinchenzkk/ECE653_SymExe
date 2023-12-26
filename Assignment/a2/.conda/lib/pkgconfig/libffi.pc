@@ -1,0 +1,11 @@
+prefix=/Users/kevinchen/Desktop/Waterloo/ECE653/z585chen/a2/.conda
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+toolexeclibdir=${libdir}
+includedir=/Users/kevinchen/Desktop/Waterloo/ECE653/z585chen/a2/.conda/include
+
+Name: libffi
+Description: Library supporting Foreign Function Interfaces
+Version: 3.4.4
+Libs: -L${toolexeclibdir} -lffi
+Cflags: -I${includedir}

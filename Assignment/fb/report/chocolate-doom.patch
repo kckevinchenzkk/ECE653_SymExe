@@ -1,0 +1,26 @@
+diff --git a/src/d_loop.h b/src/d_loop.h
+index f8538f0b..3a899442 100644
+--- a/src/d_loop.h
++++ b/src/d_loop.h
+@@ -63,7 +63,7 @@ void TryRunTics (void);
+ 
+ // Called at start of game loop to initialize timers
+ void D_StartGameLoop(void);
+-
++void NetUpdate (void);
+ // Initialize networking code and connect to server.
+ 
+ boolean D_InitNetGame(net_connect_data_t *connect_data);
+diff --git a/src/i_video.h b/src/i_video.h
+index 0e0ee4ec..0991b94c 100644
+--- a/src/i_video.h
++++ b/src/i_video.h
+@@ -73,7 +73,7 @@ void I_StartFrame (void);
+ // Quick syncronous operations are performed here.
+ 
+ void I_StartTic (void);
+-
++void I_GetEvent(void);
+ // Enable the loading disk image displayed when reading from disk.
+ 
+ void I_EnableLoadingDisk(int xoffs, int yoffs);

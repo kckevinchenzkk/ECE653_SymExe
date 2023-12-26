@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/net_petname.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - net_petname.c<span style="font-size: 80%;"> (source / <a href="net_petname.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2019 Jonathan Dowland
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : // DESCRIPTION:
+<span class="lineNum">      15 </span>            : //     Generate a randomized, private, memorable name for a Player
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      19 </span>            : #include &lt;time.h&gt;
+<span class="lineNum">      20 </span>            : #include &quot;doomtype.h&quot;
+<span class="lineNum">      21 </span>            : #include &quot;m_misc.h&quot;
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : static const char * const adjectives [] = {
+<span class="lineNum">      24 </span>            :     &quot;Grumpy&quot;,
+<span class="lineNum">      25 </span>            :     &quot;Ecstatic&quot;,
+<span class="lineNum">      26 </span>            :     &quot;Surly&quot;,
+<span class="lineNum">      27 </span>            :     &quot;Prepared&quot;,
+<span class="lineNum">      28 </span>            :     &quot;Crafty&quot;,
+<span class="lineNum">      29 </span>            :     &quot;Alert&quot;,
+<span class="lineNum">      30 </span>            :     &quot;Sluggish&quot;,
+<span class="lineNum">      31 </span>            :     &quot;Testy&quot;,
+<span class="lineNum">      32 </span>            :     &quot;Reluctant&quot;,
+<span class="lineNum">      33 </span>            :     &quot;Languid&quot;,
+<span class="lineNum">      34 </span>            :     &quot;Passive&quot;,
+<span class="lineNum">      35 </span>            :     &quot;Pacifist&quot;,
+<span class="lineNum">      36 </span>            :     &quot;Aggressive&quot;,
+<span class="lineNum">      37 </span>            :     &quot;Hostile&quot;,
+<span class="lineNum">      38 </span>            :     &quot;Bubbly&quot;,
+<span class="lineNum">      39 </span>            :     &quot;Giggly&quot;,
+<span class="lineNum">      40 </span>            :     &quot;Laughing&quot;,
+<span class="lineNum">      41 </span>            :     &quot;Crying&quot;,
+<span class="lineNum">      42 </span>            :     &quot;Frowning&quot;,
+<span class="lineNum">      43 </span>            :     &quot;Torpid&quot;,
+<span class="lineNum">      44 </span>            :     &quot;Lethargic&quot;,
+<span class="lineNum">      45 </span>            :     &quot;Manic&quot;,
+<span class="lineNum">      46 </span>            :     &quot;Patient&quot;,
+<span class="lineNum">      47 </span>            :     &quot;Protective&quot;,
+<span class="lineNum">      48 </span>            :     &quot;Philosophical&quot;,
+<span class="lineNum">      49 </span>            :     &quot;Enquiring&quot;,
+<span class="lineNum">      50 </span>            :     &quot;Debating&quot;,
+<span class="lineNum">      51 </span>            :     &quot;Furious&quot;,
+<span class="lineNum">      52 </span>            :     &quot;Laid-Back&quot;,
+<span class="lineNum">      53 </span>            :     &quot;Easy-Going&quot;,
+<span class="lineNum">      54 </span>            :     &quot;Cromulent&quot;,
+<span class="lineNum">      55 </span>            :     &quot;Excitable&quot;,
+<span class="lineNum">      56 </span>            :     &quot;Tired&quot;,
+<span class="lineNum">      57 </span>            :     &quot;Exhausted&quot;,
+<span class="lineNum">      58 </span>            :     &quot;Ruminating&quot;,
+<span class="lineNum">      59 </span>            :     &quot;Redundant&quot;,
+<span class="lineNum">      60 </span>            :     &quot;Sporty&quot;,
+<span class="lineNum">      61 </span>            :     &quot;Ginger&quot;,
+<span class="lineNum">      62 </span>            :     &quot;Scary&quot;,
+<span class="lineNum">      63 </span>            :     &quot;Posh&quot;,
+<span class="lineNum">      64 </span>            :     &quot;Baby&quot;,
+<span class="lineNum">      65 </span>            : };
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span>            : static const char * const nouns[] = {
+<span class="lineNum">      68 </span>            :     &quot;Frad&quot;,
+<span class="lineNum">      69 </span>            :     // Doom
+<span class="lineNum">      70 </span>            :     &quot;Cacodemon&quot;,
+<span class="lineNum">      71 </span>            :     &quot;Arch-Vile&quot;,
+<span class="lineNum">      72 </span>            :     &quot;Cyberdemon&quot;,
+<span class="lineNum">      73 </span>            :     &quot;Imp&quot;,
+<span class="lineNum">      74 </span>            :     &quot;Demon&quot;,
+<span class="lineNum">      75 </span>            :     &quot;Mancubus&quot;,
+<span class="lineNum">      76 </span>            :     &quot;Arachnotron&quot;,
+<span class="lineNum">      77 </span>            :     &quot;Baron&quot;,
+<span class="lineNum">      78 </span>            :     &quot;Knight&quot;,
+<span class="lineNum">      79 </span>            :     &quot;Revenant&quot;,
+<span class="lineNum">      80 </span>            :     // Hexen
+<span class="lineNum">      81 </span>            :     &quot;Ettin&quot;,
+<span class="lineNum">      82 </span>            :     &quot;Maulotaur&quot;,
+<span class="lineNum">      83 </span>            :     &quot;Centaur&quot;,
+<span class="lineNum">      84 </span>            :     &quot;Afrit&quot;,
+<span class="lineNum">      85 </span>            :     &quot;Serpent&quot;,
+<span class="lineNum">      86 </span>            :     // Heretic
+<span class="lineNum">      87 </span>            :     &quot;Disciple&quot;,
+<span class="lineNum">      88 </span>            :     &quot;Gargoyle&quot;,
+<span class="lineNum">      89 </span>            :     &quot;Golem&quot;,
+<span class="lineNum">      90 </span>            :     &quot;Lich&quot;,
+<span class="lineNum">      91 </span>            :     // Strife
+<span class="lineNum">      92 </span>            :     &quot;Sentinel&quot;,
+<span class="lineNum">      93 </span>            :     &quot;Acolyte&quot;,
+<span class="lineNum">      94 </span>            :     &quot;Templar&quot;,
+<span class="lineNum">      95 </span>            :     &quot;Reaver&quot;,
+<span class="lineNum">      96 </span>            :     &quot;Spectre&quot;,
+<span class="lineNum">      97 </span>            : };
+<span class="lineNum">      98 </span>            : 
+<span class="lineNum">      99 </span>            : /*
+<span class="lineNum">     100 </span>            :  * ideally we would export this and the caller would invoke it during
+<span class="lineNum">     101 </span>            :  * their setup routine. But, the two callers only invoke getRandomPetName
+<span class="lineNum">     102 </span>            :  * once, so the initialization might as well occur then.
+<a name="103"><span class="lineNum">     103 </span>            :  */</a>
+<span class="lineNum">     104 </span>            : static void InitPetName()
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 :     srand((unsigned int)time(NULL));</span>
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 : }</span>
+<a name="108"><span class="lineNum">     108 </span>            : </a>
+<span class="lineNum">     109 </span>            : char *NET_GetRandomPetName()
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :     const char *a, *n;</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 :     InitPetName();</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 :     a = adjectives[rand() % arrlen(adjectives)];</span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :     n = nouns[rand() % arrlen(nouns)];</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 :     return M_StringJoin(a, &quot; &quot;, n, NULL);</span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

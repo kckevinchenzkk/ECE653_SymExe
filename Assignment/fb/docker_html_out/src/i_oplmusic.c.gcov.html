@@ -1,0 +1,1974 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/i_oplmusic.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - i_oplmusic.c<span style="font-size: 80%;"> (source / <a href="i_oplmusic.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntry">1331</td>
+            <td class="headerCovTableEntryLo">0.2 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">48</td>
+            <td class="headerCovTableEntryLo">2.1 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //   System interface for music.
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      22 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #include &quot;memio.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;mus2mid.h&quot;
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : #include &quot;deh_main.h&quot;
+<span class="lineNum">      28 </span>            : #include &quot;i_sound.h&quot;
+<span class="lineNum">      29 </span>            : #include &quot;i_swap.h&quot;
+<span class="lineNum">      30 </span>            : #include &quot;m_misc.h&quot;
+<span class="lineNum">      31 </span>            : #include &quot;w_wad.h&quot;
+<span class="lineNum">      32 </span>            : #include &quot;z_zone.h&quot;
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span>            : #include &quot;opl.h&quot;
+<span class="lineNum">      35 </span>            : #include &quot;midifile.h&quot;
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span>            : // #define OPL_MIDI_DEBUG
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span><span class="lineNoCov">          0 : #define MAXMIDLENGTH (96 * 1024)</span>
+<span class="lineNum">      40 </span><span class="lineNoCov">          0 : #define GENMIDI_NUM_INSTRS  128</span>
+<span class="lineNum">      41 </span><span class="lineNoCov">          0 : #define GENMIDI_NUM_PERCUSSION 47</span>
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span><span class="lineNoCov">          0 : #define GENMIDI_HEADER          &quot;#OPL_II#&quot;</span>
+<span class="lineNum">      44 </span><span class="lineNoCov">          0 : #define GENMIDI_FLAG_FIXED      0x0001         /* fixed pitch */</span>
+<span class="lineNum">      45 </span><span class="lineNoCov">          0 : #define GENMIDI_FLAG_2VOICE     0x0004         /* double voice (OPL3) */</span>
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span><span class="lineNoCov">          0 : #define PERCUSSION_LOG_LEN 16</span>
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            : typedef PACKED_STRUCT (
+<span class="lineNum">      50 </span>            : {
+<span class="lineNum">      51 </span>            :     byte tremolo;
+<span class="lineNum">      52 </span>            :     byte attack;
+<span class="lineNum">      53 </span>            :     byte sustain;
+<span class="lineNum">      54 </span>            :     byte waveform;
+<span class="lineNum">      55 </span>            :     byte scale;
+<span class="lineNum">      56 </span>            :     byte level;
+<span class="lineNum">      57 </span>            : }) genmidi_op_t;
+<span class="lineNum">      58 </span>            : 
+<span class="lineNum">      59 </span>            : typedef PACKED_STRUCT (
+<span class="lineNum">      60 </span>            : {
+<span class="lineNum">      61 </span>            :     genmidi_op_t modulator;
+<span class="lineNum">      62 </span>            :     byte feedback;
+<span class="lineNum">      63 </span>            :     genmidi_op_t carrier;
+<span class="lineNum">      64 </span>            :     byte unused;
+<span class="lineNum">      65 </span>            :     short base_note_offset;
+<span class="lineNum">      66 </span>            : }) genmidi_voice_t;
+<span class="lineNum">      67 </span>            : 
+<span class="lineNum">      68 </span>            : typedef PACKED_STRUCT (
+<span class="lineNum">      69 </span>            : {
+<span class="lineNum">      70 </span>            :     unsigned short flags;
+<span class="lineNum">      71 </span>            :     byte fine_tuning;
+<span class="lineNum">      72 </span>            :     byte fixed_note;
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span>            :     genmidi_voice_t voices[2];
+<span class="lineNum">      75 </span>            : }) genmidi_instr_t;
+<span class="lineNum">      76 </span>            : 
+<span class="lineNum">      77 </span>            : // Data associated with a channel of a track that is currently playing.
+<span class="lineNum">      78 </span>            : 
+<span class="lineNum">      79 </span>            : typedef struct
+<span class="lineNum">      80 </span>            : {
+<span class="lineNum">      81 </span>            :     // The instrument currently used for this track.
+<span class="lineNum">      82 </span>            : 
+<span class="lineNum">      83 </span>            :     genmidi_instr_t *instrument;
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            :     // Volume level
+<span class="lineNum">      86 </span>            : 
+<span class="lineNum">      87 </span>            :     int volume;
+<span class="lineNum">      88 </span>            :     int volume_base;
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            :     // Pan
+<span class="lineNum">      91 </span>            : 
+<span class="lineNum">      92 </span>            :     int pan;
+<span class="lineNum">      93 </span>            : 
+<span class="lineNum">      94 </span>            :     // Pitch bend value:
+<span class="lineNum">      95 </span>            : 
+<span class="lineNum">      96 </span>            :     int bend;
+<span class="lineNum">      97 </span>            : 
+<span class="lineNum">      98 </span>            : } opl_channel_data_t;
+<span class="lineNum">      99 </span>            : 
+<span class="lineNum">     100 </span>            : // Data associated with a track that is currently playing.
+<span class="lineNum">     101 </span>            : 
+<span class="lineNum">     102 </span>            : typedef struct
+<span class="lineNum">     103 </span>            : {
+<span class="lineNum">     104 </span>            :     // Track iterator used to read new events.
+<span class="lineNum">     105 </span>            : 
+<span class="lineNum">     106 </span>            :     midi_track_iter_t *iter;
+<span class="lineNum">     107 </span>            : } opl_track_data_t;
+<span class="lineNum">     108 </span>            : 
+<span class="lineNum">     109 </span>            : typedef struct opl_voice_s opl_voice_t;
+<span class="lineNum">     110 </span>            : 
+<span class="lineNum">     111 </span>            : struct opl_voice_s
+<span class="lineNum">     112 </span>            : {
+<span class="lineNum">     113 </span>            :     // Index of this voice:
+<span class="lineNum">     114 </span>            :     int index;
+<span class="lineNum">     115 </span>            : 
+<span class="lineNum">     116 </span>            :     // The operators used by this voice:
+<span class="lineNum">     117 </span>            :     int op1, op2;
+<span class="lineNum">     118 </span>            : 
+<span class="lineNum">     119 </span>            :     // Array used by voice:
+<span class="lineNum">     120 </span>            :     int array;
+<span class="lineNum">     121 </span>            : 
+<span class="lineNum">     122 </span>            :     // Currently-loaded instrument data
+<span class="lineNum">     123 </span>            :     genmidi_instr_t *current_instr;
+<span class="lineNum">     124 </span>            : 
+<span class="lineNum">     125 </span>            :     // The voice number in the instrument to use.
+<span class="lineNum">     126 </span>            :     // This is normally set to zero; if this is a double voice
+<span class="lineNum">     127 </span>            :     // instrument, it may be one.
+<span class="lineNum">     128 </span>            :     unsigned int current_instr_voice;
+<span class="lineNum">     129 </span>            : 
+<span class="lineNum">     130 </span>            :     // The channel currently using this voice.
+<span class="lineNum">     131 </span>            :     opl_channel_data_t *channel;
+<span class="lineNum">     132 </span>            : 
+<span class="lineNum">     133 </span>            :     // The midi key that this voice is playing.
+<span class="lineNum">     134 </span>            :     unsigned int key;
+<span class="lineNum">     135 </span>            : 
+<span class="lineNum">     136 </span>            :     // The note being played.  This is normally the same as
+<span class="lineNum">     137 </span>            :     // the key, but if the instrument is a fixed pitch
+<span class="lineNum">     138 </span>            :     // instrument, it is different.
+<span class="lineNum">     139 </span>            :     unsigned int note;
+<span class="lineNum">     140 </span>            : 
+<span class="lineNum">     141 </span>            :     // The frequency value being used.
+<span class="lineNum">     142 </span>            :     unsigned int freq;
+<span class="lineNum">     143 </span>            : 
+<span class="lineNum">     144 </span>            :     // The volume of the note being played on this channel.
+<span class="lineNum">     145 </span>            :     unsigned int note_volume;
+<span class="lineNum">     146 </span>            : 
+<span class="lineNum">     147 </span>            :     // The current volume (register value) that has been set for this channel.
+<span class="lineNum">     148 </span>            :     unsigned int car_volume;
+<span class="lineNum">     149 </span>            :     unsigned int mod_volume;
+<span class="lineNum">     150 </span>            : 
+<span class="lineNum">     151 </span>            :     // Pan.
+<span class="lineNum">     152 </span>            :     unsigned int reg_pan;
+<span class="lineNum">     153 </span>            : 
+<span class="lineNum">     154 </span>            :     // Priority.
+<span class="lineNum">     155 </span>            :     unsigned int priority;
+<span class="lineNum">     156 </span>            : };
+<span class="lineNum">     157 </span>            : 
+<span class="lineNum">     158 </span>            : // Operators used by the different voices.
+<span class="lineNum">     159 </span>            : 
+<span class="lineNum">     160 </span>            : static const int voice_operators[2][OPL_NUM_VOICES] = {
+<span class="lineNum">     161 </span>            :     { 0x00, 0x01, 0x02, 0x08, 0x09, 0x0a, 0x10, 0x11, 0x12 },
+<span class="lineNum">     162 </span>            :     { 0x03, 0x04, 0x05, 0x0b, 0x0c, 0x0d, 0x13, 0x14, 0x15 }
+<span class="lineNum">     163 </span>            : };
+<span class="lineNum">     164 </span>            : 
+<span class="lineNum">     165 </span>            : // Frequency values to use for each note.
+<span class="lineNum">     166 </span>            : 
+<span class="lineNum">     167 </span>            : static const unsigned short frequency_curve[] = {
+<span class="lineNum">     168 </span>            : 
+<span class="lineNum">     169 </span>            :     0x133, 0x133, 0x134, 0x134, 0x135, 0x136, 0x136, 0x137,   // -1
+<span class="lineNum">     170 </span>            :     0x137, 0x138, 0x138, 0x139, 0x139, 0x13a, 0x13b, 0x13b,
+<span class="lineNum">     171 </span>            :     0x13c, 0x13c, 0x13d, 0x13d, 0x13e, 0x13f, 0x13f, 0x140,
+<span class="lineNum">     172 </span>            :     0x140, 0x141, 0x142, 0x142, 0x143, 0x143, 0x144, 0x144,
+<span class="lineNum">     173 </span>            : 
+<span class="lineNum">     174 </span>            :     0x145, 0x146, 0x146, 0x147, 0x147, 0x148, 0x149, 0x149,   // -2
+<span class="lineNum">     175 </span>            :     0x14a, 0x14a, 0x14b, 0x14c, 0x14c, 0x14d, 0x14d, 0x14e,
+<span class="lineNum">     176 </span>            :     0x14f, 0x14f, 0x150, 0x150, 0x151, 0x152, 0x152, 0x153,
+<span class="lineNum">     177 </span>            :     0x153, 0x154, 0x155, 0x155, 0x156, 0x157, 0x157, 0x158,
+<span class="lineNum">     178 </span>            : 
+<span class="lineNum">     179 </span>            :     // These are used for the first seven MIDI note values:
+<span class="lineNum">     180 </span>            : 
+<span class="lineNum">     181 </span>            :     0x158, 0x159, 0x15a, 0x15a, 0x15b, 0x15b, 0x15c, 0x15d,   // 0
+<span class="lineNum">     182 </span>            :     0x15d, 0x15e, 0x15f, 0x15f, 0x160, 0x161, 0x161, 0x162,
+<span class="lineNum">     183 </span>            :     0x162, 0x163, 0x164, 0x164, 0x165, 0x166, 0x166, 0x167,
+<span class="lineNum">     184 </span>            :     0x168, 0x168, 0x169, 0x16a, 0x16a, 0x16b, 0x16c, 0x16c,
+<span class="lineNum">     185 </span>            : 
+<span class="lineNum">     186 </span>            :     0x16d, 0x16e, 0x16e, 0x16f, 0x170, 0x170, 0x171, 0x172,   // 1
+<span class="lineNum">     187 </span>            :     0x172, 0x173, 0x174, 0x174, 0x175, 0x176, 0x176, 0x177,
+<span class="lineNum">     188 </span>            :     0x178, 0x178, 0x179, 0x17a, 0x17a, 0x17b, 0x17c, 0x17c,
+<span class="lineNum">     189 </span>            :     0x17d, 0x17e, 0x17e, 0x17f, 0x180, 0x181, 0x181, 0x182,
+<span class="lineNum">     190 </span>            : 
+<span class="lineNum">     191 </span>            :     0x183, 0x183, 0x184, 0x185, 0x185, 0x186, 0x187, 0x188,   // 2
+<span class="lineNum">     192 </span>            :     0x188, 0x189, 0x18a, 0x18a, 0x18b, 0x18c, 0x18d, 0x18d,
+<span class="lineNum">     193 </span>            :     0x18e, 0x18f, 0x18f, 0x190, 0x191, 0x192, 0x192, 0x193,
+<span class="lineNum">     194 </span>            :     0x194, 0x194, 0x195, 0x196, 0x197, 0x197, 0x198, 0x199,
+<span class="lineNum">     195 </span>            : 
+<span class="lineNum">     196 </span>            :     0x19a, 0x19a, 0x19b, 0x19c, 0x19d, 0x19d, 0x19e, 0x19f,   // 3
+<span class="lineNum">     197 </span>            :     0x1a0, 0x1a0, 0x1a1, 0x1a2, 0x1a3, 0x1a3, 0x1a4, 0x1a5,
+<span class="lineNum">     198 </span>            :     0x1a6, 0x1a6, 0x1a7, 0x1a8, 0x1a9, 0x1a9, 0x1aa, 0x1ab,
+<span class="lineNum">     199 </span>            :     0x1ac, 0x1ad, 0x1ad, 0x1ae, 0x1af, 0x1b0, 0x1b0, 0x1b1,
+<span class="lineNum">     200 </span>            : 
+<span class="lineNum">     201 </span>            :     0x1b2, 0x1b3, 0x1b4, 0x1b4, 0x1b5, 0x1b6, 0x1b7, 0x1b8,   // 4
+<span class="lineNum">     202 </span>            :     0x1b8, 0x1b9, 0x1ba, 0x1bb, 0x1bc, 0x1bc, 0x1bd, 0x1be,
+<span class="lineNum">     203 </span>            :     0x1bf, 0x1c0, 0x1c0, 0x1c1, 0x1c2, 0x1c3, 0x1c4, 0x1c4,
+<span class="lineNum">     204 </span>            :     0x1c5, 0x1c6, 0x1c7, 0x1c8, 0x1c9, 0x1c9, 0x1ca, 0x1cb,
+<span class="lineNum">     205 </span>            : 
+<span class="lineNum">     206 </span>            :     0x1cc, 0x1cd, 0x1ce, 0x1ce, 0x1cf, 0x1d0, 0x1d1, 0x1d2,   // 5
+<span class="lineNum">     207 </span>            :     0x1d3, 0x1d3, 0x1d4, 0x1d5, 0x1d6, 0x1d7, 0x1d8, 0x1d8,
+<span class="lineNum">     208 </span>            :     0x1d9, 0x1da, 0x1db, 0x1dc, 0x1dd, 0x1de, 0x1de, 0x1df,
+<span class="lineNum">     209 </span>            :     0x1e0, 0x1e1, 0x1e2, 0x1e3, 0x1e4, 0x1e5, 0x1e5, 0x1e6,
+<span class="lineNum">     210 </span>            : 
+<span class="lineNum">     211 </span>            :     0x1e7, 0x1e8, 0x1e9, 0x1ea, 0x1eb, 0x1ec, 0x1ed, 0x1ed,   // 6
+<span class="lineNum">     212 </span>            :     0x1ee, 0x1ef, 0x1f0, 0x1f1, 0x1f2, 0x1f3, 0x1f4, 0x1f5,
+<span class="lineNum">     213 </span>            :     0x1f6, 0x1f6, 0x1f7, 0x1f8, 0x1f9, 0x1fa, 0x1fb, 0x1fc,
+<span class="lineNum">     214 </span>            :     0x1fd, 0x1fe, 0x1ff, 0x200, 0x201, 0x201, 0x202, 0x203,
+<span class="lineNum">     215 </span>            : 
+<span class="lineNum">     216 </span>            :     // First note of looped range used for all octaves:
+<span class="lineNum">     217 </span>            : 
+<span class="lineNum">     218 </span>            :     0x204, 0x205, 0x206, 0x207, 0x208, 0x209, 0x20a, 0x20b,   // 7
+<span class="lineNum">     219 </span>            :     0x20c, 0x20d, 0x20e, 0x20f, 0x210, 0x210, 0x211, 0x212,
+<span class="lineNum">     220 </span>            :     0x213, 0x214, 0x215, 0x216, 0x217, 0x218, 0x219, 0x21a,
+<span class="lineNum">     221 </span>            :     0x21b, 0x21c, 0x21d, 0x21e, 0x21f, 0x220, 0x221, 0x222,
+<span class="lineNum">     222 </span>            : 
+<span class="lineNum">     223 </span>            :     0x223, 0x224, 0x225, 0x226, 0x227, 0x228, 0x229, 0x22a,   // 8
+<span class="lineNum">     224 </span>            :     0x22b, 0x22c, 0x22d, 0x22e, 0x22f, 0x230, 0x231, 0x232,
+<span class="lineNum">     225 </span>            :     0x233, 0x234, 0x235, 0x236, 0x237, 0x238, 0x239, 0x23a,
+<span class="lineNum">     226 </span>            :     0x23b, 0x23c, 0x23d, 0x23e, 0x23f, 0x240, 0x241, 0x242,
+<span class="lineNum">     227 </span>            : 
+<span class="lineNum">     228 </span>            :     0x244, 0x245, 0x246, 0x247, 0x248, 0x249, 0x24a, 0x24b,   // 9
+<span class="lineNum">     229 </span>            :     0x24c, 0x24d, 0x24e, 0x24f, 0x250, 0x251, 0x252, 0x253,
+<span class="lineNum">     230 </span>            :     0x254, 0x256, 0x257, 0x258, 0x259, 0x25a, 0x25b, 0x25c,
+<span class="lineNum">     231 </span>            :     0x25d, 0x25e, 0x25f, 0x260, 0x262, 0x263, 0x264, 0x265,
+<span class="lineNum">     232 </span>            : 
+<span class="lineNum">     233 </span>            :     0x266, 0x267, 0x268, 0x269, 0x26a, 0x26c, 0x26d, 0x26e,   // 10
+<span class="lineNum">     234 </span>            :     0x26f, 0x270, 0x271, 0x272, 0x273, 0x275, 0x276, 0x277,
+<span class="lineNum">     235 </span>            :     0x278, 0x279, 0x27a, 0x27b, 0x27d, 0x27e, 0x27f, 0x280,
+<span class="lineNum">     236 </span>            :     0x281, 0x282, 0x284, 0x285, 0x286, 0x287, 0x288, 0x289,
+<span class="lineNum">     237 </span>            : 
+<span class="lineNum">     238 </span>            :     0x28b, 0x28c, 0x28d, 0x28e, 0x28f, 0x290, 0x292, 0x293,   // 11
+<span class="lineNum">     239 </span>            :     0x294, 0x295, 0x296, 0x298, 0x299, 0x29a, 0x29b, 0x29c,
+<span class="lineNum">     240 </span>            :     0x29e, 0x29f, 0x2a0, 0x2a1, 0x2a2, 0x2a4, 0x2a5, 0x2a6,
+<span class="lineNum">     241 </span>            :     0x2a7, 0x2a9, 0x2aa, 0x2ab, 0x2ac, 0x2ae, 0x2af, 0x2b0,
+<span class="lineNum">     242 </span>            : 
+<span class="lineNum">     243 </span>            :     0x2b1, 0x2b2, 0x2b4, 0x2b5, 0x2b6, 0x2b7, 0x2b9, 0x2ba,   // 12
+<span class="lineNum">     244 </span>            :     0x2bb, 0x2bd, 0x2be, 0x2bf, 0x2c0, 0x2c2, 0x2c3, 0x2c4,
+<span class="lineNum">     245 </span>            :     0x2c5, 0x2c7, 0x2c8, 0x2c9, 0x2cb, 0x2cc, 0x2cd, 0x2ce,
+<span class="lineNum">     246 </span>            :     0x2d0, 0x2d1, 0x2d2, 0x2d4, 0x2d5, 0x2d6, 0x2d8, 0x2d9,
+<span class="lineNum">     247 </span>            : 
+<span class="lineNum">     248 </span>            :     0x2da, 0x2dc, 0x2dd, 0x2de, 0x2e0, 0x2e1, 0x2e2, 0x2e4,   // 13
+<span class="lineNum">     249 </span>            :     0x2e5, 0x2e6, 0x2e8, 0x2e9, 0x2ea, 0x2ec, 0x2ed, 0x2ee,
+<span class="lineNum">     250 </span>            :     0x2f0, 0x2f1, 0x2f2, 0x2f4, 0x2f5, 0x2f6, 0x2f8, 0x2f9,
+<span class="lineNum">     251 </span>            :     0x2fb, 0x2fc, 0x2fd, 0x2ff, 0x300, 0x302, 0x303, 0x304,
+<span class="lineNum">     252 </span>            : 
+<span class="lineNum">     253 </span>            :     0x306, 0x307, 0x309, 0x30a, 0x30b, 0x30d, 0x30e, 0x310,   // 14
+<span class="lineNum">     254 </span>            :     0x311, 0x312, 0x314, 0x315, 0x317, 0x318, 0x31a, 0x31b,
+<span class="lineNum">     255 </span>            :     0x31c, 0x31e, 0x31f, 0x321, 0x322, 0x324, 0x325, 0x327,
+<span class="lineNum">     256 </span>            :     0x328, 0x329, 0x32b, 0x32c, 0x32e, 0x32f, 0x331, 0x332,
+<span class="lineNum">     257 </span>            : 
+<span class="lineNum">     258 </span>            :     0x334, 0x335, 0x337, 0x338, 0x33a, 0x33b, 0x33d, 0x33e,   // 15
+<span class="lineNum">     259 </span>            :     0x340, 0x341, 0x343, 0x344, 0x346, 0x347, 0x349, 0x34a,
+<span class="lineNum">     260 </span>            :     0x34c, 0x34d, 0x34f, 0x350, 0x352, 0x353, 0x355, 0x357,
+<span class="lineNum">     261 </span>            :     0x358, 0x35a, 0x35b, 0x35d, 0x35e, 0x360, 0x361, 0x363,
+<span class="lineNum">     262 </span>            : 
+<span class="lineNum">     263 </span>            :     0x365, 0x366, 0x368, 0x369, 0x36b, 0x36c, 0x36e, 0x370,   // 16
+<span class="lineNum">     264 </span>            :     0x371, 0x373, 0x374, 0x376, 0x378, 0x379, 0x37b, 0x37c,
+<span class="lineNum">     265 </span>            :     0x37e, 0x380, 0x381, 0x383, 0x384, 0x386, 0x388, 0x389,
+<span class="lineNum">     266 </span>            :     0x38b, 0x38d, 0x38e, 0x390, 0x392, 0x393, 0x395, 0x397,
+<span class="lineNum">     267 </span>            : 
+<span class="lineNum">     268 </span>            :     0x398, 0x39a, 0x39c, 0x39d, 0x39f, 0x3a1, 0x3a2, 0x3a4,   // 17
+<span class="lineNum">     269 </span>            :     0x3a6, 0x3a7, 0x3a9, 0x3ab, 0x3ac, 0x3ae, 0x3b0, 0x3b1,
+<span class="lineNum">     270 </span>            :     0x3b3, 0x3b5, 0x3b7, 0x3b8, 0x3ba, 0x3bc, 0x3bd, 0x3bf,
+<span class="lineNum">     271 </span>            :     0x3c1, 0x3c3, 0x3c4, 0x3c6, 0x3c8, 0x3ca, 0x3cb, 0x3cd,
+<span class="lineNum">     272 </span>            : 
+<span class="lineNum">     273 </span>            :     // The last note has an incomplete range, and loops round back to
+<span class="lineNum">     274 </span>            :     // the start.  Note that the last value is actually a buffer overrun
+<span class="lineNum">     275 </span>            :     // and does not fit with the other values.
+<span class="lineNum">     276 </span>            : 
+<span class="lineNum">     277 </span>            :     0x3cf, 0x3d1, 0x3d2, 0x3d4, 0x3d6, 0x3d8, 0x3da, 0x3db,   // 18
+<span class="lineNum">     278 </span>            :     0x3dd, 0x3df, 0x3e1, 0x3e3, 0x3e4, 0x3e6, 0x3e8, 0x3ea,
+<span class="lineNum">     279 </span>            :     0x3ec, 0x3ed, 0x3ef, 0x3f1, 0x3f3, 0x3f5, 0x3f6, 0x3f8,
+<span class="lineNum">     280 </span>            :     0x3fa, 0x3fc, 0x3fe, 0x36c,
+<span class="lineNum">     281 </span>            : };
+<span class="lineNum">     282 </span>            : 
+<span class="lineNum">     283 </span>            : // Mapping from MIDI volume level to OPL level value.
+<span class="lineNum">     284 </span>            : 
+<span class="lineNum">     285 </span>            : static const unsigned int volume_mapping_table[] = {
+<span class="lineNum">     286 </span>            :     0, 1, 3, 5, 6, 8, 10, 11,
+<span class="lineNum">     287 </span>            :     13, 14, 16, 17, 19, 20, 22, 23,
+<span class="lineNum">     288 </span>            :     25, 26, 27, 29, 30, 32, 33, 34,
+<span class="lineNum">     289 </span>            :     36, 37, 39, 41, 43, 45, 47, 49,
+<span class="lineNum">     290 </span>            :     50, 52, 54, 55, 57, 59, 60, 61,
+<span class="lineNum">     291 </span>            :     63, 64, 66, 67, 68, 69, 71, 72,
+<span class="lineNum">     292 </span>            :     73, 74, 75, 76, 77, 79, 80, 81,
+<span class="lineNum">     293 </span>            :     82, 83, 84, 84, 85, 86, 87, 88,
+<span class="lineNum">     294 </span>            :     89, 90, 91, 92, 92, 93, 94, 95,
+<span class="lineNum">     295 </span>            :     96, 96, 97, 98, 99, 99, 100, 101,
+<span class="lineNum">     296 </span>            :     101, 102, 103, 103, 104, 105, 105, 106,
+<span class="lineNum">     297 </span>            :     107, 107, 108, 109, 109, 110, 110, 111,
+<span class="lineNum">     298 </span>            :     112, 112, 113, 113, 114, 114, 115, 115,
+<span class="lineNum">     299 </span>            :     116, 117, 117, 118, 118, 119, 119, 120,
+<span class="lineNum">     300 </span>            :     120, 121, 121, 122, 122, 123, 123, 123,
+<span class="lineNum">     301 </span>            :     124, 124, 125, 125, 126, 126, 127, 127
+<span class="lineNum">     302 </span>            : };
+<span class="lineNum">     303 </span>            : 
+<span class="lineNum">     304 </span>            : static opl_driver_ver_t opl_drv_ver = opl_doom_1_9;
+<span class="lineNum">     305 </span>            : static boolean music_initialized = false;
+<span class="lineNum">     306 </span>            : 
+<span class="lineNum">     307 </span>            : //static boolean musicpaused = false;
+<span class="lineNum">     308 </span>            : static int start_music_volume;
+<span class="lineNum">     309 </span>            : static int current_music_volume;
+<span class="lineNum">     310 </span>            : 
+<span class="lineNum">     311 </span>            : // GENMIDI lump instrument data:
+<span class="lineNum">     312 </span>            : 
+<span class="lineNum">     313 </span>            : static genmidi_instr_t *main_instrs;
+<span class="lineNum">     314 </span>            : static genmidi_instr_t *percussion_instrs;
+<span class="lineNum">     315 </span>            : static char (*main_instr_names)[32];
+<span class="lineNum">     316 </span>            : static char (*percussion_names)[32];
+<span class="lineNum">     317 </span>            : 
+<span class="lineNum">     318 </span>            : // Voices:
+<span class="lineNum">     319 </span>            : 
+<span class="lineNum">     320 </span>            : static opl_voice_t voices[OPL_NUM_VOICES * 2];
+<span class="lineNum">     321 </span>            : static opl_voice_t *voice_free_list[OPL_NUM_VOICES * 2];
+<span class="lineNum">     322 </span>            : static opl_voice_t *voice_alloced_list[OPL_NUM_VOICES * 2];
+<span class="lineNum">     323 </span>            : static int voice_free_num;
+<span class="lineNum">     324 </span>            : static int voice_alloced_num;
+<span class="lineNum">     325 </span>            : static int opl_opl3mode;
+<span class="lineNum">     326 </span>            : static int num_opl_voices;
+<span class="lineNum">     327 </span>            : 
+<span class="lineNum">     328 </span>            : // Data for each channel.
+<span class="lineNum">     329 </span>            : 
+<span class="lineNum">     330 </span>            : static opl_channel_data_t channels[MIDI_CHANNELS_PER_TRACK];
+<span class="lineNum">     331 </span>            : 
+<span class="lineNum">     332 </span>            : // Track data for playing tracks:
+<span class="lineNum">     333 </span>            : 
+<span class="lineNum">     334 </span>            : static opl_track_data_t *tracks;
+<span class="lineNum">     335 </span>            : static unsigned int num_tracks = 0;
+<span class="lineNum">     336 </span>            : static unsigned int running_tracks = 0;
+<span class="lineNum">     337 </span>            : static boolean song_looping;
+<span class="lineNum">     338 </span>            : 
+<span class="lineNum">     339 </span>            : // Tempo control variables
+<span class="lineNum">     340 </span>            : 
+<span class="lineNum">     341 </span>            : static unsigned int ticks_per_beat;
+<span class="lineNum">     342 </span>            : static unsigned int us_per_beat;
+<span class="lineNum">     343 </span>            : 
+<span class="lineNum">     344 </span>            : // Mini-log of recently played percussion instruments:
+<span class="lineNum">     345 </span>            : 
+<span class="lineNum">     346 </span>            : static uint8_t last_perc[PERCUSSION_LOG_LEN];
+<span class="lineNum">     347 </span>            : static unsigned int last_perc_count;
+<span class="lineNum">     348 </span>            : 
+<span class="lineNum">     349 </span>            : // Configuration file variable, containing the port number for the
+<span class="lineNum">     350 </span>            : // adlib chip.
+<span class="lineNum">     351 </span>            : 
+<span class="lineNum">     352 </span>            : char *snd_dmxoption = &quot;&quot;;
+<span class="lineNum">     353 </span>            : int opl_io_port = 0x388;
+<span class="lineNum">     354 </span>            : 
+<span class="lineNum">     355 </span>            : // If true, OPL sound channels are reversed to their correct arrangement
+<span class="lineNum">     356 </span>            : // (as intended by the MIDI standard) rather than the backwards one
+<span class="lineNum">     357 </span>            : // used by DMX due to a bug.
+<span class="lineNum">     358 </span>            : 
+<span class="lineNum">     359 </span>            : static boolean opl_stereo_correct = false;
+<span class="lineNum">     360 </span>            : 
+<span class="lineNum">     361 </span>            : // Load instrument table from GENMIDI lump:
+<a name="362"><span class="lineNum">     362 </span>            : </a>
+<span class="lineNum">     363 </span>            : static boolean LoadInstrumentTable(void)
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :     byte *lump;</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 :     lump = W_CacheLumpName(DEH_String(&quot;genmidi&quot;), PU_STATIC);</span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :     // DMX does not check header</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     371 </span><span class="lineNoCov">          0 :     main_instrs = (genmidi_instr_t *) (lump + strlen(GENMIDI_HEADER));</span>
+<span class="lineNum">     372 </span><span class="lineNoCov">          0 :     percussion_instrs = main_instrs + GENMIDI_NUM_INSTRS;</span>
+<span class="lineNum">     373 </span><span class="lineNoCov">          0 :     main_instr_names =</span>
+<span class="lineNum">     374 </span><span class="lineNoCov">          0 :         (char (*)[32]) (percussion_instrs + GENMIDI_NUM_PERCUSSION);</span>
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 :     percussion_names = main_instr_names + GENMIDI_NUM_INSTRS;</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     379 </span>            : 
+<span class="lineNum">     380 </span>            : // Get the next available voice from the freelist.
+<a name="381"><span class="lineNum">     381 </span>            : </a>
+<span class="lineNum">     382 </span>            : static opl_voice_t *GetFreeVoice(void)
+<span class="lineNum">     383 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 :     opl_voice_t *result;</span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     386 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     387 </span><span class="lineNoCov">          0 :     // None available?</span>
+<span class="lineNum">     388 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     389 </span><span class="lineNoCov">          0 :     if (voice_free_num == 0)</span>
+<span class="lineNum">     390 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     391 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     392 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     393 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     394 </span><span class="lineNoCov">          0 :     // Remove from free list</span>
+<span class="lineNum">     395 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     396 </span><span class="lineNoCov">          0 :     result = voice_free_list[0];</span>
+<span class="lineNum">     397 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     398 </span><span class="lineNoCov">          0 :     voice_free_num--;</span>
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     400 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; voice_free_num; i++)</span>
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     402 </span><span class="lineNoCov">          0 :         voice_free_list[i] = voice_free_list[i + 1];</span>
+<span class="lineNum">     403 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 :     // Add to allocated list</span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 :     voice_alloced_list[voice_alloced_num++] = result;</span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     411 </span>            : 
+<span class="lineNum">     412 </span>            : // Release a voice back to the freelist.
+<span class="lineNum">     413 </span>            : 
+<span class="lineNum">     414 </span>            : static void VoiceKeyOff(opl_voice_t *voice);
+<a name="415"><span class="lineNum">     415 </span>            : </a>
+<span class="lineNum">     416 </span>            : static void ReleaseVoice(int index)
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 :     opl_voice_t *voice;</span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :     boolean double_voice;</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :     // Doom 2 1.666 OPL crash emulation.</span>
+<span class="lineNum">     423 </span><span class="lineNoCov">          0 :     if (index &gt;= voice_alloced_num)</span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     425 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 :         voice_alloced_num = 0;</span>
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 :         voice_free_num = 0;</span>
+<span class="lineNum">     428 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     429 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     430 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     431 </span><span class="lineNoCov">          0 :     voice = voice_alloced_list[index];</span>
+<span class="lineNum">     432 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     433 </span><span class="lineNoCov">          0 :     VoiceKeyOff(voice);</span>
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     435 </span><span class="lineNoCov">          0 :     voice-&gt;channel = NULL;</span>
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 :     voice-&gt;note = 0;</span>
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 :     double_voice = voice-&gt;current_instr_voice != 0;</span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :     // Remove from alloced list.</span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 :     voice_alloced_num--;</span>
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 :     for (i = index; i &lt; voice_alloced_num; i++)</span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 :         voice_alloced_list[i] = voice_alloced_list[i + 1];</span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :     // Search to the end of the freelist (This is how Doom behaves!)</span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 :     voice_free_list[voice_free_num++] = voice;</span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 :     if (double_voice &amp;&amp; opl_drv_ver &lt; opl_doom_1_9)</span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 :         ReleaseVoice(index);</span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     458 </span>            : 
+<span class="lineNum">     459 </span>            : // Load data to the specified operator
+<span class="lineNum">     460 </span>            : 
+<a name="461"><span class="lineNum">     461 </span>            : static void LoadOperatorData(int operator, genmidi_op_t *data,</a>
+<span class="lineNum">     462 </span>            :                              boolean max_level, unsigned int *volume)
+<span class="lineNum">     463 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     464 </span><span class="lineNoCov">          0 :     int level;</span>
+<span class="lineNum">     465 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     466 </span><span class="lineNoCov">          0 :     // The scale and level fields must be combined for the level register.</span>
+<span class="lineNum">     467 </span><span class="lineNoCov">          0 :     // For the carrier wave we always set the maximum level.</span>
+<span class="lineNum">     468 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     469 </span><span class="lineNoCov">          0 :     level = data-&gt;scale;</span>
+<span class="lineNum">     470 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 :     if (max_level)</span>
+<span class="lineNum">     472 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     473 </span><span class="lineNoCov">          0 :         level |= 0x3f;</span>
+<span class="lineNum">     474 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     475 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     476 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     477 </span><span class="lineNoCov">          0 :         level |= data-&gt;level;</span>
+<span class="lineNum">     478 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     479 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     480 </span><span class="lineNoCov">          0 :     *volume = level;</span>
+<span class="lineNum">     481 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     482 </span><span class="lineNoCov">          0 :     OPL_WriteRegister(OPL_REGS_LEVEL + operator, level);</span>
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 :     OPL_WriteRegister(OPL_REGS_TREMOLO + operator, data-&gt;tremolo);</span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 :     OPL_WriteRegister(OPL_REGS_ATTACK + operator, data-&gt;attack);</span>
+<span class="lineNum">     485 </span><span class="lineNoCov">          0 :     OPL_WriteRegister(OPL_REGS_SUSTAIN + operator, data-&gt;sustain);</span>
+<span class="lineNum">     486 </span><span class="lineNoCov">          0 :     OPL_WriteRegister(OPL_REGS_WAVEFORM + operator, data-&gt;waveform);</span>
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     488 </span>            : 
+<span class="lineNum">     489 </span>            : // Set the instrument for a particular voice.
+<span class="lineNum">     490 </span>            : 
+<span class="lineNum">     491 </span>            : static void SetVoiceInstrument(opl_voice_t *voice,
+<a name="492"><span class="lineNum">     492 </span>            :                                genmidi_instr_t *instr,</a>
+<span class="lineNum">     493 </span>            :                                unsigned int instr_voice)
+<span class="lineNum">     494 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     495 </span><span class="lineNoCov">          0 :     genmidi_voice_t *data;</span>
+<span class="lineNum">     496 </span><span class="lineNoCov">          0 :     unsigned int modulating;</span>
+<span class="lineNum">     497 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     498 </span><span class="lineNoCov">          0 :     // Instrument already set for this channel?</span>
+<span class="lineNum">     499 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     500 </span><span class="lineNoCov">          0 :     if (voice-&gt;current_instr == instr</span>
+<span class="lineNum">     501 </span><span class="lineNoCov">          0 :      &amp;&amp; voice-&gt;current_instr_voice == instr_voice)</span>
+<span class="lineNum">     502 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     503 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     504 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     505 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     506 </span><span class="lineNoCov">          0 :     voice-&gt;current_instr = instr;</span>
+<span class="lineNum">     507 </span><span class="lineNoCov">          0 :     voice-&gt;current_instr_voice = instr_voice;</span>
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     509 </span><span class="lineNoCov">          0 :     data = &amp;instr-&gt;voices[instr_voice];</span>
+<span class="lineNum">     510 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 :     // Are we usind modulated feedback mode?</span>
+<span class="lineNum">     512 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     513 </span><span class="lineNoCov">          0 :     modulating = (data-&gt;feedback &amp; 0x01) == 0;</span>
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     515 </span><span class="lineNoCov">          0 :     // Doom loads the second operator first, then the first.</span>
+<span class="lineNum">     516 </span><span class="lineNoCov">          0 :     // The carrier is set to minimum volume until the voice volume</span>
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 :     // is set in SetVoiceVolume (below).  If we are not using</span>
+<span class="lineNum">     518 </span><span class="lineNoCov">          0 :     // modulating mode, we must set both to minimum volume.</span>
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     520 </span><span class="lineNoCov">          0 :     LoadOperatorData(voice-&gt;op2 | voice-&gt;array, &amp;data-&gt;carrier, true,</span>
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 :                      &amp;voice-&gt;car_volume);</span>
+<span class="lineNum">     522 </span><span class="lineNoCov">          0 :     LoadOperatorData(voice-&gt;op1 | voice-&gt;array, &amp;data-&gt;modulator, !modulating,</span>
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 :                      &amp;voice-&gt;mod_volume);</span>
+<span class="lineNum">     524 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :     // Set feedback register that control the connection between the</span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 :     // two operators.  Turn on bits in the upper nybble; I think this</span>
+<span class="lineNum">     527 </span><span class="lineNoCov">          0 :     // is for OPL3, where it turns on channel A/B.</span>
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     529 </span><span class="lineNoCov">          0 :     OPL_WriteRegister((OPL_REGS_FEEDBACK + voice-&gt;index) | voice-&gt;array,</span>
+<span class="lineNum">     530 </span><span class="lineNoCov">          0 :                       data-&gt;feedback | voice-&gt;reg_pan);</span>
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     532 </span><span class="lineNoCov">          0 :     // Calculate voice priority.</span>
+<span class="lineNum">     533 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     534 </span><span class="lineNoCov">          0 :     voice-&gt;priority = 0x0f - (data-&gt;carrier.attack &gt;&gt; 4)</span>
+<span class="lineNum">     535 </span><span class="lineNoCov">          0 :                     + 0x0f - (data-&gt;carrier.sustain &amp; 0x0f);</span>
+<span class="lineNum">     536 </span><span class="lineNoCov">          0 : }</span>
+<a name="537"><span class="lineNum">     537 </span>            : </a>
+<span class="lineNum">     538 </span>            : static void SetVoiceVolume(opl_voice_t *voice, unsigned int volume)
+<span class="lineNum">     539 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     540 </span><span class="lineNoCov">          0 :     genmidi_voice_t *opl_voice;</span>
+<span class="lineNum">     541 </span><span class="lineNoCov">          0 :     unsigned int midi_volume;</span>
+<span class="lineNum">     542 </span><span class="lineNoCov">          0 :     unsigned int full_volume;</span>
+<span class="lineNum">     543 </span><span class="lineNoCov">          0 :     unsigned int car_volume;</span>
+<span class="lineNum">     544 </span><span class="lineNoCov">          0 :     unsigned int mod_volume;</span>
+<span class="lineNum">     545 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     546 </span><span class="lineNoCov">          0 :     voice-&gt;note_volume = volume;</span>
+<span class="lineNum">     547 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     548 </span><span class="lineNoCov">          0 :     opl_voice = &amp;voice-&gt;current_instr-&gt;voices[voice-&gt;current_instr_voice];</span>
+<span class="lineNum">     549 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     550 </span><span class="lineNoCov">          0 :     // Multiply note volume and channel volume to get the actual volume.</span>
+<span class="lineNum">     551 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     552 </span><span class="lineNoCov">          0 :     midi_volume = 2 * (volume_mapping_table[voice-&gt;channel-&gt;volume] + 1);</span>
+<span class="lineNum">     553 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     554 </span><span class="lineNoCov">          0 :     full_volume = (volume_mapping_table[voice-&gt;note_volume] * midi_volume)</span>
+<span class="lineNum">     555 </span><span class="lineNoCov">          0 :                 &gt;&gt; 9;</span>
+<span class="lineNum">     556 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     557 </span><span class="lineNoCov">          0 :     // The volume value to use in the register:</span>
+<span class="lineNum">     558 </span><span class="lineNoCov">          0 :     car_volume = 0x3f - full_volume;</span>
+<span class="lineNum">     559 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     560 </span><span class="lineNoCov">          0 :     // Update the volume register(s) if necessary.</span>
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     562 </span><span class="lineNoCov">          0 :     if (car_volume != (voice-&gt;car_volume &amp; 0x3f))</span>
+<span class="lineNum">     563 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     564 </span><span class="lineNoCov">          0 :         voice-&gt;car_volume = car_volume | (voice-&gt;car_volume &amp; 0xc0);</span>
+<span class="lineNum">     565 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     566 </span><span class="lineNoCov">          0 :         OPL_WriteRegister((OPL_REGS_LEVEL + voice-&gt;op2) | voice-&gt;array,</span>
+<span class="lineNum">     567 </span><span class="lineNoCov">          0 :                           voice-&gt;car_volume);</span>
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     569 </span><span class="lineNoCov">          0 :         // If we are using non-modulated feedback mode, we must set the</span>
+<span class="lineNum">     570 </span><span class="lineNoCov">          0 :         // volume for both voices.</span>
+<span class="lineNum">     571 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     572 </span><span class="lineNoCov">          0 :         if ((opl_voice-&gt;feedback &amp; 0x01) != 0</span>
+<span class="lineNum">     573 </span><span class="lineNoCov">          0 :          &amp;&amp; opl_voice-&gt;modulator.level != 0x3f)</span>
+<span class="lineNum">     574 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 :             mod_volume = opl_voice-&gt;modulator.level;</span>
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :             if (mod_volume &lt; car_volume)</span>
+<span class="lineNum">     577 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :                 mod_volume = car_volume;</span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     581 </span><span class="lineNoCov">          0 :             mod_volume |= voice-&gt;mod_volume &amp; 0xc0;</span>
+<span class="lineNum">     582 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     583 </span><span class="lineNoCov">          0 :             if(mod_volume != voice-&gt;mod_volume)</span>
+<span class="lineNum">     584 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     585 </span><span class="lineNoCov">          0 :                 voice-&gt;mod_volume = mod_volume;</span>
+<span class="lineNum">     586 </span><span class="lineNoCov">          0 :                 OPL_WriteRegister((OPL_REGS_LEVEL + voice-&gt;op1) | voice-&gt;array,</span>
+<span class="lineNum">     587 </span><span class="lineNoCov">          0 :                                   mod_volume |</span>
+<span class="lineNum">     588 </span><span class="lineNoCov">          0 :                                   (opl_voice-&gt;modulator.scale &amp; 0xc0));</span>
+<span class="lineNum">     589 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     590 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     591 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     592 </span><span class="lineNoCov">          0 : }</span>
+<a name="593"><span class="lineNum">     593 </span>            : </a>
+<span class="lineNum">     594 </span>            : static void SetVoicePan(opl_voice_t *voice, unsigned int pan)
+<span class="lineNum">     595 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :     genmidi_voice_t *opl_voice;</span>
+<span class="lineNum">     597 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     598 </span><span class="lineNoCov">          0 :     voice-&gt;reg_pan = pan;</span>
+<span class="lineNum">     599 </span><span class="lineNoCov">          0 :     opl_voice = &amp;voice-&gt;current_instr-&gt;voices[voice-&gt;current_instr_voice];;</span>
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     601 </span><span class="lineNoCov">          0 :     OPL_WriteRegister((OPL_REGS_FEEDBACK + voice-&gt;index) | voice-&gt;array,</span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 :                       opl_voice-&gt;feedback | pan);</span>
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     604 </span>            : 
+<span class="lineNum">     605 </span>            : // Initialize the voice table and freelist
+<a name="606"><span class="lineNum">     606 </span>            : </a>
+<span class="lineNum">     607 </span>            : static void InitVoices(void)
+<span class="lineNum">     608 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     609 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     610 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     611 </span><span class="lineNoCov">          0 :     // Start with an empty free list.</span>
+<span class="lineNum">     612 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 :     voice_free_num = num_opl_voices;</span>
+<span class="lineNum">     614 </span><span class="lineNoCov">          0 :     voice_alloced_num = 0;</span>
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :     // Initialize each voice.</span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; num_opl_voices; ++i)</span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     620 </span><span class="lineNoCov">          0 :         voices[i].index = i % OPL_NUM_VOICES;</span>
+<span class="lineNum">     621 </span><span class="lineNoCov">          0 :         voices[i].op1 = voice_operators[0][i % OPL_NUM_VOICES];</span>
+<span class="lineNum">     622 </span><span class="lineNoCov">          0 :         voices[i].op2 = voice_operators[1][i % OPL_NUM_VOICES];</span>
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 :         voices[i].array = (i / OPL_NUM_VOICES) &lt;&lt; 8;</span>
+<span class="lineNum">     624 </span><span class="lineNoCov">          0 :         voices[i].current_instr = NULL;</span>
+<span class="lineNum">     625 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 :         // Add this voice to the freelist.</span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 :         voice_free_list[i] = &amp;voices[i];</span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     631 </span>            : 
+<span class="lineNum">     632 </span>            : static void SetChannelVolume(opl_channel_data_t *channel, unsigned int volume,
+<span class="lineNum">     633 </span>            :                              boolean clip_start);
+<span class="lineNum">     634 </span>            : 
+<span class="lineNum">     635 </span>            : // Set music volume (0 - 127)
+<a name="636"><span class="lineNum">     636 </span>            : </a>
+<span class="lineNum">     637 </span>            : static void I_OPL_SetMusicVolume(int volume)
+<span class="lineNum">     638 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     639 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">     640 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     641 </span><span class="lineNoCov">          0 :     if (current_music_volume == volume)</span>
+<span class="lineNum">     642 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     643 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     644 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     645 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     646 </span><span class="lineNoCov">          0 :     // Internal state variable.</span>
+<span class="lineNum">     647 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     648 </span><span class="lineNoCov">          0 :     current_music_volume = volume;</span>
+<span class="lineNum">     649 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     650 </span><span class="lineNoCov">          0 :     // Update the volume of all voices.</span>
+<span class="lineNum">     651 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     652 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; MIDI_CHANNELS_PER_TRACK; ++i)</span>
+<span class="lineNum">     653 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     654 </span><span class="lineNoCov">          0 :         if (i == 15)</span>
+<span class="lineNum">     655 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 :             SetChannelVolume(&amp;channels[i], volume, false);</span>
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     658 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     659 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     660 </span><span class="lineNoCov">          0 :             SetChannelVolume(&amp;channels[i], channels[i].volume_base, false);</span>
+<span class="lineNum">     661 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     662 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     663 </span><span class="lineNoCov">          0 : }</span>
+<a name="664"><span class="lineNum">     664 </span>            : </a>
+<span class="lineNum">     665 </span>            : static void VoiceKeyOff(opl_voice_t *voice)
+<span class="lineNum">     666 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     667 </span><span class="lineNoCov">          0 :     OPL_WriteRegister((OPL_REGS_FREQ_2 + voice-&gt;index) | voice-&gt;array,</span>
+<span class="lineNum">     668 </span><span class="lineNoCov">          0 :                       voice-&gt;freq &gt;&gt; 8);</span>
+<span class="lineNum">     669 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     670 </span>            : 
+<a name="671"><span class="lineNum">     671 </span>            : static opl_channel_data_t *TrackChannelForEvent(opl_track_data_t *track,</a>
+<span class="lineNum">     672 </span>            :                                                 midi_event_t *event)
+<span class="lineNum">     673 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     674 </span><span class="lineNoCov">          0 :     unsigned int channel_num = event-&gt;data.channel.channel;</span>
+<span class="lineNum">     675 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     676 </span><span class="lineNoCov">          0 :     // MIDI uses track #9 for percussion, but for MUS it's track #15</span>
+<span class="lineNum">     677 </span><span class="lineNoCov">          0 :     // instead. Because DMX works on MUS data internally, we need to</span>
+<span class="lineNum">     678 </span><span class="lineNoCov">          0 :     // swap back to the MUS version of the channel number.</span>
+<span class="lineNum">     679 </span><span class="lineNoCov">          0 :     if (channel_num == 9)</span>
+<span class="lineNum">     680 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     681 </span><span class="lineNoCov">          0 :         channel_num = 15;</span>
+<span class="lineNum">     682 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     683 </span><span class="lineNoCov">          0 :     else if (channel_num == 15)</span>
+<span class="lineNum">     684 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     685 </span><span class="lineNoCov">          0 :         channel_num = 9;</span>
+<span class="lineNum">     686 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     687 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     688 </span><span class="lineNoCov">          0 :     return &amp;channels[channel_num];</span>
+<span class="lineNum">     689 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     690 </span>            : 
+<span class="lineNum">     691 </span>            : // Get the frequency that we should be using for a voice.
+<a name="692"><span class="lineNum">     692 </span>            : </a>
+<span class="lineNum">     693 </span>            : static void KeyOffEvent(opl_track_data_t *track, midi_event_t *event)
+<span class="lineNum">     694 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     695 </span><span class="lineNoCov">          0 :     opl_channel_data_t *channel;</span>
+<span class="lineNum">     696 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     697 </span><span class="lineNoCov">          0 :     unsigned int key;</span>
+<span class="lineNum">     698 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     699 </span><span class="lineNoCov">          0 : /*</span>
+<span class="lineNum">     700 </span><span class="lineNoCov">          0 :     printf(&quot;note off: channel %i, %i, %i\n&quot;,</span>
+<span class="lineNum">     701 </span><span class="lineNoCov">          0 :            event-&gt;data.channel.channel,</span>
+<span class="lineNum">     702 </span><span class="lineNoCov">          0 :            event-&gt;data.channel.param1,</span>
+<span class="lineNum">     703 </span><span class="lineNoCov">          0 :            event-&gt;data.channel.param2);</span>
+<span class="lineNum">     704 </span><span class="lineNoCov">          0 : */</span>
+<span class="lineNum">     705 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 :     channel = TrackChannelForEvent(track, event);</span>
+<span class="lineNum">     707 </span><span class="lineNoCov">          0 :     key = event-&gt;data.channel.param1;</span>
+<span class="lineNum">     708 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     709 </span><span class="lineNoCov">          0 :     // Turn off voices being used to play this key.</span>
+<span class="lineNum">     710 </span><span class="lineNoCov">          0 :     // If it is a double voice instrument there will be two.</span>
+<span class="lineNum">     711 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     712 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; voice_alloced_num; i++)</span>
+<span class="lineNum">     713 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     714 </span><span class="lineNoCov">          0 :         if (voice_alloced_list[i]-&gt;channel == channel</span>
+<span class="lineNum">     715 </span><span class="lineNoCov">          0 :          &amp;&amp; voice_alloced_list[i]-&gt;key == key)</span>
+<span class="lineNum">     716 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     717 </span><span class="lineNoCov">          0 :             // Finished with this voice now.</span>
+<span class="lineNum">     718 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     719 </span><span class="lineNoCov">          0 :             ReleaseVoice(i);</span>
+<span class="lineNum">     720 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     721 </span><span class="lineNoCov">          0 :             i--;</span>
+<span class="lineNum">     722 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     723 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     724 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     725 </span>            : 
+<span class="lineNum">     726 </span>            : // When all voices are in use, we must discard an existing voice to
+<span class="lineNum">     727 </span>            : // play a new note.  Find and free an existing voice.  The channel
+<span class="lineNum">     728 </span>            : // passed to the function is the channel for the new note to be
+<span class="lineNum">     729 </span>            : // played.
+<a name="730"><span class="lineNum">     730 </span>            : </a>
+<span class="lineNum">     731 </span>            : static void ReplaceExistingVoice(void)
+<span class="lineNum">     732 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     733 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     734 </span><span class="lineNoCov">          0 :     int result;</span>
+<span class="lineNum">     735 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     736 </span><span class="lineNoCov">          0 :     // Check the allocated voices, if we find an instrument that is</span>
+<span class="lineNum">     737 </span><span class="lineNoCov">          0 :     // of a lower priority to the new instrument, discard it.</span>
+<span class="lineNum">     738 </span><span class="lineNoCov">          0 :     // If a voice is being used to play the second voice of an instrument,</span>
+<span class="lineNum">     739 </span><span class="lineNoCov">          0 :     // use that, as second voices are non-essential.</span>
+<span class="lineNum">     740 </span><span class="lineNoCov">          0 :     // Lower numbered MIDI channels implicitly have a higher priority</span>
+<span class="lineNum">     741 </span><span class="lineNoCov">          0 :     // than higher-numbered channels, eg. MIDI channel 1 is never</span>
+<span class="lineNum">     742 </span><span class="lineNoCov">          0 :     // discarded for MIDI channel 2.</span>
+<span class="lineNum">     743 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     744 </span><span class="lineNoCov">          0 :     result = 0;</span>
+<span class="lineNum">     745 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     746 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; voice_alloced_num; i++)</span>
+<span class="lineNum">     747 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     748 </span><span class="lineNoCov">          0 :         if (voice_alloced_list[i]-&gt;current_instr_voice != 0</span>
+<span class="lineNum">     749 </span><span class="lineNoCov">          0 :          || voice_alloced_list[i]-&gt;channel</span>
+<span class="lineNum">     750 </span><span class="lineNoCov">          0 :          &gt;= voice_alloced_list[result]-&gt;channel)</span>
+<span class="lineNum">     751 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     752 </span><span class="lineNoCov">          0 :             result = i;</span>
+<span class="lineNum">     753 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     754 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     755 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     756 </span><span class="lineNoCov">          0 :     ReleaseVoice(result);</span>
+<span class="lineNum">     757 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     758 </span>            : 
+<span class="lineNum">     759 </span>            : // Alternate versions of ReplaceExistingVoice() used when emulating old
+<span class="lineNum">     760 </span>            : // versions of the DMX library used in Doom 1.666, Heretic and Hexen.
+<a name="761"><span class="lineNum">     761 </span>            : </a>
+<span class="lineNum">     762 </span>            : static void ReplaceExistingVoiceDoom1(void)
+<span class="lineNum">     763 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     764 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     765 </span><span class="lineNoCov">          0 :     int result;</span>
+<span class="lineNum">     766 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     767 </span><span class="lineNoCov">          0 :     result = 0;</span>
+<span class="lineNum">     768 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     769 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; voice_alloced_num; i++)</span>
+<span class="lineNum">     770 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     771 </span><span class="lineNoCov">          0 :         if (voice_alloced_list[i]-&gt;channel</span>
+<span class="lineNum">     772 </span><span class="lineNoCov">          0 :           &gt; voice_alloced_list[result]-&gt;channel)</span>
+<span class="lineNum">     773 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     774 </span><span class="lineNoCov">          0 :             result = i;</span>
+<span class="lineNum">     775 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     776 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     777 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     778 </span><span class="lineNoCov">          0 :     ReleaseVoice(result);</span>
+<span class="lineNum">     779 </span><span class="lineNoCov">          0 : }</span>
+<a name="780"><span class="lineNum">     780 </span>            : </a>
+<span class="lineNum">     781 </span>            : static void ReplaceExistingVoiceDoom2(opl_channel_data_t *channel)
+<span class="lineNum">     782 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     783 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     784 </span><span class="lineNoCov">          0 :     int result;</span>
+<span class="lineNum">     785 </span><span class="lineNoCov">          0 :     int priority;</span>
+<span class="lineNum">     786 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     787 </span><span class="lineNoCov">          0 :     result = 0;</span>
+<span class="lineNum">     788 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     789 </span><span class="lineNoCov">          0 :     priority = 0x8000;</span>
+<span class="lineNum">     790 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     791 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; voice_alloced_num - 3; i++)</span>
+<span class="lineNum">     792 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     793 </span><span class="lineNoCov">          0 :         if (voice_alloced_list[i]-&gt;priority &lt; priority</span>
+<span class="lineNum">     794 </span><span class="lineNoCov">          0 :          &amp;&amp; voice_alloced_list[i]-&gt;channel &gt;= channel)</span>
+<span class="lineNum">     795 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     796 </span><span class="lineNoCov">          0 :             priority = voice_alloced_list[i]-&gt;priority;</span>
+<span class="lineNum">     797 </span><span class="lineNoCov">          0 :             result = i;</span>
+<span class="lineNum">     798 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     799 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     800 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     801 </span><span class="lineNoCov">          0 :     ReleaseVoice(result);</span>
+<span class="lineNum">     802 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     803 </span>            : 
+<a name="804"><span class="lineNum">     804 </span>            : </a>
+<span class="lineNum">     805 </span>            : static unsigned int FrequencyForVoice(opl_voice_t *voice)
+<span class="lineNum">     806 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     807 </span><span class="lineNoCov">          0 :     genmidi_voice_t *gm_voice;</span>
+<span class="lineNum">     808 </span><span class="lineNoCov">          0 :     signed int freq_index;</span>
+<span class="lineNum">     809 </span><span class="lineNoCov">          0 :     unsigned int octave;</span>
+<span class="lineNum">     810 </span><span class="lineNoCov">          0 :     unsigned int sub_index;</span>
+<span class="lineNum">     811 </span><span class="lineNoCov">          0 :     signed int note;</span>
+<span class="lineNum">     812 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     813 </span><span class="lineNoCov">          0 :     note = voice-&gt;note;</span>
+<span class="lineNum">     814 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     815 </span><span class="lineNoCov">          0 :     // Apply note offset.</span>
+<span class="lineNum">     816 </span><span class="lineNoCov">          0 :     // Don't apply offset if the instrument is a fixed note instrument.</span>
+<span class="lineNum">     817 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     818 </span><span class="lineNoCov">          0 :     gm_voice = &amp;voice-&gt;current_instr-&gt;voices[voice-&gt;current_instr_voice];</span>
+<span class="lineNum">     819 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     820 </span><span class="lineNoCov">          0 :     if ((SHORT(voice-&gt;current_instr-&gt;flags) &amp; GENMIDI_FLAG_FIXED) == 0)</span>
+<span class="lineNum">     821 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     822 </span><span class="lineNoCov">          0 :         note += (signed short) SHORT(gm_voice-&gt;base_note_offset);</span>
+<span class="lineNum">     823 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     824 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     825 </span><span class="lineNoCov">          0 :     // Avoid possible overflow due to base note offset:</span>
+<span class="lineNum">     826 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     827 </span><span class="lineNoCov">          0 :     while (note &lt; 0)</span>
+<span class="lineNum">     828 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     829 </span><span class="lineNoCov">          0 :         note += 12;</span>
+<span class="lineNum">     830 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     831 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     832 </span><span class="lineNoCov">          0 :     while (note &gt; 95)</span>
+<span class="lineNum">     833 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     834 </span><span class="lineNoCov">          0 :         note -= 12;</span>
+<span class="lineNum">     835 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     836 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     837 </span><span class="lineNoCov">          0 :     freq_index = 64 + 32 * note + voice-&gt;channel-&gt;bend;</span>
+<span class="lineNum">     838 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     839 </span><span class="lineNoCov">          0 :     // If this is the second voice of a double voice instrument, the</span>
+<span class="lineNum">     840 </span><span class="lineNoCov">          0 :     // frequency index can be adjusted by the fine tuning field.</span>
+<span class="lineNum">     841 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     842 </span><span class="lineNoCov">          0 :     if (voice-&gt;current_instr_voice != 0)</span>
+<span class="lineNum">     843 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     844 </span><span class="lineNoCov">          0 :         freq_index += (voice-&gt;current_instr-&gt;fine_tuning / 2) - 64;</span>
+<span class="lineNum">     845 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     846 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     847 </span><span class="lineNoCov">          0 :     if (freq_index &lt; 0)</span>
+<span class="lineNum">     848 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     849 </span><span class="lineNoCov">          0 :         freq_index = 0;</span>
+<span class="lineNum">     850 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     851 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     852 </span><span class="lineNoCov">          0 :     // The first 7 notes use the start of the table, while</span>
+<span class="lineNum">     853 </span><span class="lineNoCov">          0 :     // consecutive notes loop around the latter part.</span>
+<span class="lineNum">     854 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     855 </span><span class="lineNoCov">          0 :     if (freq_index &lt; 284)</span>
+<span class="lineNum">     856 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     857 </span><span class="lineNoCov">          0 :         return frequency_curve[freq_index];</span>
+<span class="lineNum">     858 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     859 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     860 </span><span class="lineNoCov">          0 :     sub_index = (freq_index - 284) % (12 * 32);</span>
+<span class="lineNum">     861 </span><span class="lineNoCov">          0 :     octave = (freq_index - 284) / (12 * 32);</span>
+<span class="lineNum">     862 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     863 </span><span class="lineNoCov">          0 :     // Once the seventh octave is reached, things break down.</span>
+<span class="lineNum">     864 </span><span class="lineNoCov">          0 :     // We can only go up to octave 7 as a maximum anyway (the OPL</span>
+<span class="lineNum">     865 </span><span class="lineNoCov">          0 :     // register only has three bits for octave number), but for the</span>
+<span class="lineNum">     866 </span><span class="lineNoCov">          0 :     // notes in octave 7, the first five bits have octave=7, the</span>
+<span class="lineNum">     867 </span><span class="lineNoCov">          0 :     // following notes have octave=6.  This 7/6 pattern repeats in</span>
+<span class="lineNum">     868 </span><span class="lineNoCov">          0 :     // following octaves (which are technically impossible to</span>
+<span class="lineNum">     869 </span><span class="lineNoCov">          0 :     // represent anyway).</span>
+<span class="lineNum">     870 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     871 </span><span class="lineNoCov">          0 :     if (octave &gt;= 7)</span>
+<span class="lineNum">     872 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     873 </span><span class="lineNoCov">          0 :         octave = 7;</span>
+<span class="lineNum">     874 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     875 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     876 </span><span class="lineNoCov">          0 :     // Calculate the resulting register value to use for the frequency.</span>
+<span class="lineNum">     877 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     878 </span><span class="lineNoCov">          0 :     return frequency_curve[sub_index + 284] | (octave &lt;&lt; 10);</span>
+<span class="lineNum">     879 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     880 </span>            : 
+<span class="lineNum">     881 </span>            : // Update the frequency that a voice is programmed to use.
+<a name="882"><span class="lineNum">     882 </span>            : </a>
+<span class="lineNum">     883 </span>            : static void UpdateVoiceFrequency(opl_voice_t *voice)
+<span class="lineNum">     884 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     885 </span><span class="lineNoCov">          0 :     unsigned int freq;</span>
+<span class="lineNum">     886 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     887 </span><span class="lineNoCov">          0 :     // Calculate the frequency to use for this voice and update it</span>
+<span class="lineNum">     888 </span><span class="lineNoCov">          0 :     // if neccessary.</span>
+<span class="lineNum">     889 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     890 </span><span class="lineNoCov">          0 :     freq = FrequencyForVoice(voice);</span>
+<span class="lineNum">     891 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     892 </span><span class="lineNoCov">          0 :     if (voice-&gt;freq != freq)</span>
+<span class="lineNum">     893 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     894 </span><span class="lineNoCov">          0 :         OPL_WriteRegister((OPL_REGS_FREQ_1 + voice-&gt;index) | voice-&gt;array,</span>
+<span class="lineNum">     895 </span><span class="lineNoCov">          0 :                           freq &amp; 0xff);</span>
+<span class="lineNum">     896 </span><span class="lineNoCov">          0 :         OPL_WriteRegister((OPL_REGS_FREQ_2 + voice-&gt;index) | voice-&gt;array,</span>
+<span class="lineNum">     897 </span><span class="lineNoCov">          0 :                           (freq &gt;&gt; 8) | 0x20);</span>
+<span class="lineNum">     898 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     899 </span><span class="lineNoCov">          0 :         voice-&gt;freq = freq;</span>
+<span class="lineNum">     900 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     901 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     902 </span>            : 
+<span class="lineNum">     903 </span>            : // Program a single voice for an instrument.  For a double voice
+<span class="lineNum">     904 </span>            : // instrument (GENMIDI_FLAG_2VOICE), this is called twice for each
+<span class="lineNum">     905 </span>            : // key on event.
+<span class="lineNum">     906 </span>            : 
+<span class="lineNum">     907 </span>            : static void VoiceKeyOn(opl_channel_data_t *channel,
+<span class="lineNum">     908 </span>            :                        genmidi_instr_t *instrument,
+<span class="lineNum">     909 </span>            :                        unsigned int instrument_voice,
+<span class="lineNum">     910 </span>            :                        unsigned int note,
+<a name="911"><span class="lineNum">     911 </span>            :                        unsigned int key,</a>
+<span class="lineNum">     912 </span>            :                        unsigned int volume)
+<span class="lineNum">     913 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     914 </span><span class="lineNoCov">          0 :     opl_voice_t *voice;</span>
+<span class="lineNum">     915 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     916 </span><span class="lineNoCov">          0 :     if (!opl_opl3mode &amp;&amp; opl_drv_ver == opl_doom1_1_666)</span>
+<span class="lineNum">     917 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     918 </span><span class="lineNoCov">          0 :         instrument_voice = 0;</span>
+<span class="lineNum">     919 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     920 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     921 </span><span class="lineNoCov">          0 :     // Find a voice to use for this new note.</span>
+<span class="lineNum">     922 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     923 </span><span class="lineNoCov">          0 :     voice = GetFreeVoice();</span>
+<span class="lineNum">     924 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     925 </span><span class="lineNoCov">          0 :     if (voice == NULL)</span>
+<span class="lineNum">     926 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     927 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     928 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     929 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     930 </span><span class="lineNoCov">          0 :     voice-&gt;channel = channel;</span>
+<span class="lineNum">     931 </span><span class="lineNoCov">          0 :     voice-&gt;key = key;</span>
+<span class="lineNum">     932 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     933 </span><span class="lineNoCov">          0 :     // Work out the note to use.  This is normally the same as</span>
+<span class="lineNum">     934 </span><span class="lineNoCov">          0 :     // the key, unless it is a fixed pitch instrument.</span>
+<span class="lineNum">     935 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     936 </span><span class="lineNoCov">          0 :     if ((SHORT(instrument-&gt;flags) &amp; GENMIDI_FLAG_FIXED) != 0)</span>
+<span class="lineNum">     937 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     938 </span><span class="lineNoCov">          0 :         voice-&gt;note = instrument-&gt;fixed_note;</span>
+<span class="lineNum">     939 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     940 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     941 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     942 </span><span class="lineNoCov">          0 :         voice-&gt;note = note;</span>
+<span class="lineNum">     943 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     944 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     945 </span><span class="lineNoCov">          0 :     voice-&gt;reg_pan = channel-&gt;pan;</span>
+<span class="lineNum">     946 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     947 </span><span class="lineNoCov">          0 :     // Program the voice with the instrument data:</span>
+<span class="lineNum">     948 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     949 </span><span class="lineNoCov">          0 :     SetVoiceInstrument(voice, instrument, instrument_voice);</span>
+<span class="lineNum">     950 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     951 </span><span class="lineNoCov">          0 :     // Set the volume level.</span>
+<span class="lineNum">     952 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     953 </span><span class="lineNoCov">          0 :     SetVoiceVolume(voice, volume);</span>
+<span class="lineNum">     954 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     955 </span><span class="lineNoCov">          0 :     // Write the frequency value to turn the note on.</span>
+<span class="lineNum">     956 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     957 </span><span class="lineNoCov">          0 :     voice-&gt;freq = 0;</span>
+<span class="lineNum">     958 </span><span class="lineNoCov">          0 :     UpdateVoiceFrequency(voice);</span>
+<span class="lineNum">     959 </span><span class="lineNoCov">          0 : }</span>
+<a name="960"><span class="lineNum">     960 </span>            : </a>
+<span class="lineNum">     961 </span>            : static void KeyOnEvent(opl_track_data_t *track, midi_event_t *event)
+<span class="lineNum">     962 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     963 </span><span class="lineNoCov">          0 :     genmidi_instr_t *instrument;</span>
+<span class="lineNum">     964 </span><span class="lineNoCov">          0 :     opl_channel_data_t *channel;</span>
+<span class="lineNum">     965 </span><span class="lineNoCov">          0 :     unsigned int note, key, volume, voicenum;</span>
+<span class="lineNum">     966 </span><span class="lineNoCov">          0 :     boolean double_voice;</span>
+<span class="lineNum">     967 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     968 </span><span class="lineNoCov">          0 : /*</span>
+<span class="lineNum">     969 </span><span class="lineNoCov">          0 :     printf(&quot;note on: channel %i, %i, %i\n&quot;,</span>
+<span class="lineNum">     970 </span><span class="lineNoCov">          0 :            event-&gt;data.channel.channel,</span>
+<span class="lineNum">     971 </span><span class="lineNoCov">          0 :            event-&gt;data.channel.param1,</span>
+<span class="lineNum">     972 </span><span class="lineNoCov">          0 :            event-&gt;data.channel.param2);</span>
+<span class="lineNum">     973 </span><span class="lineNoCov">          0 : */</span>
+<span class="lineNum">     974 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     975 </span><span class="lineNoCov">          0 :     note = event-&gt;data.channel.param1;</span>
+<span class="lineNum">     976 </span><span class="lineNoCov">          0 :     key = event-&gt;data.channel.param1;</span>
+<span class="lineNum">     977 </span><span class="lineNoCov">          0 :     volume = event-&gt;data.channel.param2;</span>
+<span class="lineNum">     978 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     979 </span><span class="lineNoCov">          0 :     // A volume of zero means key off. Some MIDI tracks, eg. the ones</span>
+<span class="lineNum">     980 </span><span class="lineNoCov">          0 :     // in AV.wad, use a second key on with a volume of zero to mean</span>
+<span class="lineNum">     981 </span><span class="lineNoCov">          0 :     // key off.</span>
+<span class="lineNum">     982 </span><span class="lineNoCov">          0 :     if (volume &lt;= 0)</span>
+<span class="lineNum">     983 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     984 </span><span class="lineNoCov">          0 :         KeyOffEvent(track, event);</span>
+<span class="lineNum">     985 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     986 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     987 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     988 </span><span class="lineNoCov">          0 :     // The channel.</span>
+<span class="lineNum">     989 </span><span class="lineNoCov">          0 :     channel = TrackChannelForEvent(track, event);</span>
+<span class="lineNum">     990 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     991 </span><span class="lineNoCov">          0 :     // Percussion channel is treated differently.</span>
+<span class="lineNum">     992 </span><span class="lineNoCov">          0 :     if (event-&gt;data.channel.channel == 9)</span>
+<span class="lineNum">     993 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     994 </span><span class="lineNoCov">          0 :         if (key &lt; 35 || key &gt; 81)</span>
+<span class="lineNum">     995 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     996 </span><span class="lineNoCov">          0 :             return;</span>
+<span class="lineNum">     997 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     998 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     999 </span><span class="lineNoCov">          0 :         instrument = &amp;percussion_instrs[key - 35];</span>
+<span class="lineNum">    1000 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1001 </span><span class="lineNoCov">          0 :         last_perc[last_perc_count] = key;</span>
+<span class="lineNum">    1002 </span><span class="lineNoCov">          0 :         last_perc_count = (last_perc_count + 1) % PERCUSSION_LOG_LEN;</span>
+<span class="lineNum">    1003 </span><span class="lineNoCov">          0 :         note = 60;</span>
+<span class="lineNum">    1004 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1005 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">    1006 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1007 </span><span class="lineNoCov">          0 :         instrument = channel-&gt;instrument;</span>
+<span class="lineNum">    1008 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1009 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1010 </span><span class="lineNoCov">          0 :     double_voice = (SHORT(instrument-&gt;flags) &amp; GENMIDI_FLAG_2VOICE) != 0;</span>
+<span class="lineNum">    1011 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1012 </span><span class="lineNoCov">          0 :     switch (opl_drv_ver)</span>
+<span class="lineNum">    1013 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1014 </span><span class="lineNoCov">          0 :         case opl_doom1_1_666:</span>
+<span class="lineNum">    1015 </span><span class="lineNoCov">          0 :             voicenum = double_voice + 1;</span>
+<span class="lineNum">    1016 </span><span class="lineNoCov">          0 :             if (!opl_opl3mode)</span>
+<span class="lineNum">    1017 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1018 </span><span class="lineNoCov">          0 :                 voicenum = 1;</span>
+<span class="lineNum">    1019 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1020 </span><span class="lineNoCov">          0 :             while (voice_alloced_num &gt; num_opl_voices - voicenum)</span>
+<span class="lineNum">    1021 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1022 </span><span class="lineNoCov">          0 :                 ReplaceExistingVoiceDoom1();</span>
+<span class="lineNum">    1023 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1024 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1025 </span><span class="lineNoCov">          0 :             // Find and program a voice for this instrument.  If this</span>
+<span class="lineNum">    1026 </span><span class="lineNoCov">          0 :             // is a double voice instrument, we must do this twice.</span>
+<span class="lineNum">    1027 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1028 </span><span class="lineNoCov">          0 :             if (double_voice)</span>
+<span class="lineNum">    1029 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1030 </span><span class="lineNoCov">          0 :                 VoiceKeyOn(channel, instrument, 1, note, key, volume);</span>
+<span class="lineNum">    1031 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1032 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1033 </span><span class="lineNoCov">          0 :             VoiceKeyOn(channel, instrument, 0, note, key, volume);</span>
+<span class="lineNum">    1034 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1035 </span><span class="lineNoCov">          0 :         case opl_doom2_1_666:</span>
+<span class="lineNum">    1036 </span><span class="lineNoCov">          0 :             if (voice_alloced_num == num_opl_voices)</span>
+<span class="lineNum">    1037 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1038 </span><span class="lineNoCov">          0 :                 ReplaceExistingVoiceDoom2(channel);</span>
+<span class="lineNum">    1039 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1040 </span><span class="lineNoCov">          0 :             if (voice_alloced_num == num_opl_voices - 1 &amp;&amp; double_voice)</span>
+<span class="lineNum">    1041 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1042 </span><span class="lineNoCov">          0 :                 ReplaceExistingVoiceDoom2(channel);</span>
+<span class="lineNum">    1043 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1044 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1045 </span><span class="lineNoCov">          0 :             // Find and program a voice for this instrument.  If this</span>
+<span class="lineNum">    1046 </span><span class="lineNoCov">          0 :             // is a double voice instrument, we must do this twice.</span>
+<span class="lineNum">    1047 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1048 </span><span class="lineNoCov">          0 :             if (double_voice)</span>
+<span class="lineNum">    1049 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1050 </span><span class="lineNoCov">          0 :                 VoiceKeyOn(channel, instrument, 1, note, key, volume);</span>
+<span class="lineNum">    1051 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1052 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1053 </span><span class="lineNoCov">          0 :             VoiceKeyOn(channel, instrument, 0, note, key, volume);</span>
+<span class="lineNum">    1054 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1055 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">    1056 </span><span class="lineNoCov">          0 :         case opl_doom_1_9:</span>
+<span class="lineNum">    1057 </span><span class="lineNoCov">          0 :             if (voice_free_num == 0)</span>
+<span class="lineNum">    1058 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1059 </span><span class="lineNoCov">          0 :                 ReplaceExistingVoice();</span>
+<span class="lineNum">    1060 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1061 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1062 </span><span class="lineNoCov">          0 :             // Find and program a voice for this instrument.  If this</span>
+<span class="lineNum">    1063 </span><span class="lineNoCov">          0 :             // is a double voice instrument, we must do this twice.</span>
+<span class="lineNum">    1064 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1065 </span><span class="lineNoCov">          0 :             VoiceKeyOn(channel, instrument, 0, note, key, volume);</span>
+<span class="lineNum">    1066 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1067 </span><span class="lineNoCov">          0 :             if (double_voice)</span>
+<span class="lineNum">    1068 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1069 </span><span class="lineNoCov">          0 :                 VoiceKeyOn(channel, instrument, 1, note, key, volume);</span>
+<span class="lineNum">    1070 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1071 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1072 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1073 </span><span class="lineNoCov">          0 : }</span>
+<a name="1074"><span class="lineNum">    1074 </span>            : </a>
+<span class="lineNum">    1075 </span>            : static void ProgramChangeEvent(opl_track_data_t *track, midi_event_t *event)
+<span class="lineNum">    1076 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1077 </span><span class="lineNoCov">          0 :     opl_channel_data_t *channel;</span>
+<span class="lineNum">    1078 </span><span class="lineNoCov">          0 :     int instrument;</span>
+<span class="lineNum">    1079 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1080 </span><span class="lineNoCov">          0 :     // Set the instrument used on this channel.</span>
+<span class="lineNum">    1081 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1082 </span><span class="lineNoCov">          0 :     channel = TrackChannelForEvent(track, event);</span>
+<span class="lineNum">    1083 </span><span class="lineNoCov">          0 :     instrument = event-&gt;data.channel.param1;</span>
+<span class="lineNum">    1084 </span><span class="lineNoCov">          0 :     channel-&gt;instrument = &amp;main_instrs[instrument];</span>
+<span class="lineNum">    1085 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1086 </span><span class="lineNoCov">          0 :     // TODO: Look through existing voices that are turned on on this</span>
+<span class="lineNum">    1087 </span><span class="lineNoCov">          0 :     // channel, and change the instrument.</span>
+<span class="lineNum">    1088 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1089 </span>            : 
+<a name="1090"><span class="lineNum">    1090 </span>            : static void SetChannelVolume(opl_channel_data_t *channel, unsigned int volume,</a>
+<span class="lineNum">    1091 </span>            :                              boolean clip_start)
+<span class="lineNum">    1092 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1093 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">    1094 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1095 </span><span class="lineNoCov">          0 :     channel-&gt;volume_base = volume;</span>
+<span class="lineNum">    1096 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1097 </span><span class="lineNoCov">          0 :     if (volume &gt; current_music_volume)</span>
+<span class="lineNum">    1098 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1099 </span><span class="lineNoCov">          0 :         volume = current_music_volume;</span>
+<span class="lineNum">    1100 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1101 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1102 </span><span class="lineNoCov">          0 :     if (clip_start &amp;&amp; volume &gt; start_music_volume)</span>
+<span class="lineNum">    1103 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1104 </span><span class="lineNoCov">          0 :         volume = start_music_volume;</span>
+<span class="lineNum">    1105 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1106 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1107 </span><span class="lineNoCov">          0 :     channel-&gt;volume = volume;</span>
+<span class="lineNum">    1108 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1109 </span><span class="lineNoCov">          0 :     // Update all voices that this channel is using.</span>
+<span class="lineNum">    1110 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1111 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; num_opl_voices; ++i)</span>
+<span class="lineNum">    1112 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1113 </span><span class="lineNoCov">          0 :         if (voices[i].channel == channel)</span>
+<span class="lineNum">    1114 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1115 </span><span class="lineNoCov">          0 :             SetVoiceVolume(&amp;voices[i], voices[i].note_volume);</span>
+<span class="lineNum">    1116 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1117 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1118 </span><span class="lineNoCov">          0 : }</span>
+<a name="1119"><span class="lineNum">    1119 </span>            : </a>
+<span class="lineNum">    1120 </span>            : static void SetChannelPan(opl_channel_data_t *channel, unsigned int pan)
+<span class="lineNum">    1121 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1122 </span><span class="lineNoCov">          0 :     unsigned int reg_pan;</span>
+<span class="lineNum">    1123 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">    1124 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1125 </span><span class="lineNoCov">          0 :     // The DMX library has the stereo channels backwards, maybe because</span>
+<span class="lineNum">    1126 </span><span class="lineNoCov">          0 :     // Paul Radek had a Soundblaster card with the channels reversed, or</span>
+<span class="lineNum">    1127 </span><span class="lineNoCov">          0 :     // perhaps it was just a bug in the OPL3 support that was never</span>
+<span class="lineNum">    1128 </span><span class="lineNoCov">          0 :     // finished. By default we preserve this bug, but we also provide a</span>
+<span class="lineNum">    1129 </span><span class="lineNoCov">          0 :     // secret DMXOPTION to fix it.</span>
+<span class="lineNum">    1130 </span><span class="lineNoCov">          0 :     if (opl_stereo_correct)</span>
+<span class="lineNum">    1131 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1132 </span><span class="lineNoCov">          0 :         pan = 144 - pan;</span>
+<span class="lineNum">    1133 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1134 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1135 </span><span class="lineNoCov">          0 :     if (opl_opl3mode)</span>
+<span class="lineNum">    1136 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1137 </span><span class="lineNoCov">          0 :         if (pan &gt;= 96)</span>
+<span class="lineNum">    1138 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1139 </span><span class="lineNoCov">          0 :             reg_pan = 0x10;</span>
+<span class="lineNum">    1140 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1141 </span><span class="lineNoCov">          0 :         else if (pan &lt;= 48)</span>
+<span class="lineNum">    1142 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1143 </span><span class="lineNoCov">          0 :             reg_pan = 0x20;</span>
+<span class="lineNum">    1144 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1145 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">    1146 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1147 </span><span class="lineNoCov">          0 :             reg_pan = 0x30;</span>
+<span class="lineNum">    1148 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1149 </span><span class="lineNoCov">          0 :         if (channel-&gt;pan != reg_pan)</span>
+<span class="lineNum">    1150 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1151 </span><span class="lineNoCov">          0 :             channel-&gt;pan = reg_pan;</span>
+<span class="lineNum">    1152 </span><span class="lineNoCov">          0 :             for (i = 0; i &lt; num_opl_voices; i++)</span>
+<span class="lineNum">    1153 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1154 </span><span class="lineNoCov">          0 :                 if (voices[i].channel == channel)</span>
+<span class="lineNum">    1155 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">    1156 </span><span class="lineNoCov">          0 :                     SetVoicePan(&amp;voices[i], reg_pan);</span>
+<span class="lineNum">    1157 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">    1158 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1159 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1160 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1161 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1162 </span>            : 
+<a name="1163"><span class="lineNum">    1163 </span>            : // Handler for the MIDI_CONTROLLER_ALL_NOTES_OFF channel event.</a>
+<span class="lineNum">    1164 </span>            : static void AllNotesOff(opl_channel_data_t *channel, unsigned int param)
+<span class="lineNum">    1165 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1166 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">    1167 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1168 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; voice_alloced_num; i++)</span>
+<span class="lineNum">    1169 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1170 </span><span class="lineNoCov">          0 :         if (voice_alloced_list[i]-&gt;channel == channel)</span>
+<span class="lineNum">    1171 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1172 </span><span class="lineNoCov">          0 :             // Finished with this voice now.</span>
+<span class="lineNum">    1173 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1174 </span><span class="lineNoCov">          0 :             ReleaseVoice(i);</span>
+<span class="lineNum">    1175 </span><span class="lineNoCov">          0 :             </span>
+<span class="lineNum">    1176 </span><span class="lineNoCov">          0 :             i--;</span>
+<span class="lineNum">    1177 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1178 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1179 </span><span class="lineNoCov">          0 : }</span>
+<a name="1180"><span class="lineNum">    1180 </span>            : </a>
+<span class="lineNum">    1181 </span>            : static void ControllerEvent(opl_track_data_t *track, midi_event_t *event)
+<span class="lineNum">    1182 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1183 </span><span class="lineNoCov">          0 :     opl_channel_data_t *channel;</span>
+<span class="lineNum">    1184 </span><span class="lineNoCov">          0 :     unsigned int controller;</span>
+<span class="lineNum">    1185 </span><span class="lineNoCov">          0 :     unsigned int param;</span>
+<span class="lineNum">    1186 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1187 </span><span class="lineNoCov">          0 : /*</span>
+<span class="lineNum">    1188 </span><span class="lineNoCov">          0 :     printf(&quot;change controller: channel %i, %i, %i\n&quot;,</span>
+<span class="lineNum">    1189 </span><span class="lineNoCov">          0 :            event-&gt;data.channel.channel,</span>
+<span class="lineNum">    1190 </span><span class="lineNoCov">          0 :            event-&gt;data.channel.param1,</span>
+<span class="lineNum">    1191 </span><span class="lineNoCov">          0 :            event-&gt;data.channel.param2);</span>
+<span class="lineNum">    1192 </span><span class="lineNoCov">          0 : */</span>
+<span class="lineNum">    1193 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1194 </span><span class="lineNoCov">          0 :     channel = TrackChannelForEvent(track, event);</span>
+<span class="lineNum">    1195 </span><span class="lineNoCov">          0 :     controller = event-&gt;data.channel.param1;</span>
+<span class="lineNum">    1196 </span><span class="lineNoCov">          0 :     param = event-&gt;data.channel.param2;</span>
+<span class="lineNum">    1197 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1198 </span><span class="lineNoCov">          0 :     switch (controller)</span>
+<span class="lineNum">    1199 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1200 </span><span class="lineNoCov">          0 :         case MIDI_CONTROLLER_MAIN_VOLUME:</span>
+<span class="lineNum">    1201 </span><span class="lineNoCov">          0 :             SetChannelVolume(channel, param, true);</span>
+<span class="lineNum">    1202 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1203 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1204 </span><span class="lineNoCov">          0 :         case MIDI_CONTROLLER_PAN:</span>
+<span class="lineNum">    1205 </span><span class="lineNoCov">          0 :             SetChannelPan(channel, param);</span>
+<span class="lineNum">    1206 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1207 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1208 </span><span class="lineNoCov">          0 :         case MIDI_CONTROLLER_ALL_NOTES_OFF:</span>
+<span class="lineNum">    1209 </span><span class="lineNoCov">          0 :             AllNotesOff(channel, param);</span>
+<span class="lineNum">    1210 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1211 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1212 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">    1213 </span>            : #ifdef OPL_MIDI_DEBUG
+<span class="lineNum">    1214 </span>            :             fprintf(stderr, &quot;Unknown MIDI controller type: %u\n&quot;, controller);
+<span class="lineNum">    1215 </span>            : #endif
+<span class="lineNum">    1216 </span>            :             break;
+<span class="lineNum">    1217 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1218 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1219 </span>            : 
+<span class="lineNum">    1220 </span>            : // Process a pitch bend event.
+<a name="1221"><span class="lineNum">    1221 </span>            : </a>
+<span class="lineNum">    1222 </span>            : static void PitchBendEvent(opl_track_data_t *track, midi_event_t *event)
+<span class="lineNum">    1223 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1224 </span><span class="lineNoCov">          0 :     opl_channel_data_t *channel;</span>
+<span class="lineNum">    1225 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">    1226 </span><span class="lineNoCov">          0 :     opl_voice_t *voice_updated_list[OPL_NUM_VOICES * 2];</span>
+<span class="lineNum">    1227 </span><span class="lineNoCov">          0 :     unsigned int voice_updated_num = 0;</span>
+<span class="lineNum">    1228 </span><span class="lineNoCov">          0 :     opl_voice_t *voice_not_updated_list[OPL_NUM_VOICES * 2];</span>
+<span class="lineNum">    1229 </span><span class="lineNoCov">          0 :     unsigned int voice_not_updated_num = 0;</span>
+<span class="lineNum">    1230 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1231 </span><span class="lineNoCov">          0 :     // Update the channel bend value.  Only the MSB of the pitch bend</span>
+<span class="lineNum">    1232 </span><span class="lineNoCov">          0 :     // value is considered: this is what Doom does.</span>
+<span class="lineNum">    1233 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1234 </span><span class="lineNoCov">          0 :     channel = TrackChannelForEvent(track, event);</span>
+<span class="lineNum">    1235 </span><span class="lineNoCov">          0 :     channel-&gt;bend = event-&gt;data.channel.param2 - 64;</span>
+<span class="lineNum">    1236 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1237 </span><span class="lineNoCov">          0 :     // Update all voices for this channel.</span>
+<span class="lineNum">    1238 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1239 </span><span class="lineNoCov">          0 :         for (i = 0; i &lt; voice_alloced_num; ++i)</span>
+<span class="lineNum">    1240 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1241 </span><span class="lineNoCov">          0 :         if (voice_alloced_list[i]-&gt;channel == channel)</span>
+<span class="lineNum">    1242 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1243 </span><span class="lineNoCov">          0 :             UpdateVoiceFrequency(voice_alloced_list[i]);</span>
+<span class="lineNum">    1244 </span><span class="lineNoCov">          0 :             voice_updated_list[voice_updated_num++] = voice_alloced_list[i];</span>
+<span class="lineNum">    1245 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1246 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">    1247 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1248 </span><span class="lineNoCov">          0 :             voice_not_updated_list[voice_not_updated_num++] =</span>
+<span class="lineNum">    1249 </span><span class="lineNoCov">          0 :             voice_alloced_list[i];</span>
+<span class="lineNum">    1250 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1251 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1252 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1253 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; voice_not_updated_num; i++)</span>
+<span class="lineNum">    1254 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1255 </span><span class="lineNoCov">          0 :         voice_alloced_list[i] = voice_not_updated_list[i];</span>
+<span class="lineNum">    1256 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1257 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1258 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; voice_updated_num; i++)</span>
+<span class="lineNum">    1259 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1260 </span><span class="lineNoCov">          0 :         voice_alloced_list[i + voice_not_updated_num] = voice_updated_list[i];</span>
+<span class="lineNum">    1261 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1262 </span><span class="lineNoCov">          0 : }</span>
+<a name="1263"><span class="lineNum">    1263 </span>            : </a>
+<span class="lineNum">    1264 </span>            : static void MetaSetTempo(unsigned int tempo)
+<span class="lineNum">    1265 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1266 </span><span class="lineNoCov">          0 :     OPL_AdjustCallbacks((float) us_per_beat / tempo);</span>
+<span class="lineNum">    1267 </span><span class="lineNoCov">          0 :     us_per_beat = tempo;</span>
+<span class="lineNum">    1268 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1269 </span>            : 
+<span class="lineNum">    1270 </span>            : // Process a meta event.
+<a name="1271"><span class="lineNum">    1271 </span>            : </a>
+<span class="lineNum">    1272 </span>            : static void MetaEvent(opl_track_data_t *track, midi_event_t *event)
+<span class="lineNum">    1273 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1274 </span><span class="lineNoCov">          0 :     byte *data = event-&gt;data.meta.data;</span>
+<span class="lineNum">    1275 </span><span class="lineNoCov">          0 :     unsigned int data_len = event-&gt;data.meta.length;</span>
+<span class="lineNum">    1276 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1277 </span><span class="lineNoCov">          0 :     switch (event-&gt;data.meta.type)</span>
+<span class="lineNum">    1278 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1279 </span><span class="lineNoCov">          0 :         // Things we can just ignore.</span>
+<span class="lineNum">    1280 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1281 </span><span class="lineNoCov">          0 :         case MIDI_META_SEQUENCE_NUMBER:</span>
+<span class="lineNum">    1282 </span><span class="lineNoCov">          0 :         case MIDI_META_TEXT:</span>
+<span class="lineNum">    1283 </span><span class="lineNoCov">          0 :         case MIDI_META_COPYRIGHT:</span>
+<span class="lineNum">    1284 </span><span class="lineNoCov">          0 :         case MIDI_META_TRACK_NAME:</span>
+<span class="lineNum">    1285 </span><span class="lineNoCov">          0 :         case MIDI_META_INSTR_NAME:</span>
+<span class="lineNum">    1286 </span><span class="lineNoCov">          0 :         case MIDI_META_LYRICS:</span>
+<span class="lineNum">    1287 </span><span class="lineNoCov">          0 :         case MIDI_META_MARKER:</span>
+<span class="lineNum">    1288 </span><span class="lineNoCov">          0 :         case MIDI_META_CUE_POINT:</span>
+<span class="lineNum">    1289 </span><span class="lineNoCov">          0 :         case MIDI_META_SEQUENCER_SPECIFIC:</span>
+<span class="lineNum">    1290 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1291 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1292 </span><span class="lineNoCov">          0 :         case MIDI_META_SET_TEMPO:</span>
+<span class="lineNum">    1293 </span><span class="lineNoCov">          0 :             if (data_len == 3)</span>
+<span class="lineNum">    1294 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1295 </span><span class="lineNoCov">          0 :                 MetaSetTempo((data[0] &lt;&lt; 16) | (data[1] &lt;&lt; 8) | data[2]);</span>
+<span class="lineNum">    1296 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1297 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1298 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1299 </span><span class="lineNoCov">          0 :         // End of track - actually handled when we run out of events</span>
+<span class="lineNum">    1300 </span><span class="lineNoCov">          0 :         // in the track, see below.</span>
+<span class="lineNum">    1301 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1302 </span><span class="lineNoCov">          0 :         case MIDI_META_END_OF_TRACK:</span>
+<span class="lineNum">    1303 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1304 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1305 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">    1306 </span>            : #ifdef OPL_MIDI_DEBUG
+<span class="lineNum">    1307 </span>            :             fprintf(stderr, &quot;Unknown MIDI meta event type: %u\n&quot;,
+<span class="lineNum">    1308 </span>            :                             event-&gt;data.meta.type);
+<span class="lineNum">    1309 </span>            : #endif
+<span class="lineNum">    1310 </span>            :             break;
+<span class="lineNum">    1311 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1312 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1313 </span>            : 
+<span class="lineNum">    1314 </span>            : // Process a MIDI event from a track.
+<a name="1315"><span class="lineNum">    1315 </span>            : </a>
+<span class="lineNum">    1316 </span>            : static void ProcessEvent(opl_track_data_t *track, midi_event_t *event)
+<span class="lineNum">    1317 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1318 </span><span class="lineNoCov">          0 :     switch (event-&gt;event_type)</span>
+<span class="lineNum">    1319 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1320 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_NOTE_OFF:</span>
+<span class="lineNum">    1321 </span><span class="lineNoCov">          0 :             KeyOffEvent(track, event);</span>
+<span class="lineNum">    1322 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1323 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1324 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_NOTE_ON:</span>
+<span class="lineNum">    1325 </span><span class="lineNoCov">          0 :             KeyOnEvent(track, event);</span>
+<span class="lineNum">    1326 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1327 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1328 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_CONTROLLER:</span>
+<span class="lineNum">    1329 </span><span class="lineNoCov">          0 :             ControllerEvent(track, event);</span>
+<span class="lineNum">    1330 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1331 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1332 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_PROGRAM_CHANGE:</span>
+<span class="lineNum">    1333 </span><span class="lineNoCov">          0 :             ProgramChangeEvent(track, event);</span>
+<span class="lineNum">    1334 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1335 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1336 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_PITCH_BEND:</span>
+<span class="lineNum">    1337 </span><span class="lineNoCov">          0 :             PitchBendEvent(track, event);</span>
+<span class="lineNum">    1338 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1339 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1340 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_META:</span>
+<span class="lineNum">    1341 </span><span class="lineNoCov">          0 :             MetaEvent(track, event);</span>
+<span class="lineNum">    1342 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1343 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1344 </span><span class="lineNoCov">          0 :         // SysEx events can be ignored.</span>
+<span class="lineNum">    1345 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1346 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_SYSEX:</span>
+<span class="lineNum">    1347 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_SYSEX_SPLIT:</span>
+<span class="lineNum">    1348 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1349 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1350 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">    1351 </span>            : #ifdef OPL_MIDI_DEBUG
+<span class="lineNum">    1352 </span>            :             fprintf(stderr, &quot;Unknown MIDI event type %i\n&quot;, event-&gt;event_type);
+<span class="lineNum">    1353 </span>            : #endif
+<span class="lineNum">    1354 </span>            :             break;
+<span class="lineNum">    1355 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1356 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1357 </span>            : 
+<span class="lineNum">    1358 </span>            : static void ScheduleTrack(opl_track_data_t *track);
+<span class="lineNum">    1359 </span>            : static void InitChannel(opl_channel_data_t *channel);
+<span class="lineNum">    1360 </span>            : 
+<span class="lineNum">    1361 </span>            : // Restart a song from the beginning.
+<a name="1362"><span class="lineNum">    1362 </span>            : </a>
+<span class="lineNum">    1363 </span>            : static void RestartSong(void *unused)
+<span class="lineNum">    1364 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1365 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">    1366 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1367 </span><span class="lineNoCov">          0 :     running_tracks = num_tracks;</span>
+<span class="lineNum">    1368 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1369 </span><span class="lineNoCov">          0 :     start_music_volume = current_music_volume;</span>
+<span class="lineNum">    1370 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1371 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; num_tracks; ++i)</span>
+<span class="lineNum">    1372 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1373 </span><span class="lineNoCov">          0 :         MIDI_RestartIterator(tracks[i].iter);</span>
+<span class="lineNum">    1374 </span><span class="lineNoCov">          0 :         ScheduleTrack(&amp;tracks[i]);</span>
+<span class="lineNum">    1375 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1376 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1377 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; MIDI_CHANNELS_PER_TRACK; ++i)</span>
+<span class="lineNum">    1378 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1379 </span><span class="lineNoCov">          0 :         InitChannel(&amp;channels[i]);</span>
+<span class="lineNum">    1380 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1381 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1382 </span>            : 
+<span class="lineNum">    1383 </span>            : // Callback function invoked when another event needs to be read from
+<span class="lineNum">    1384 </span>            : // a track.
+<a name="1385"><span class="lineNum">    1385 </span>            : </a>
+<span class="lineNum">    1386 </span>            : static void TrackTimerCallback(void *arg)
+<span class="lineNum">    1387 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1388 </span><span class="lineNoCov">          0 :     opl_track_data_t *track = arg;</span>
+<span class="lineNum">    1389 </span><span class="lineNoCov">          0 :     midi_event_t *event;</span>
+<span class="lineNum">    1390 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1391 </span><span class="lineNoCov">          0 :     // Get the next event and process it.</span>
+<span class="lineNum">    1392 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1393 </span><span class="lineNoCov">          0 :     if (!MIDI_GetNextEvent(track-&gt;iter, &amp;event))</span>
+<span class="lineNum">    1394 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1395 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1396 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1397 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1398 </span><span class="lineNoCov">          0 :     ProcessEvent(track, event);</span>
+<span class="lineNum">    1399 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1400 </span><span class="lineNoCov">          0 :     // End of track?</span>
+<span class="lineNum">    1401 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1402 </span><span class="lineNoCov">          0 :     if (event-&gt;event_type == MIDI_EVENT_META</span>
+<span class="lineNum">    1403 </span><span class="lineNoCov">          0 :      &amp;&amp; event-&gt;data.meta.type == MIDI_META_END_OF_TRACK)</span>
+<span class="lineNum">    1404 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1405 </span><span class="lineNoCov">          0 :         --running_tracks;</span>
+<span class="lineNum">    1406 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1407 </span><span class="lineNoCov">          0 :         // When all tracks have finished, restart the song.</span>
+<span class="lineNum">    1408 </span><span class="lineNoCov">          0 :         // Don't restart the song immediately, but wait for 5ms</span>
+<span class="lineNum">    1409 </span><span class="lineNoCov">          0 :         // before triggering a restart.  Otherwise it is possible</span>
+<span class="lineNum">    1410 </span><span class="lineNoCov">          0 :         // to construct an empty MIDI file that causes the game</span>
+<span class="lineNum">    1411 </span><span class="lineNoCov">          0 :         // to lock up in an infinite loop. (5ms should be short</span>
+<span class="lineNum">    1412 </span><span class="lineNoCov">          0 :         // enough not to be noticeable by the listener).</span>
+<span class="lineNum">    1413 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1414 </span><span class="lineNoCov">          0 :         if (running_tracks &lt;= 0 &amp;&amp; song_looping)</span>
+<span class="lineNum">    1415 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1416 </span><span class="lineNoCov">          0 :             OPL_SetCallback(5000, RestartSong, NULL);</span>
+<span class="lineNum">    1417 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1418 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1419 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1420 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1421 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1422 </span><span class="lineNoCov">          0 :     // Reschedule the callback for the next event in the track.</span>
+<span class="lineNum">    1423 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1424 </span><span class="lineNoCov">          0 :     ScheduleTrack(track);</span>
+<span class="lineNum">    1425 </span><span class="lineNoCov">          0 : }</span>
+<a name="1426"><span class="lineNum">    1426 </span>            : </a>
+<span class="lineNum">    1427 </span>            : static void ScheduleTrack(opl_track_data_t *track)
+<span class="lineNum">    1428 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1429 </span><span class="lineNoCov">          0 :     unsigned int nticks;</span>
+<span class="lineNum">    1430 </span><span class="lineNoCov">          0 :     uint64_t us;</span>
+<span class="lineNum">    1431 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1432 </span><span class="lineNoCov">          0 :     // Get the number of microseconds until the next event.</span>
+<span class="lineNum">    1433 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1434 </span><span class="lineNoCov">          0 :     nticks = MIDI_GetDeltaTime(track-&gt;iter);</span>
+<span class="lineNum">    1435 </span><span class="lineNoCov">          0 :     us = ((uint64_t) nticks * us_per_beat) / ticks_per_beat;</span>
+<span class="lineNum">    1436 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1437 </span><span class="lineNoCov">          0 :     // Set a timer to be invoked when the next event is</span>
+<span class="lineNum">    1438 </span><span class="lineNoCov">          0 :     // ready to play.</span>
+<span class="lineNum">    1439 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1440 </span><span class="lineNoCov">          0 :     OPL_SetCallback(us, TrackTimerCallback, track);</span>
+<span class="lineNum">    1441 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1442 </span>            : 
+<span class="lineNum">    1443 </span>            : // Initialize a channel.
+<a name="1444"><span class="lineNum">    1444 </span>            : </a>
+<span class="lineNum">    1445 </span>            : static void InitChannel(opl_channel_data_t *channel)
+<span class="lineNum">    1446 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1447 </span><span class="lineNoCov">          0 :     // TODO: Work out sensible defaults?</span>
+<span class="lineNum">    1448 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1449 </span><span class="lineNoCov">          0 :     channel-&gt;instrument = &amp;main_instrs[0];</span>
+<span class="lineNum">    1450 </span><span class="lineNoCov">          0 :     channel-&gt;volume = current_music_volume;</span>
+<span class="lineNum">    1451 </span><span class="lineNoCov">          0 :     channel-&gt;volume_base = 100;</span>
+<span class="lineNum">    1452 </span><span class="lineNoCov">          0 :     if (channel-&gt;volume &gt; channel-&gt;volume_base)</span>
+<span class="lineNum">    1453 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1454 </span><span class="lineNoCov">          0 :         channel-&gt;volume = channel-&gt;volume_base;</span>
+<span class="lineNum">    1455 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1456 </span><span class="lineNoCov">          0 :     channel-&gt;pan = 0x30;</span>
+<span class="lineNum">    1457 </span><span class="lineNoCov">          0 :     channel-&gt;bend = 0;</span>
+<span class="lineNum">    1458 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1459 </span>            : 
+<span class="lineNum">    1460 </span>            : // Start a MIDI track playing:
+<a name="1461"><span class="lineNum">    1461 </span>            : </a>
+<span class="lineNum">    1462 </span>            : static void StartTrack(midi_file_t *file, unsigned int track_num)
+<span class="lineNum">    1463 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1464 </span><span class="lineNoCov">          0 :     opl_track_data_t *track;</span>
+<span class="lineNum">    1465 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1466 </span><span class="lineNoCov">          0 :     track = &amp;tracks[track_num];</span>
+<span class="lineNum">    1467 </span><span class="lineNoCov">          0 :     track-&gt;iter = MIDI_IterateTrack(file, track_num);</span>
+<span class="lineNum">    1468 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1469 </span><span class="lineNoCov">          0 :     // Schedule the first event.</span>
+<span class="lineNum">    1470 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1471 </span><span class="lineNoCov">          0 :     ScheduleTrack(track);</span>
+<span class="lineNum">    1472 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1473 </span>            : 
+<span class="lineNum">    1474 </span>            : // Start playing a mid
+<a name="1475"><span class="lineNum">    1475 </span>            : </a>
+<span class="lineNum">    1476 </span>            : static void I_OPL_PlaySong(void *handle, boolean looping)
+<span class="lineNum">    1477 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1478 </span><span class="lineNoCov">          0 :     midi_file_t *file;</span>
+<span class="lineNum">    1479 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">    1480 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1481 </span><span class="lineNoCov">          0 :     if (!music_initialized || handle == NULL)</span>
+<span class="lineNum">    1482 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1483 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1484 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1485 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1486 </span><span class="lineNoCov">          0 :     file = handle;</span>
+<span class="lineNum">    1487 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1488 </span><span class="lineNoCov">          0 :     // Allocate track data.</span>
+<span class="lineNum">    1489 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1490 </span><span class="lineNoCov">          0 :     tracks = malloc(MIDI_NumTracks(file) * sizeof(opl_track_data_t));</span>
+<span class="lineNum">    1491 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1492 </span><span class="lineNoCov">          0 :     num_tracks = MIDI_NumTracks(file);</span>
+<span class="lineNum">    1493 </span><span class="lineNoCov">          0 :     running_tracks = num_tracks;</span>
+<span class="lineNum">    1494 </span><span class="lineNoCov">          0 :     song_looping = looping;</span>
+<span class="lineNum">    1495 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1496 </span><span class="lineNoCov">          0 :     ticks_per_beat = MIDI_GetFileTimeDivision(file);</span>
+<span class="lineNum">    1497 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1498 </span><span class="lineNoCov">          0 :     // Default is 120 bpm.</span>
+<span class="lineNum">    1499 </span><span class="lineNoCov">          0 :     // TODO: this is wrong</span>
+<span class="lineNum">    1500 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1501 </span><span class="lineNoCov">          0 :     us_per_beat = 500 * 1000;</span>
+<span class="lineNum">    1502 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1503 </span><span class="lineNoCov">          0 :     start_music_volume = current_music_volume;</span>
+<span class="lineNum">    1504 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1505 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; num_tracks; ++i)</span>
+<span class="lineNum">    1506 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1507 </span><span class="lineNoCov">          0 :         StartTrack(file, i);</span>
+<span class="lineNum">    1508 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1509 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1510 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; MIDI_CHANNELS_PER_TRACK; ++i)</span>
+<span class="lineNum">    1511 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1512 </span><span class="lineNoCov">          0 :         InitChannel(&amp;channels[i]);</span>
+<span class="lineNum">    1513 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1514 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1515 </span><span class="lineNoCov">          0 :     // If the music was previously paused, it needs to be unpaused; playing</span>
+<span class="lineNum">    1516 </span><span class="lineNoCov">          0 :     // a new song implies that we turn off pause. This matches vanilla</span>
+<span class="lineNum">    1517 </span><span class="lineNoCov">          0 :     // behavior of the DMX library, and some of the higher-level code in</span>
+<span class="lineNum">    1518 </span><span class="lineNoCov">          0 :     // s_sound.c relies on this.</span>
+<span class="lineNum">    1519 </span><span class="lineNoCov">          0 :     OPL_SetPaused(0);</span>
+<span class="lineNum">    1520 </span><span class="lineNoCov">          0 : }</span>
+<a name="1521"><span class="lineNum">    1521 </span>            : </a>
+<span class="lineNum">    1522 </span>            : static void I_OPL_PauseSong(void)
+<span class="lineNum">    1523 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1524 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">    1525 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1526 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1527 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1528 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1529 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1530 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1531 </span><span class="lineNoCov">          0 :     // Pause OPL callbacks.</span>
+<span class="lineNum">    1532 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1533 </span><span class="lineNoCov">          0 :     OPL_SetPaused(1);</span>
+<span class="lineNum">    1534 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1535 </span><span class="lineNoCov">          0 :     // Turn off all main instrument voices (not percussion).</span>
+<span class="lineNum">    1536 </span><span class="lineNoCov">          0 :     // This is what Vanilla does.</span>
+<span class="lineNum">    1537 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1538 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; num_opl_voices; ++i)</span>
+<span class="lineNum">    1539 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1540 </span><span class="lineNoCov">          0 :         if (voices[i].channel != NULL</span>
+<span class="lineNum">    1541 </span><span class="lineNoCov">          0 :          &amp;&amp; voices[i].current_instr &lt; percussion_instrs)</span>
+<span class="lineNum">    1542 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1543 </span><span class="lineNoCov">          0 :             VoiceKeyOff(&amp;voices[i]);</span>
+<span class="lineNum">    1544 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1545 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1546 </span><span class="lineNoCov">          0 : }</span>
+<a name="1547"><span class="lineNum">    1547 </span>            : </a>
+<span class="lineNum">    1548 </span>            : static void I_OPL_ResumeSong(void)
+<span class="lineNum">    1549 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1550 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1551 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1552 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1553 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1554 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1555 </span><span class="lineNoCov">          0 :     OPL_SetPaused(0);</span>
+<span class="lineNum">    1556 </span><span class="lineNoCov">          0 : }</span>
+<a name="1557"><span class="lineNum">    1557 </span>            : </a>
+<span class="lineNum">    1558 </span>            : static void I_OPL_StopSong(void)
+<span class="lineNum">    1559 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1560 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">    1561 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1562 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1563 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1564 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1565 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1566 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1567 </span><span class="lineNoCov">          0 :     OPL_Lock();</span>
+<span class="lineNum">    1568 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1569 </span><span class="lineNoCov">          0 :     // Stop all playback.</span>
+<span class="lineNum">    1570 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1571 </span><span class="lineNoCov">          0 :     OPL_ClearCallbacks();</span>
+<span class="lineNum">    1572 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1573 </span><span class="lineNoCov">          0 :     // Free all voices.</span>
+<span class="lineNum">    1574 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1575 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; MIDI_CHANNELS_PER_TRACK; ++i)</span>
+<span class="lineNum">    1576 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1577 </span><span class="lineNoCov">          0 :         AllNotesOff(&amp;channels[i], 0);</span>
+<span class="lineNum">    1578 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1579 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1580 </span><span class="lineNoCov">          0 :     // Free all track data.</span>
+<span class="lineNum">    1581 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1582 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; num_tracks; ++i)</span>
+<span class="lineNum">    1583 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1584 </span><span class="lineNoCov">          0 :         MIDI_FreeIterator(tracks[i].iter);</span>
+<span class="lineNum">    1585 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1586 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1587 </span><span class="lineNoCov">          0 :     free(tracks);</span>
+<span class="lineNum">    1588 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1589 </span><span class="lineNoCov">          0 :     tracks = NULL;</span>
+<span class="lineNum">    1590 </span><span class="lineNoCov">          0 :     num_tracks = 0;</span>
+<span class="lineNum">    1591 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1592 </span><span class="lineNoCov">          0 :     OPL_Unlock();</span>
+<span class="lineNum">    1593 </span><span class="lineNoCov">          0 : }</span>
+<a name="1594"><span class="lineNum">    1594 </span>            : </a>
+<span class="lineNum">    1595 </span>            : static void I_OPL_UnRegisterSong(void *handle)
+<span class="lineNum">    1596 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1597 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1598 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1599 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1600 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1601 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1602 </span><span class="lineNoCov">          0 :     if (handle != NULL)</span>
+<span class="lineNum">    1603 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1604 </span><span class="lineNoCov">          0 :         MIDI_FreeFile(handle);</span>
+<span class="lineNum">    1605 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1606 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1607 </span>            : 
+<span class="lineNum">    1608 </span>            : // Determine whether memory block is a .mid file
+<a name="1609"><span class="lineNum">    1609 </span>            : </a>
+<span class="lineNum">    1610 </span>            : static boolean IsMid(byte *mem, int len)
+<span class="lineNum">    1611 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1612 </span><span class="lineNoCov">          0 :     return len &gt; 4 &amp;&amp; !memcmp(mem, &quot;MThd&quot;, 4);</span>
+<span class="lineNum">    1613 </span><span class="lineNoCov">          0 : }</span>
+<a name="1614"><span class="lineNum">    1614 </span>            : </a>
+<span class="lineNum">    1615 </span>            : static boolean ConvertMus(byte *musdata, int len, char *filename)
+<span class="lineNum">    1616 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1617 </span><span class="lineNoCov">          0 :     MEMFILE *instream;</span>
+<span class="lineNum">    1618 </span><span class="lineNoCov">          0 :     MEMFILE *outstream;</span>
+<span class="lineNum">    1619 </span><span class="lineNoCov">          0 :     void *outbuf;</span>
+<span class="lineNum">    1620 </span><span class="lineNoCov">          0 :     size_t outbuf_len;</span>
+<span class="lineNum">    1621 </span><span class="lineNoCov">          0 :     int result;</span>
+<span class="lineNum">    1622 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1623 </span><span class="lineNoCov">          0 :     instream = mem_fopen_read(musdata, len);</span>
+<span class="lineNum">    1624 </span><span class="lineNoCov">          0 :     outstream = mem_fopen_write();</span>
+<span class="lineNum">    1625 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1626 </span><span class="lineNoCov">          0 :     result = mus2mid(instream, outstream);</span>
+<span class="lineNum">    1627 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1628 </span><span class="lineNoCov">          0 :     if (result == 0)</span>
+<span class="lineNum">    1629 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1630 </span><span class="lineNoCov">          0 :         mem_get_buf(outstream, &amp;outbuf, &amp;outbuf_len);</span>
+<span class="lineNum">    1631 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1632 </span><span class="lineNoCov">          0 :         M_WriteFile(filename, outbuf, outbuf_len);</span>
+<span class="lineNum">    1633 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1634 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1635 </span><span class="lineNoCov">          0 :     mem_fclose(instream);</span>
+<span class="lineNum">    1636 </span><span class="lineNoCov">          0 :     mem_fclose(outstream);</span>
+<span class="lineNum">    1637 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1638 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">    1639 </span><span class="lineNoCov">          0 : }</span>
+<a name="1640"><span class="lineNum">    1640 </span>            : </a>
+<span class="lineNum">    1641 </span>            : static void *I_OPL_RegisterSong(void *data, int len)
+<span class="lineNum">    1642 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1643 </span><span class="lineNoCov">          0 :     midi_file_t *result;</span>
+<span class="lineNum">    1644 </span><span class="lineNoCov">          0 :     char *filename;</span>
+<span class="lineNum">    1645 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1646 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1647 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1648 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">    1649 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1650 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1651 </span><span class="lineNoCov">          0 :     // MUS files begin with &quot;MUS&quot;</span>
+<span class="lineNum">    1652 </span><span class="lineNoCov">          0 :     // Reject anything which doesnt have this signature</span>
+<span class="lineNum">    1653 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1654 </span><span class="lineNoCov">          0 :     filename = M_TempFile(&quot;doom.mid&quot;);</span>
+<span class="lineNum">    1655 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1656 </span><span class="lineNoCov">          0 :     if (IsMid(data, len) &amp;&amp; len &lt; MAXMIDLENGTH)</span>
+<span class="lineNum">    1657 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1658 </span><span class="lineNoCov">          0 :         M_WriteFile(filename, data, len);</span>
+<span class="lineNum">    1659 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1660 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">    1661 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1662 </span><span class="lineNoCov">          0 :         // Assume a MUS file and try to convert</span>
+<span class="lineNum">    1663 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1664 </span><span class="lineNoCov">          0 :         ConvertMus(data, len, filename);</span>
+<span class="lineNum">    1665 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1666 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1667 </span><span class="lineNoCov">          0 :     result = MIDI_LoadFile(filename);</span>
+<span class="lineNum">    1668 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1669 </span><span class="lineNoCov">          0 :     if (result == NULL)</span>
+<span class="lineNum">    1670 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1671 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;I_OPL_RegisterSong: Failed to load MID.\n&quot;);</span>
+<span class="lineNum">    1672 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1673 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1674 </span><span class="lineNoCov">          0 :     // remove file now</span>
+<span class="lineNum">    1675 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1676 </span><span class="lineNoCov">          0 :     remove(filename);</span>
+<span class="lineNum">    1677 </span><span class="lineNoCov">          0 :     free(filename);</span>
+<span class="lineNum">    1678 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1679 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">    1680 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1681 </span>            : 
+<span class="lineNum">    1682 </span>            : // Is the song playing?
+<a name="1683"><span class="lineNum">    1683 </span>            : </a>
+<span class="lineNum">    1684 </span>            : static boolean I_OPL_MusicIsPlaying(void)
+<span class="lineNum">    1685 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1686 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1687 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1688 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">    1689 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1690 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1691 </span><span class="lineNoCov">          0 :     return num_tracks &gt; 0;</span>
+<span class="lineNum">    1692 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1693 </span>            : 
+<span class="lineNum">    1694 </span>            : // Shutdown music
+<a name="1695"><span class="lineNum">    1695 </span>            : </a>
+<span class="lineNum">    1696 </span>            : static void I_OPL_ShutdownMusic(void)
+<span class="lineNum">    1697 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1698 </span><span class="lineNoCov">          0 :     if (music_initialized)</span>
+<span class="lineNum">    1699 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1700 </span><span class="lineNoCov">          0 :         // Stop currently-playing track, if there is one:</span>
+<span class="lineNum">    1701 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1702 </span><span class="lineNoCov">          0 :         I_OPL_StopSong();</span>
+<span class="lineNum">    1703 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1704 </span><span class="lineNoCov">          0 :         OPL_Shutdown();</span>
+<span class="lineNum">    1705 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1706 </span><span class="lineNoCov">          0 :         // Release GENMIDI lump</span>
+<span class="lineNum">    1707 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1708 </span><span class="lineNoCov">          0 :         W_ReleaseLumpName(DEH_String(&quot;genmidi&quot;));</span>
+<span class="lineNum">    1709 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1710 </span><span class="lineNoCov">          0 :         music_initialized = false;</span>
+<span class="lineNum">    1711 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1712 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1713 </span>            : 
+<span class="lineNum">    1714 </span>            : // Initialize music subsystem
+<a name="1715"><span class="lineNum">    1715 </span>            : </a>
+<span class="lineNum">    1716 </span>            : static boolean I_OPL_InitMusic(void)
+<span class="lineNum">    1717 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1718 </span><span class="lineNoCov">          0 :     char *dmxoption;</span>
+<span class="lineNum">    1719 </span><span class="lineNoCov">          0 :     opl_init_result_t chip_type;</span>
+<span class="lineNum">    1720 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1721 </span><span class="lineNoCov">          0 :     OPL_SetSampleRate(snd_samplerate);</span>
+<span class="lineNum">    1722 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1723 </span><span class="lineNoCov">          0 :     chip_type = OPL_Init(opl_io_port);</span>
+<span class="lineNum">    1724 </span><span class="lineNoCov">          0 :     if (chip_type == OPL_INIT_NONE)</span>
+<span class="lineNum">    1725 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1726 </span><span class="lineNoCov">          0 :         printf(&quot;Dude.  The Adlib isn't responding.\n&quot;);</span>
+<span class="lineNum">    1727 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">    1728 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1729 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1730 </span><span class="lineNoCov">          0 :     // The DMXOPTION variable must be set to enable OPL3 support.</span>
+<span class="lineNum">    1731 </span><span class="lineNoCov">          0 :     // As an extension, we also allow it to be set from the config file.</span>
+<span class="lineNum">    1732 </span><span class="lineNoCov">          0 :     dmxoption = getenv(&quot;DMXOPTION&quot;);</span>
+<span class="lineNum">    1733 </span><span class="lineNoCov">          0 :     if (dmxoption == NULL)</span>
+<span class="lineNum">    1734 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1735 </span><span class="lineNoCov">          0 :         dmxoption = snd_dmxoption != NULL ? snd_dmxoption : &quot;&quot;;</span>
+<span class="lineNum">    1736 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1737 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1738 </span><span class="lineNoCov">          0 :     if (chip_type == OPL_INIT_OPL3 &amp;&amp; strstr(dmxoption, &quot;-opl3&quot;) != NULL)</span>
+<span class="lineNum">    1739 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1740 </span><span class="lineNoCov">          0 :         opl_opl3mode = 1;</span>
+<span class="lineNum">    1741 </span><span class="lineNoCov">          0 :         num_opl_voices = OPL_NUM_VOICES * 2;</span>
+<span class="lineNum">    1742 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1743 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">    1744 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1745 </span><span class="lineNoCov">          0 :         opl_opl3mode = 0;</span>
+<span class="lineNum">    1746 </span><span class="lineNoCov">          0 :         num_opl_voices = OPL_NUM_VOICES;</span>
+<span class="lineNum">    1747 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1748 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1749 </span><span class="lineNoCov">          0 :     // Secret, undocumented DMXOPTION that reverses the stereo channels</span>
+<span class="lineNum">    1750 </span><span class="lineNoCov">          0 :     // into their correct orientation.</span>
+<span class="lineNum">    1751 </span><span class="lineNoCov">          0 :     opl_stereo_correct = strstr(dmxoption, &quot;-reverse&quot;) != NULL;</span>
+<span class="lineNum">    1752 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1753 </span><span class="lineNoCov">          0 :     // Initialize all registers.</span>
+<span class="lineNum">    1754 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1755 </span><span class="lineNoCov">          0 :     OPL_InitRegisters(opl_opl3mode);</span>
+<span class="lineNum">    1756 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1757 </span><span class="lineNoCov">          0 :     // Load instruments from GENMIDI lump:</span>
+<span class="lineNum">    1758 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1759 </span><span class="lineNoCov">          0 :     if (!LoadInstrumentTable())</span>
+<span class="lineNum">    1760 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1761 </span><span class="lineNoCov">          0 :         OPL_Shutdown();</span>
+<span class="lineNum">    1762 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">    1763 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1764 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1765 </span><span class="lineNoCov">          0 :     InitVoices();</span>
+<span class="lineNum">    1766 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1767 </span><span class="lineNoCov">          0 :     tracks = NULL;</span>
+<span class="lineNum">    1768 </span><span class="lineNoCov">          0 :     num_tracks = 0;</span>
+<span class="lineNum">    1769 </span><span class="lineNoCov">          0 :     music_initialized = true;</span>
+<span class="lineNum">    1770 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1771 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">    1772 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1773 </span>            : 
+<span class="lineNum">    1774 </span>            : static snddevice_t music_opl_devices[] =
+<span class="lineNum">    1775 </span>            : {
+<span class="lineNum">    1776 </span>            :     SNDDEVICE_ADLIB,
+<span class="lineNum">    1777 </span>            :     SNDDEVICE_SB,
+<span class="lineNum">    1778 </span>            : };
+<span class="lineNum">    1779 </span>            : 
+<span class="lineNum">    1780 </span>            : music_module_t music_opl_module =
+<span class="lineNum">    1781 </span>            : {
+<span class="lineNum">    1782 </span>            :     music_opl_devices,
+<span class="lineNum">    1783 </span>            :     arrlen(music_opl_devices),
+<span class="lineNum">    1784 </span>            :     I_OPL_InitMusic,
+<span class="lineNum">    1785 </span>            :     I_OPL_ShutdownMusic,
+<span class="lineNum">    1786 </span>            :     I_OPL_SetMusicVolume,
+<span class="lineNum">    1787 </span>            :     I_OPL_PauseSong,
+<span class="lineNum">    1788 </span>            :     I_OPL_ResumeSong,
+<span class="lineNum">    1789 </span>            :     I_OPL_RegisterSong,
+<span class="lineNum">    1790 </span>            :     I_OPL_UnRegisterSong,
+<span class="lineNum">    1791 </span>            :     I_OPL_PlaySong,
+<span class="lineNum">    1792 </span>            :     I_OPL_StopSong,
+<span class="lineNum">    1793 </span>            :     I_OPL_MusicIsPlaying,
+<span class="lineNum">    1794 </span>            :     NULL,  // Poll
+<span class="lineNum">    1795 </span>            : };
+<a name="1796"><span class="lineNum">    1796 </span>            : </a>
+<span class="lineNum">    1797 </span>            : void I_SetOPLDriverVer(opl_driver_ver_t ver)
+<span class="lineNum">    1798 </span><span class="lineCov">      14698 : {</span>
+<span class="lineNum">    1799 </span><span class="lineCov">      14698 :     opl_drv_ver = ver;</span>
+<span class="lineNum">    1800 </span><span class="lineCov">      14698 : }</span>
+<span class="lineNum">    1801 </span>            : 
+<span class="lineNum">    1802 </span>            : //----------------------------------------------------------------------
+<span class="lineNum">    1803 </span>            : //
+<span class="lineNum">    1804 </span>            : // Development / debug message generation, to help developing GENMIDI
+<span class="lineNum">    1805 </span>            : // lumps.
+<span class="lineNum">    1806 </span>            : //
+<span class="lineNum">    1807 </span>            : //----------------------------------------------------------------------
+<a name="1808"><span class="lineNum">    1808 </span>            : </a>
+<span class="lineNum">    1809 </span>            : static int NumActiveChannels(void)
+<span class="lineNum">    1810 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1811 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">    1812 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1813 </span><span class="lineNoCov">          0 :     for (i = MIDI_CHANNELS_PER_TRACK - 1; i &gt;= 0; --i)</span>
+<span class="lineNum">    1814 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1815 </span><span class="lineNoCov">          0 :         if (channels[i].instrument != &amp;main_instrs[0])</span>
+<span class="lineNum">    1816 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1817 </span><span class="lineNoCov">          0 :             return i + 1;</span>
+<span class="lineNum">    1818 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1819 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1820 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1821 </span><span class="lineNoCov">          0 :     return 0;</span>
+<span class="lineNum">    1822 </span><span class="lineNoCov">          0 : }</span>
+<a name="1823"><span class="lineNum">    1823 </span>            : </a>
+<span class="lineNum">    1824 </span>            : static int ChannelInUse(opl_channel_data_t *channel)
+<span class="lineNum">    1825 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1826 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">    1827 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1828 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; voice_alloced_num; i++)</span>
+<span class="lineNum">    1829 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1830 </span><span class="lineNoCov">          0 :         if (voice_alloced_list[i]-&gt;channel == channel)</span>
+<span class="lineNum">    1831 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1832 </span><span class="lineNoCov">          0 :             return 1;</span>
+<span class="lineNum">    1833 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1834 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1835 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1836 </span><span class="lineNoCov">          0 :     return 0;</span>
+<span class="lineNum">    1837 </span><span class="lineNoCov">          0 : }</span>
+<a name="1838"><span class="lineNum">    1838 </span>            : </a>
+<span class="lineNum">    1839 </span>            : void I_OPL_DevMessages(char *result, size_t result_len)
+<span class="lineNum">    1840 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1841 </span><span class="lineNoCov">          0 :     char tmp[80];</span>
+<span class="lineNum">    1842 </span><span class="lineNoCov">          0 :     int instr_num;</span>
+<span class="lineNum">    1843 </span><span class="lineNoCov">          0 :     int lines;</span>
+<span class="lineNum">    1844 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">    1845 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1846 </span><span class="lineNoCov">          0 :     if (num_tracks == 0)</span>
+<span class="lineNum">    1847 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1848 </span><span class="lineNoCov">          0 :         M_snprintf(result, result_len, &quot;No OPL track!&quot;);</span>
+<span class="lineNum">    1849 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1850 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1851 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1852 </span><span class="lineNoCov">          0 :     M_snprintf(result, result_len, &quot;Tracks:\n&quot;);</span>
+<span class="lineNum">    1853 </span><span class="lineNoCov">          0 :     lines = 1;</span>
+<span class="lineNum">    1854 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1855 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; NumActiveChannels(); ++i)</span>
+<span class="lineNum">    1856 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1857 </span><span class="lineNoCov">          0 :         if (channels[i].instrument == NULL)</span>
+<span class="lineNum">    1858 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1859 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1860 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1861 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1862 </span><span class="lineNoCov">          0 :         instr_num = channels[i].instrument - main_instrs;</span>
+<span class="lineNum">    1863 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1864 </span><span class="lineNoCov">          0 :         M_snprintf(tmp, sizeof(tmp),</span>
+<span class="lineNum">    1865 </span><span class="lineNoCov">          0 :                    &quot;chan %i: %c i#%i (%s)\n&quot;,</span>
+<span class="lineNum">    1866 </span><span class="lineNoCov">          0 :                    i,</span>
+<span class="lineNum">    1867 </span><span class="lineNoCov">          0 :                    ChannelInUse(&amp;channels[i]) ? '\'' : ' ',</span>
+<span class="lineNum">    1868 </span><span class="lineNoCov">          0 :                    instr_num + 1,</span>
+<span class="lineNum">    1869 </span><span class="lineNoCov">          0 :                    main_instr_names[instr_num]);</span>
+<span class="lineNum">    1870 </span><span class="lineNoCov">          0 :         M_StringConcat(result, tmp, result_len);</span>
+<span class="lineNum">    1871 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1872 </span><span class="lineNoCov">          0 :         ++lines;</span>
+<span class="lineNum">    1873 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1874 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1875 </span><span class="lineNoCov">          0 :     M_snprintf(tmp, sizeof(tmp), &quot;\nLast percussion:\n&quot;);</span>
+<span class="lineNum">    1876 </span><span class="lineNoCov">          0 :     M_StringConcat(result, tmp, result_len);</span>
+<span class="lineNum">    1877 </span><span class="lineNoCov">          0 :     lines += 2;</span>
+<span class="lineNum">    1878 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1879 </span><span class="lineNoCov">          0 :     i = (last_perc_count + PERCUSSION_LOG_LEN - 1) % PERCUSSION_LOG_LEN;</span>
+<span class="lineNum">    1880 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1881 </span><span class="lineNoCov">          0 :     do {</span>
+<span class="lineNum">    1882 </span><span class="lineNoCov">          0 :         if (last_perc[i] == 0)</span>
+<span class="lineNum">    1883 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1884 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1885 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1886 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1887 </span><span class="lineNoCov">          0 :         M_snprintf(tmp, sizeof(tmp),</span>
+<span class="lineNum">    1888 </span><span class="lineNoCov">          0 :                    &quot;%cp#%i (%s)\n&quot;,</span>
+<span class="lineNum">    1889 </span><span class="lineNoCov">          0 :                    i == 0 ? '\'' : ' ',</span>
+<span class="lineNum">    1890 </span><span class="lineNoCov">          0 :                    last_perc[i],</span>
+<span class="lineNum">    1891 </span><span class="lineNoCov">          0 :                    percussion_names[last_perc[i] - 35]);</span>
+<span class="lineNum">    1892 </span><span class="lineNoCov">          0 :         M_StringConcat(result, tmp, result_len);</span>
+<span class="lineNum">    1893 </span><span class="lineNoCov">          0 :         ++lines;</span>
+<span class="lineNum">    1894 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1895 </span><span class="lineNoCov">          0 :         i = (i + PERCUSSION_LOG_LEN - 1) % PERCUSSION_LOG_LEN;</span>
+<span class="lineNum">    1896 </span><span class="lineNoCov">          0 :     } while (lines &lt; 25 &amp;&amp; i != last_perc_count);</span>
+<span class="lineNum">    1897 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1898 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

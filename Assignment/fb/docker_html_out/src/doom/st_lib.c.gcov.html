@@ -1,0 +1,365 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/st_lib.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - st_lib.c<span style="font-size: 80%;"> (source / <a href="st_lib.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">151</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      The status bar widget code.
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;ctype.h&gt;
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;deh_main.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;doomdef.h&quot;
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span>            : #include &quot;z_zone.h&quot;
+<span class="lineNum">      27 </span>            : #include &quot;v_video.h&quot;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : #include &quot;i_swap.h&quot;
+<span class="lineNum">      30 </span>            : #include &quot;i_system.h&quot;
+<span class="lineNum">      31 </span>            : 
+<span class="lineNum">      32 </span>            : #include &quot;w_wad.h&quot;
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span>            : #include &quot;st_stuff.h&quot;
+<span class="lineNum">      35 </span>            : #include &quot;st_lib.h&quot;
+<span class="lineNum">      36 </span>            : #include &quot;r_local.h&quot;
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span>            : // in AM_map.c
+<span class="lineNum">      40 </span>            : extern boolean          automapactive; 
+<span class="lineNum">      41 </span>            : 
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span>            : 
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span>            : //
+<span class="lineNum">      46 </span>            : // Hack display negative frags.
+<span class="lineNum">      47 </span>            : //  Loads and store the stminus lump.
+<span class="lineNum">      48 </span>            : //
+<span class="lineNum">      49 </span>            : patch_t*                sttminus;
+<a name="50"><span class="lineNum">      50 </span>            : </a>
+<span class="lineNum">      51 </span>            : void STlib_init(void)
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      53 </span><span class="lineNoCov">          0 :     if (W_CheckNumForName(DEH_String(&quot;STTMINUS&quot;)) &gt;= 0)</span>
+<span class="lineNum">      54 </span><span class="lineNoCov">          0 :         sttminus = (patch_t *) W_CacheLumpName(DEH_String(&quot;STTMINUS&quot;), PU_STATIC);</span>
+<span class="lineNum">      55 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">      56 </span><span class="lineNoCov">          0 :         sttminus = NULL;</span>
+<span class="lineNum">      57 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">      58 </span>            : 
+<span class="lineNum">      59 </span>            : 
+<span class="lineNum">      60 </span>            : // ?
+<span class="lineNum">      61 </span>            : void
+<span class="lineNum">      62 </span>            : STlib_initNum
+<span class="lineNum">      63 </span>            : ( st_number_t*          n,
+<span class="lineNum">      64 </span>            :   int                   x,
+<span class="lineNum">      65 </span>            :   int                   y,
+<span class="lineNum">      66 </span>            :   patch_t**             pl,
+<span class="lineNum">      67 </span>            :   int*                  num,
+<a name="68"><span class="lineNum">      68 </span>            :   boolean*              on,</a>
+<span class="lineNum">      69 </span>            :   int                   width )
+<span class="lineNum">      70 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      71 </span><span class="lineNoCov">          0 :     n-&gt;x     = x;</span>
+<span class="lineNum">      72 </span><span class="lineNoCov">          0 :     n-&gt;y     = y;</span>
+<span class="lineNum">      73 </span><span class="lineNoCov">          0 :     n-&gt;oldnum        = 0;</span>
+<span class="lineNum">      74 </span><span class="lineNoCov">          0 :     n-&gt;width = width;</span>
+<span class="lineNum">      75 </span><span class="lineNoCov">          0 :     n-&gt;num   = num;</span>
+<span class="lineNum">      76 </span><span class="lineNoCov">          0 :     n-&gt;on    = on;</span>
+<span class="lineNum">      77 </span><span class="lineNoCov">          0 :     n-&gt;p     = pl;</span>
+<span class="lineNum">      78 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">      79 </span>            : 
+<span class="lineNum">      80 </span>            : 
+<span class="lineNum">      81 </span>            : // 
+<span class="lineNum">      82 </span>            : // A fairly efficient way to draw a number
+<span class="lineNum">      83 </span>            : //  based on differences from the old number.
+<span class="lineNum">      84 </span>            : // Note: worth the trouble?
+<span class="lineNum">      85 </span>            : //
+<span class="lineNum">      86 </span>            : void
+<span class="lineNum">      87 </span>            : STlib_drawNum
+<a name="88"><span class="lineNum">      88 </span>            : ( st_number_t*  n,</a>
+<span class="lineNum">      89 </span>            :   boolean       refresh )
+<span class="lineNum">      90 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      92 </span><span class="lineNoCov">          0 :     int         numdigits = n-&gt;width;</span>
+<span class="lineNum">      93 </span><span class="lineNoCov">          0 :     int         num = *n-&gt;num;</span>
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">      95 </span><span class="lineNoCov">          0 :     int         w = SHORT(n-&gt;p[0]-&gt;width);</span>
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 :     int         h = SHORT(n-&gt;p[0]-&gt;height);</span>
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 :     int         x = n-&gt;x;</span>
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 :     int         neg;</span>
+<span class="lineNum">     100 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 :     n-&gt;oldnum = *n-&gt;num;</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 :     neg = num &lt; 0;</span>
+<span class="lineNum">     104 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 :     if (neg)</span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 :         if (numdigits == 2 &amp;&amp; num &lt; -9)</span>
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 :             num = -9;</span>
+<span class="lineNum">     109 </span><span class="lineNoCov">          0 :         else if (numdigits == 3 &amp;&amp; num &lt; -99)</span>
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 :             num = -99;</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 :         num = -num;</span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :     // clear the area</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 :     x = n-&gt;x - numdigits*w;</span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 :     if (n-&gt;y - ST_Y &lt; 0)</span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 :         I_Error(&quot;drawNum: n-&gt;y - ST_Y &lt; 0&quot;);</span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 :     V_CopyRect(x, n-&gt;y - ST_Y, st_backing_screen, w*numdigits, h, x, n-&gt;y);</span>
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 :     // if non-number, do not draw it</span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 :     if (num == 1994)</span>
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 :     x = n-&gt;x;</span>
+<span class="lineNum">     128 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     129 </span><span class="lineNoCov">          0 :     // in the special case of 0, you draw 0</span>
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 :     if (!num)</span>
+<span class="lineNum">     131 </span><span class="lineNoCov">          0 :         V_DrawPatch(x - w, n-&gt;y, n-&gt;p[ 0 ]);</span>
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :     // draw the new number</span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 :     while (num &amp;&amp; numdigits--)</span>
+<span class="lineNum">     135 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     136 </span><span class="lineNoCov">          0 :         x -= w;</span>
+<span class="lineNum">     137 </span><span class="lineNoCov">          0 :         V_DrawPatch(x, n-&gt;y, n-&gt;p[ num % 10 ]);</span>
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 :         num /= 10;</span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :     // draw a minus sign if necessary</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :     if (neg &amp;&amp; sttminus)</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :         V_DrawPatch(x - 8, n-&gt;y, sttminus);</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     145 </span>            : 
+<span class="lineNum">     146 </span>            : 
+<span class="lineNum">     147 </span>            : //
+<span class="lineNum">     148 </span>            : void
+<span class="lineNum">     149 </span>            : STlib_updateNum
+<a name="150"><span class="lineNum">     150 </span>            : ( st_number_t*          n,</a>
+<span class="lineNum">     151 </span>            :   boolean               refresh )
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :     if (*n-&gt;on) STlib_drawNum(n, refresh);</span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     155 </span>            : 
+<span class="lineNum">     156 </span>            : 
+<span class="lineNum">     157 </span>            : //
+<span class="lineNum">     158 </span>            : void
+<span class="lineNum">     159 </span>            : STlib_initPercent
+<span class="lineNum">     160 </span>            : ( st_percent_t*         p,
+<span class="lineNum">     161 </span>            :   int                   x,
+<span class="lineNum">     162 </span>            :   int                   y,
+<span class="lineNum">     163 </span>            :   patch_t**             pl,
+<span class="lineNum">     164 </span>            :   int*                  num,
+<a name="165"><span class="lineNum">     165 </span>            :   boolean*              on,</a>
+<span class="lineNum">     166 </span>            :   patch_t*              percent )
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 :     STlib_initNum(&amp;p-&gt;n, x, y, pl, num, on, 3);</span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 :     p-&gt;p = percent;</span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     171 </span>            : 
+<span class="lineNum">     172 </span>            : 
+<span class="lineNum">     173 </span>            : 
+<span class="lineNum">     174 </span>            : 
+<span class="lineNum">     175 </span>            : void
+<span class="lineNum">     176 </span>            : STlib_updatePercent
+<a name="177"><span class="lineNum">     177 </span>            : ( st_percent_t*         per,</a>
+<span class="lineNum">     178 </span>            :   int                   refresh )
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :     if (refresh &amp;&amp; *per-&gt;n.on)</span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :         V_DrawPatch(per-&gt;n.x, per-&gt;n.y, per-&gt;p);</span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :     STlib_updateNum(&amp;per-&gt;n, refresh);</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     185 </span>            : 
+<span class="lineNum">     186 </span>            : 
+<span class="lineNum">     187 </span>            : 
+<span class="lineNum">     188 </span>            : void
+<span class="lineNum">     189 </span>            : STlib_initMultIcon
+<span class="lineNum">     190 </span>            : ( st_multicon_t*        i,
+<span class="lineNum">     191 </span>            :   int                   x,
+<span class="lineNum">     192 </span>            :   int                   y,
+<span class="lineNum">     193 </span>            :   patch_t**             il,
+<a name="194"><span class="lineNum">     194 </span>            :   int*                  inum,</a>
+<span class="lineNum">     195 </span>            :   boolean*              on )
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 :     i-&gt;x     = x;</span>
+<span class="lineNum">     198 </span><span class="lineNoCov">          0 :     i-&gt;y     = y;</span>
+<span class="lineNum">     199 </span><span class="lineNoCov">          0 :     i-&gt;oldinum       = -1;</span>
+<span class="lineNum">     200 </span><span class="lineNoCov">          0 :     i-&gt;inum  = inum;</span>
+<span class="lineNum">     201 </span><span class="lineNoCov">          0 :     i-&gt;on    = on;</span>
+<span class="lineNum">     202 </span><span class="lineNoCov">          0 :     i-&gt;p     = il;</span>
+<span class="lineNum">     203 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     204 </span>            : 
+<span class="lineNum">     205 </span>            : 
+<span class="lineNum">     206 </span>            : 
+<span class="lineNum">     207 </span>            : void
+<span class="lineNum">     208 </span>            : STlib_updateMultIcon
+<a name="209"><span class="lineNum">     209 </span>            : ( st_multicon_t*        mi,</a>
+<span class="lineNum">     210 </span>            :   boolean               refresh )
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 :     int                 w;</span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 :     int                 h;</span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 :     int                 x;</span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 :     int                 y;</span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :     if (*mi-&gt;on</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 :         &amp;&amp; (mi-&gt;oldinum != *mi-&gt;inum || refresh)</span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :         &amp;&amp; (*mi-&gt;inum!=-1))</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 :         if (mi-&gt;oldinum != -1)</span>
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 :             x = mi-&gt;x - SHORT(mi-&gt;p[mi-&gt;oldinum]-&gt;leftoffset);</span>
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 :             y = mi-&gt;y - SHORT(mi-&gt;p[mi-&gt;oldinum]-&gt;topoffset);</span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 :             w = SHORT(mi-&gt;p[mi-&gt;oldinum]-&gt;width);</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 :             h = SHORT(mi-&gt;p[mi-&gt;oldinum]-&gt;height);</span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 :             if (y - ST_Y &lt; 0)</span>
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 :                 I_Error(&quot;updateMultIcon: y - ST_Y &lt; 0&quot;);</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :             V_CopyRect(x, y-ST_Y, st_backing_screen, w, h, x, y);</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 :         V_DrawPatch(mi-&gt;x, mi-&gt;y, mi-&gt;p[*mi-&gt;inum]);</span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :         mi-&gt;oldinum = *mi-&gt;inum;</span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     237 </span>            : 
+<span class="lineNum">     238 </span>            : 
+<span class="lineNum">     239 </span>            : 
+<span class="lineNum">     240 </span>            : void
+<span class="lineNum">     241 </span>            : STlib_initBinIcon
+<span class="lineNum">     242 </span>            : ( st_binicon_t*         b,
+<span class="lineNum">     243 </span>            :   int                   x,
+<span class="lineNum">     244 </span>            :   int                   y,
+<span class="lineNum">     245 </span>            :   patch_t*              i,
+<a name="246"><span class="lineNum">     246 </span>            :   boolean*              val,</a>
+<span class="lineNum">     247 </span>            :   boolean*              on )
+<span class="lineNum">     248 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 :     b-&gt;x     = x;</span>
+<span class="lineNum">     250 </span><span class="lineNoCov">          0 :     b-&gt;y     = y;</span>
+<span class="lineNum">     251 </span><span class="lineNoCov">          0 :     b-&gt;oldval        = false;</span>
+<span class="lineNum">     252 </span><span class="lineNoCov">          0 :     b-&gt;val   = val;</span>
+<span class="lineNum">     253 </span><span class="lineNoCov">          0 :     b-&gt;on    = on;</span>
+<span class="lineNum">     254 </span><span class="lineNoCov">          0 :     b-&gt;p     = i;</span>
+<span class="lineNum">     255 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     256 </span>            : 
+<span class="lineNum">     257 </span>            : 
+<span class="lineNum">     258 </span>            : 
+<span class="lineNum">     259 </span>            : void
+<span class="lineNum">     260 </span>            : STlib_updateBinIcon
+<a name="261"><span class="lineNum">     261 </span>            : ( st_binicon_t*         bi,</a>
+<span class="lineNum">     262 </span>            :   boolean               refresh )
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 :     int                 x;</span>
+<span class="lineNum">     265 </span><span class="lineNoCov">          0 :     int                 y;</span>
+<span class="lineNum">     266 </span><span class="lineNoCov">          0 :     int                 w;</span>
+<span class="lineNum">     267 </span><span class="lineNoCov">          0 :     int                 h;</span>
+<span class="lineNum">     268 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     269 </span><span class="lineNoCov">          0 :     if (*bi-&gt;on</span>
+<span class="lineNum">     270 </span><span class="lineNoCov">          0 :      &amp;&amp; (bi-&gt;oldval != *bi-&gt;val || refresh))</span>
+<span class="lineNum">     271 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 :         x = bi-&gt;x - SHORT(bi-&gt;p-&gt;leftoffset);</span>
+<span class="lineNum">     273 </span><span class="lineNoCov">          0 :         y = bi-&gt;y - SHORT(bi-&gt;p-&gt;topoffset);</span>
+<span class="lineNum">     274 </span><span class="lineNoCov">          0 :         w = SHORT(bi-&gt;p-&gt;width);</span>
+<span class="lineNum">     275 </span><span class="lineNoCov">          0 :         h = SHORT(bi-&gt;p-&gt;height);</span>
+<span class="lineNum">     276 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 :         if (y - ST_Y &lt; 0)</span>
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 :             I_Error(&quot;updateBinIcon: y - ST_Y &lt; 0&quot;);</span>
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     280 </span><span class="lineNoCov">          0 :         if (*bi-&gt;val)</span>
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 :             V_DrawPatch(bi-&gt;x, bi-&gt;y, bi-&gt;p);</span>
+<span class="lineNum">     282 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     283 </span><span class="lineNoCov">          0 :             V_CopyRect(x, y-ST_Y, st_backing_screen, w, h, x, y);</span>
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 :         bi-&gt;oldval = *bi-&gt;val;</span>
+<span class="lineNum">     286 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     288 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     289 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

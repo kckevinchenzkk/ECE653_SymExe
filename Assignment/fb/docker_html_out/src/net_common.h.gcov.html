@@ -1,0 +1,182 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/net_common.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - net_common.h<span style="font-size: 80%;"> (source / <a href="net_common.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : // Common code shared between the client and server
+<span class="lineNum">      15 </span>            : //
+<span class="lineNum">      16 </span>            : 
+<span class="lineNum">      17 </span>            : #ifndef NET_COMMON_H
+<span class="lineNum">      18 </span>            : #define NET_COMMON_H
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &quot;d_mode.h&quot;
+<span class="lineNum">      21 </span>            : #include &quot;net_defs.h&quot;
+<span class="lineNum">      22 </span>            : #include &quot;net_packet.h&quot;
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : typedef enum
+<span class="lineNum">      25 </span>            : {
+<span class="lineNum">      26 </span>            :     // Client has sent a SYN, is waiting for a SYN in response.
+<span class="lineNum">      27 </span>            :     NET_CONN_STATE_CONNECTING,
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            :     // Successfully connected.
+<span class="lineNum">      30 </span>            :     NET_CONN_STATE_CONNECTED,
+<span class="lineNum">      31 </span>            : 
+<span class="lineNum">      32 </span>            :     // Sent a DISCONNECT packet, waiting for a DISCONNECT_ACK reply
+<span class="lineNum">      33 </span>            :     NET_CONN_STATE_DISCONNECTING,
+<span class="lineNum">      34 </span>            : 
+<span class="lineNum">      35 </span>            :     // Client successfully disconnected
+<span class="lineNum">      36 </span>            :     NET_CONN_STATE_DISCONNECTED,
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            :     // We are disconnected, but in a sleep state, waiting for several
+<span class="lineNum">      39 </span>            :     // seconds.  This is in case the DISCONNECT_ACK we sent failed
+<span class="lineNum">      40 </span>            :     // to arrive, and we need to send another one.  We keep this as
+<span class="lineNum">      41 </span>            :     // a valid connection for a few seconds until we are sure that
+<span class="lineNum">      42 </span>            :     // the other end has successfully disconnected as well.
+<span class="lineNum">      43 </span>            :     NET_CONN_STATE_DISCONNECTED_SLEEP,
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span>            : } net_connstate_t;
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span>            : // Reason a connection was terminated
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            : typedef enum
+<span class="lineNum">      50 </span>            : {
+<span class="lineNum">      51 </span>            :     // As the result of a local disconnect request
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span>            :     NET_DISCONNECT_LOCAL,
+<span class="lineNum">      54 </span>            : 
+<span class="lineNum">      55 </span>            :     // As the result of a remote disconnect request
+<span class="lineNum">      56 </span>            : 
+<span class="lineNum">      57 </span>            :     NET_DISCONNECT_REMOTE,
+<span class="lineNum">      58 </span>            : 
+<span class="lineNum">      59 </span>            :     // Timeout (no data received in a long time)
+<span class="lineNum">      60 </span>            : 
+<span class="lineNum">      61 </span>            :     NET_DISCONNECT_TIMEOUT,
+<span class="lineNum">      62 </span>            : 
+<span class="lineNum">      63 </span>            : } net_disconnect_reason_t;
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span><span class="lineNoCov">          0 : #define MAX_RETRIES 5</span>
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span>            : typedef struct net_reliable_packet_s net_reliable_packet_t;
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : typedef struct 
+<span class="lineNum">      70 </span>            : {
+<span class="lineNum">      71 </span>            :     net_connstate_t state;
+<span class="lineNum">      72 </span>            :     net_disconnect_reason_t disconnect_reason;
+<span class="lineNum">      73 </span>            :     net_addr_t *addr;
+<span class="lineNum">      74 </span>            :     net_protocol_t protocol;
+<span class="lineNum">      75 </span>            :     int last_send_time;
+<span class="lineNum">      76 </span>            :     int num_retries;
+<span class="lineNum">      77 </span>            :     int keepalive_send_time;
+<span class="lineNum">      78 </span>            :     int keepalive_recv_time;
+<span class="lineNum">      79 </span>            :     net_reliable_packet_t *reliable_packets;
+<span class="lineNum">      80 </span>            :     int reliable_send_seq;
+<span class="lineNum">      81 </span>            :     int reliable_recv_seq;
+<span class="lineNum">      82 </span>            : } net_connection_t;
+<span class="lineNum">      83 </span>            : 
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            : void NET_Conn_SendPacket(net_connection_t *conn, net_packet_t *packet);
+<span class="lineNum">      86 </span>            : void NET_Conn_InitClient(net_connection_t *conn, net_addr_t *addr,
+<span class="lineNum">      87 </span>            :                          net_protocol_t protocol);
+<span class="lineNum">      88 </span>            : void NET_Conn_InitServer(net_connection_t *conn, net_addr_t *addr,
+<span class="lineNum">      89 </span>            :                          net_protocol_t protocol);
+<span class="lineNum">      90 </span>            : boolean NET_Conn_Packet(net_connection_t *conn, net_packet_t *packet,
+<span class="lineNum">      91 </span>            :                         unsigned int *packet_type);
+<span class="lineNum">      92 </span>            : void NET_Conn_Disconnect(net_connection_t *conn);
+<span class="lineNum">      93 </span>            : void NET_Conn_Run(net_connection_t *conn);
+<span class="lineNum">      94 </span>            : net_packet_t *NET_Conn_NewReliable(net_connection_t *conn, int packet_type);
+<span class="lineNum">      95 </span>            : 
+<span class="lineNum">      96 </span>            : // Other miscellaneous common functions
+<span class="lineNum">      97 </span>            : unsigned int NET_ExpandTicNum(unsigned int relative, unsigned int b);
+<span class="lineNum">      98 </span>            : boolean NET_ValidGameSettings(GameMode_t mode, GameMission_t mission,
+<span class="lineNum">      99 </span>            :                               net_gamesettings_t *settings);
+<span class="lineNum">     100 </span>            : 
+<span class="lineNum">     101 </span>            : void NET_OpenLog(void);
+<span class="lineNum">     102 </span>            : void NET_Log(const char *fmt, ...);
+<span class="lineNum">     103 </span>            : void NET_LogPacket(net_packet_t *packet);
+<span class="lineNum">     104 </span>            : 
+<span class="lineNum">     105 </span>            : #endif /* #ifndef NET_COMMON_H */
+<span class="lineNum">     106 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

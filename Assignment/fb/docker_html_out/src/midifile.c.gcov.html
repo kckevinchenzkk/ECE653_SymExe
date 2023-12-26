@@ -1,0 +1,900 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/midifile.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - midifile.c<span style="font-size: 80%;"> (source / <a href="midifile.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">538</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">22</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : // DESCRIPTION:
+<span class="lineNum">      15 </span>            : //    Reading of MIDI files.
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      19 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      20 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;assert.h&gt;
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;doomtype.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;i_swap.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;i_system.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;midifile.h&quot;
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span><span class="lineNoCov">          0 : #define HEADER_CHUNK_ID &quot;MThd&quot;</span>
+<span class="lineNum">      29 </span><span class="lineNoCov">          0 : #define TRACK_CHUNK_ID  &quot;MTrk&quot;</span>
+<span class="lineNum">      30 </span>            : #define MAX_BUFFER_SIZE 0x10000
+<span class="lineNum">      31 </span>            : 
+<span class="lineNum">      32 </span>            : // haleyjd 09/09/10: packing required
+<span class="lineNum">      33 </span>            : #ifdef _MSC_VER
+<span class="lineNum">      34 </span>            : #pragma pack(push, 1)
+<span class="lineNum">      35 </span>            : #endif
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span>            : typedef PACKED_STRUCT (
+<span class="lineNum">      38 </span>            : {
+<span class="lineNum">      39 </span>            :     byte chunk_id[4];
+<span class="lineNum">      40 </span>            :     unsigned int chunk_size;
+<span class="lineNum">      41 </span>            : }) chunk_header_t;
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span>            : typedef PACKED_STRUCT (
+<span class="lineNum">      44 </span>            : {
+<span class="lineNum">      45 </span>            :     chunk_header_t chunk_header;
+<span class="lineNum">      46 </span>            :     unsigned short format_type;
+<span class="lineNum">      47 </span>            :     unsigned short num_tracks;
+<span class="lineNum">      48 </span>            :     unsigned short time_division;
+<span class="lineNum">      49 </span>            : }) midi_header_t;
+<span class="lineNum">      50 </span>            : 
+<span class="lineNum">      51 </span>            : // haleyjd 09/09/10: packing off.
+<span class="lineNum">      52 </span>            : #ifdef _MSC_VER
+<span class="lineNum">      53 </span>            : #pragma pack(pop)
+<span class="lineNum">      54 </span>            : #endif
+<span class="lineNum">      55 </span>            : 
+<span class="lineNum">      56 </span>            : typedef struct
+<span class="lineNum">      57 </span>            : {
+<span class="lineNum">      58 </span>            :     // Length in bytes:
+<span class="lineNum">      59 </span>            : 
+<span class="lineNum">      60 </span>            :     unsigned int data_len;
+<span class="lineNum">      61 </span>            : 
+<span class="lineNum">      62 </span>            :     // Events in this track:
+<span class="lineNum">      63 </span>            : 
+<span class="lineNum">      64 </span>            :     midi_event_t *events;
+<span class="lineNum">      65 </span>            :     int num_events;
+<span class="lineNum">      66 </span>            : } midi_track_t;
+<span class="lineNum">      67 </span>            : 
+<span class="lineNum">      68 </span>            : struct midi_track_iter_s
+<span class="lineNum">      69 </span>            : {
+<span class="lineNum">      70 </span>            :     midi_track_t *track;
+<span class="lineNum">      71 </span>            :     unsigned int position;
+<span class="lineNum">      72 </span>            : };
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span>            : struct midi_file_s
+<span class="lineNum">      75 </span>            : {
+<span class="lineNum">      76 </span>            :     midi_header_t header;
+<span class="lineNum">      77 </span>            : 
+<span class="lineNum">      78 </span>            :     // All tracks in this file:
+<span class="lineNum">      79 </span>            :     midi_track_t *tracks;
+<span class="lineNum">      80 </span>            :     unsigned int num_tracks;
+<span class="lineNum">      81 </span>            : 
+<span class="lineNum">      82 </span>            :     // Data buffer used to store data read for SysEx or meta events:
+<span class="lineNum">      83 </span>            :     byte *buffer;
+<span class="lineNum">      84 </span>            :     unsigned int buffer_size;
+<span class="lineNum">      85 </span>            : };
+<span class="lineNum">      86 </span>            : 
+<span class="lineNum">      87 </span>            : // Check the header of a chunk:
+<span class="lineNum">      88 </span>            : 
+<a name="89"><span class="lineNum">      89 </span>            : static boolean CheckChunkHeader(chunk_header_t *chunk,</a>
+<span class="lineNum">      90 </span>            :                                 const char *expected_id)
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      92 </span><span class="lineNoCov">          0 :     boolean result;</span>
+<span class="lineNum">      93 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 :     result = (memcmp((char *) chunk-&gt;chunk_id, expected_id, 4) == 0);</span>
+<span class="lineNum">      95 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 :     if (!result)</span>
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;CheckChunkHeader: Expected '%s' chunk header, &quot;</span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 :                         &quot;got '%c%c%c%c'\n&quot;,</span>
+<span class="lineNum">     100 </span><span class="lineNoCov">          0 :                         expected_id,</span>
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 :                         chunk-&gt;chunk_id[0], chunk-&gt;chunk_id[1],</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 :                         chunk-&gt;chunk_id[2], chunk-&gt;chunk_id[3]);</span>
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     104 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     107 </span>            : 
+<span class="lineNum">     108 </span>            : // Read a single byte.  Returns false on error.
+<a name="109"><span class="lineNum">     109 </span>            : </a>
+<span class="lineNum">     110 </span>            : static boolean ReadByte(byte *result, FILE *stream)
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 :     int c;</span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 :     c = fgetc(stream);</span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 :     if (c == EOF)</span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadByte: Unexpected end of file\n&quot;);</span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 :         *result = (byte) c;</span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     128 </span>            : 
+<span class="lineNum">     129 </span>            : // Read a variable-length value.
+<a name="130"><span class="lineNum">     130 </span>            : </a>
+<span class="lineNum">     131 </span>            : static boolean ReadVariableLength(unsigned int *result, FILE *stream)
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 :     byte b = 0;</span>
+<span class="lineNum">     135 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     136 </span><span class="lineNoCov">          0 :     *result = 0;</span>
+<span class="lineNum">     137 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;4; ++i)</span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 :         if (!ReadByte(&amp;b, stream))</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;ReadVariableLength: Error while reading &quot;</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :                             &quot;variable-length value\n&quot;);</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :         // Insert the bottom seven bits from this byte.</span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :         *result &lt;&lt;= 7;</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 :         *result |= b &amp; 0x7f;</span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :         // If the top bit is not set, this is the end.</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :         if ((b &amp; 0x80) == 0)</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 :             return true;</span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     158 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     159 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     160 </span><span class="lineNoCov">          0 :     fprintf(stderr, &quot;ReadVariableLength: Variable-length value too &quot;</span>
+<span class="lineNum">     161 </span><span class="lineNoCov">          0 :                     &quot;long: maximum of four bytes\n&quot;);</span>
+<span class="lineNum">     162 </span><span class="lineNoCov">          0 :     return false;</span>
+<span class="lineNum">     163 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     164 </span>            : 
+<span class="lineNum">     165 </span>            : // Read a byte sequence into the data buffer.
+<a name="166"><span class="lineNum">     166 </span>            : </a>
+<span class="lineNum">     167 </span>            : static void *ReadByteSequence(unsigned int num_bytes, FILE *stream)
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 :     byte *result;</span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :     // Allocate a buffer. Allocate one extra byte, as malloc(0) is</span>
+<span class="lineNum">     173 </span><span class="lineNoCov">          0 :     // non-portable.</span>
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     175 </span><span class="lineNoCov">          0 :     result = malloc(num_bytes + 1);</span>
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 :     if (result == NULL)</span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadByteSequence: Failed to allocate buffer\n&quot;);</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :     // Read the data:</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;num_bytes; ++i)</span>
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :         if (!ReadByte(&amp;result[i], stream))</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;ReadByteSequence: Error while reading byte %u\n&quot;,</span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 :                             i);</span>
+<span class="lineNum">     191 </span><span class="lineNoCov">          0 :             free(result);</span>
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 :             return NULL;</span>
+<span class="lineNum">     193 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     194 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     195 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     198 </span>            : 
+<span class="lineNum">     199 </span>            : // Read a MIDI channel event.
+<span class="lineNum">     200 </span>            : // two_param indicates that the event type takes two parameters
+<span class="lineNum">     201 </span>            : // (three byte) otherwise it is single parameter (two byte)
+<span class="lineNum">     202 </span>            : 
+<span class="lineNum">     203 </span>            : static boolean ReadChannelEvent(midi_event_t *event,
+<a name="204"><span class="lineNum">     204 </span>            :                                 byte event_type, boolean two_param,</a>
+<span class="lineNum">     205 </span>            :                                 FILE *stream)
+<span class="lineNum">     206 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     207 </span><span class="lineNoCov">          0 :     byte b = 0;</span>
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 :     // Set basics:</span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :     event-&gt;event_type = event_type &amp; 0xf0;</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 :     event-&gt;data.channel.channel = event_type &amp; 0x0f;</span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 :     // Read parameters:</span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :     if (!ReadByte(&amp;b, stream))</span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadChannelEvent: Error while reading channel &quot;</span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :                         &quot;event parameters\n&quot;);</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 :     event-&gt;data.channel.param1 = b;</span>
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 :     // Second parameter:</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 :     if (two_param)</span>
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 :         if (!ReadByte(&amp;b, stream))</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;ReadChannelEvent: Error while reading channel &quot;</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :                             &quot;event parameters\n&quot;);</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 :         event-&gt;data.channel.param2 = b;</span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     240 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     241 </span>            : 
+<span class="lineNum">     242 </span>            : // Read sysex event:
+<span class="lineNum">     243 </span>            : 
+<a name="244"><span class="lineNum">     244 </span>            : static boolean ReadSysExEvent(midi_event_t *event, int event_type,</a>
+<span class="lineNum">     245 </span>            :                               FILE *stream)
+<span class="lineNum">     246 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :     event-&gt;event_type = event_type;</span>
+<span class="lineNum">     248 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 :     if (!ReadVariableLength(&amp;event-&gt;data.sysex.length, stream))</span>
+<span class="lineNum">     250 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     251 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadSysExEvent: Failed to read length of &quot;</span>
+<span class="lineNum">     252 </span><span class="lineNoCov">          0 :                                         &quot;SysEx block\n&quot;);</span>
+<span class="lineNum">     253 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     254 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     255 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     256 </span><span class="lineNoCov">          0 :     // Read the byte sequence:</span>
+<span class="lineNum">     257 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     258 </span><span class="lineNoCov">          0 :     event-&gt;data.sysex.data = ReadByteSequence(event-&gt;data.sysex.length, stream);</span>
+<span class="lineNum">     259 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     260 </span><span class="lineNoCov">          0 :     if (event-&gt;data.sysex.data == NULL)</span>
+<span class="lineNum">     261 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     262 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadSysExEvent: Failed while reading SysEx event\n&quot;);</span>
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     265 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     266 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     267 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     268 </span>            : 
+<span class="lineNum">     269 </span>            : // Read meta event:
+<a name="270"><span class="lineNum">     270 </span>            : </a>
+<span class="lineNum">     271 </span>            : static boolean ReadMetaEvent(midi_event_t *event, FILE *stream)
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     273 </span><span class="lineNoCov">          0 :     byte b = 0;</span>
+<span class="lineNum">     274 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     275 </span><span class="lineNoCov">          0 :     event-&gt;event_type = MIDI_EVENT_META;</span>
+<span class="lineNum">     276 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 :     // Read meta event type:</span>
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 :     if (!ReadByte(&amp;b, stream))</span>
+<span class="lineNum">     280 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadMetaEvent: Failed to read meta event type\n&quot;);</span>
+<span class="lineNum">     282 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     283 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 :     event-&gt;data.meta.type = b;</span>
+<span class="lineNum">     286 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 :     // Read length of meta event data:</span>
+<span class="lineNum">     288 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 :     if (!ReadVariableLength(&amp;event-&gt;data.meta.length, stream))</span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     291 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadSysExEvent: Failed to read length of &quot;</span>
+<span class="lineNum">     292 </span><span class="lineNoCov">          0 :                                         &quot;SysEx block\n&quot;);</span>
+<span class="lineNum">     293 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     294 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     295 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     296 </span><span class="lineNoCov">          0 :     // Read the byte sequence:</span>
+<span class="lineNum">     297 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     298 </span><span class="lineNoCov">          0 :     event-&gt;data.meta.data = ReadByteSequence(event-&gt;data.meta.length, stream);</span>
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :     if (event-&gt;data.meta.data == NULL)</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadSysExEvent: Failed while reading SysEx event\n&quot;);</span>
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     308 </span>            : 
+<a name="309"><span class="lineNum">     309 </span>            : static boolean ReadEvent(midi_event_t *event, unsigned int *last_event_type,</a>
+<span class="lineNum">     310 </span>            :                          FILE *stream)
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :     byte event_type = 0;</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :     if (!ReadVariableLength(&amp;event-&gt;delta_time, stream))</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadEvent: Failed to read event timestamp\n&quot;);</span>
+<span class="lineNum">     317 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     319 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     320 </span><span class="lineNoCov">          0 :     if (!ReadByte(&amp;event_type, stream))</span>
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadEvent: Failed to read event type\n&quot;);</span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     325 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 :     // All event types have their top bit set.  Therefore, if </span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 :     // the top bit is not set, it is because we are using the &quot;same</span>
+<span class="lineNum">     328 </span><span class="lineNoCov">          0 :     // as previous event type&quot; shortcut to save a byte.  Skip back</span>
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 :     // a byte so that we read this byte again.</span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     331 </span><span class="lineNoCov">          0 :     if ((event_type &amp; 0x80) == 0)</span>
+<span class="lineNum">     332 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     333 </span><span class="lineNoCov">          0 :         event_type = *last_event_type;</span>
+<span class="lineNum">     334 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     335 </span><span class="lineNoCov">          0 :         if (fseek(stream, -1, SEEK_CUR) &lt; 0)</span>
+<span class="lineNum">     336 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;ReadEvent: Unable to seek in stream\n&quot;);</span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     340 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 :         *last_event_type = event_type;</span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 :     // Check event type:</span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :     switch (event_type &amp; 0xf0)</span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :         // Two parameter channel events:</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_NOTE_OFF:</span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_NOTE_ON:</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_AFTERTOUCH:</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_CONTROLLER:</span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_PITCH_BEND:</span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :             return ReadChannelEvent(event, event_type, true, stream);</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     359 </span><span class="lineNoCov">          0 :         // Single parameter channel events:</span>
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_PROGRAM_CHANGE:</span>
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_CHAN_AFTERTOUCH:</span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :             return ReadChannelEvent(event, event_type, false, stream);</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :     // Specific value?</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     371 </span><span class="lineNoCov">          0 :     switch (event_type)</span>
+<span class="lineNum">     372 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     373 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_SYSEX:</span>
+<span class="lineNum">     374 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_SYSEX_SPLIT:</span>
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 :             return ReadSysExEvent(event, event_type, stream);</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_META:</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :             return ReadMetaEvent(event, stream);</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     382 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     383 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 :     fprintf(stderr, &quot;ReadEvent: Unknown MIDI event type: 0x%x\n&quot;, event_type);</span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 :     return false;</span>
+<span class="lineNum">     386 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     387 </span>            : 
+<span class="lineNum">     388 </span>            : // Free an event:
+<a name="389"><span class="lineNum">     389 </span>            : </a>
+<span class="lineNum">     390 </span>            : static void FreeEvent(midi_event_t *event)
+<span class="lineNum">     391 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     392 </span><span class="lineNoCov">          0 :     // Some event types have dynamically allocated buffers assigned</span>
+<span class="lineNum">     393 </span><span class="lineNoCov">          0 :     // to them that must be freed.</span>
+<span class="lineNum">     394 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     395 </span><span class="lineNoCov">          0 :     switch (event-&gt;event_type)</span>
+<span class="lineNum">     396 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     397 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_SYSEX:</span>
+<span class="lineNum">     398 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_SYSEX_SPLIT:</span>
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 :             free(event-&gt;data.sysex.data);</span>
+<span class="lineNum">     400 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     402 </span><span class="lineNoCov">          0 :         case MIDI_EVENT_META:</span>
+<span class="lineNum">     403 </span><span class="lineNoCov">          0 :             free(event-&gt;data.meta.data);</span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 :             // Nothing to do.</span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     411 </span>            : 
+<span class="lineNum">     412 </span>            : // Read and check the track chunk header
+<a name="413"><span class="lineNum">     413 </span>            : </a>
+<span class="lineNum">     414 </span>            : static boolean ReadTrackHeader(midi_track_t *track, FILE *stream)
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 :     size_t records_read;</span>
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 :     chunk_header_t chunk_header;</span>
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :     records_read = fread(&amp;chunk_header, sizeof(chunk_header_t), 1, stream);</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 :     if (records_read &lt; 1)</span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     423 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     425 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 :     if (!CheckChunkHeader(&amp;chunk_header, TRACK_CHUNK_ID))</span>
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     428 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     429 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     430 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     431 </span><span class="lineNoCov">          0 :     track-&gt;data_len = SDL_SwapBE32(chunk_header.chunk_size);</span>
+<span class="lineNum">     432 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     433 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 : }</span>
+<a name="435"><span class="lineNum">     435 </span>            : </a>
+<span class="lineNum">     436 </span>            : static boolean ReadTrack(midi_track_t *track, FILE *stream)
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 :     midi_event_t *new_events;</span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 :     midi_event_t *event;</span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :     unsigned int last_event_type;</span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 :     track-&gt;num_events = 0;</span>
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 :     track-&gt;events = NULL;</span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :     // Read the header:</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :     if (!ReadTrackHeader(track, stream))</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 :     // Then the events:</span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 :     last_event_type = 0;</span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :     for (;;)</span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     458 </span><span class="lineNoCov">          0 :         // Resize the track slightly larger to hold another event:</span>
+<span class="lineNum">     459 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     460 </span><span class="lineNoCov">          0 :         new_events = I_Realloc(track-&gt;events, </span>
+<span class="lineNum">     461 </span><span class="lineNoCov">          0 :                              sizeof(midi_event_t) * (track-&gt;num_events + 1));</span>
+<span class="lineNum">     462 </span><span class="lineNoCov">          0 :         track-&gt;events = new_events;</span>
+<span class="lineNum">     463 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     464 </span><span class="lineNoCov">          0 :         // Read the next event:</span>
+<span class="lineNum">     465 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     466 </span><span class="lineNoCov">          0 :         event = &amp;track-&gt;events[track-&gt;num_events];</span>
+<span class="lineNum">     467 </span><span class="lineNoCov">          0 :         if (!ReadEvent(event, &amp;last_event_type, stream))</span>
+<span class="lineNum">     468 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     469 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     470 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     472 </span><span class="lineNoCov">          0 :         ++track-&gt;num_events;</span>
+<span class="lineNum">     473 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     474 </span><span class="lineNoCov">          0 :         // End of track?</span>
+<span class="lineNum">     475 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     476 </span><span class="lineNoCov">          0 :         if (event-&gt;event_type == MIDI_EVENT_META</span>
+<span class="lineNum">     477 </span><span class="lineNoCov">          0 :          &amp;&amp; event-&gt;data.meta.type == MIDI_META_END_OF_TRACK)</span>
+<span class="lineNum">     478 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     479 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     480 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     481 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     482 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     485 </span>            : 
+<span class="lineNum">     486 </span>            : // Free a track:
+<a name="487"><span class="lineNum">     487 </span>            : </a>
+<span class="lineNum">     488 </span>            : static void FreeTrack(midi_track_t *track)
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     490 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">     491 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     492 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;track-&gt;num_events; ++i)</span>
+<span class="lineNum">     493 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     494 </span><span class="lineNoCov">          0 :         FreeEvent(&amp;track-&gt;events[i]);</span>
+<span class="lineNum">     495 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     496 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     497 </span><span class="lineNoCov">          0 :     free(track-&gt;events);</span>
+<span class="lineNum">     498 </span><span class="lineNoCov">          0 : }</span>
+<a name="499"><span class="lineNum">     499 </span>            : </a>
+<span class="lineNum">     500 </span>            : static boolean ReadAllTracks(midi_file_t *file, FILE *stream)
+<span class="lineNum">     501 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     502 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">     503 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     504 </span><span class="lineNoCov">          0 :     // Allocate list of tracks and read each track:</span>
+<span class="lineNum">     505 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     506 </span><span class="lineNoCov">          0 :     file-&gt;tracks = malloc(sizeof(midi_track_t) * file-&gt;num_tracks);</span>
+<span class="lineNum">     507 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 :     if (file-&gt;tracks == NULL)</span>
+<span class="lineNum">     509 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     510 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     512 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     513 </span><span class="lineNoCov">          0 :     memset(file-&gt;tracks, 0, sizeof(midi_track_t) * file-&gt;num_tracks);</span>
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     515 </span><span class="lineNoCov">          0 :     // Read each track:</span>
+<span class="lineNum">     516 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;file-&gt;num_tracks; ++i)</span>
+<span class="lineNum">     518 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 :         if (!ReadTrack(&amp;file-&gt;tracks[i], stream))</span>
+<span class="lineNum">     520 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     522 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     524 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     527 </span>            : 
+<span class="lineNum">     528 </span>            : // Read and check the header chunk.
+<a name="529"><span class="lineNum">     529 </span>            : </a>
+<span class="lineNum">     530 </span>            : static boolean ReadFileHeader(midi_file_t *file, FILE *stream)
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     532 </span><span class="lineNoCov">          0 :     size_t records_read;</span>
+<span class="lineNum">     533 </span><span class="lineNoCov">          0 :     unsigned int format_type;</span>
+<span class="lineNum">     534 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     535 </span><span class="lineNoCov">          0 :     records_read = fread(&amp;file-&gt;header, sizeof(midi_header_t), 1, stream);</span>
+<span class="lineNum">     536 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     537 </span><span class="lineNoCov">          0 :     if (records_read &lt; 1)</span>
+<span class="lineNum">     538 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     539 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     540 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     541 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     542 </span><span class="lineNoCov">          0 :     if (!CheckChunkHeader(&amp;file-&gt;header.chunk_header, HEADER_CHUNK_ID)</span>
+<span class="lineNum">     543 </span><span class="lineNoCov">          0 :      || SDL_SwapBE32(file-&gt;header.chunk_header.chunk_size) != 6)</span>
+<span class="lineNum">     544 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     545 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadFileHeader: Invalid MIDI chunk header! &quot;</span>
+<span class="lineNum">     546 </span><span class="lineNoCov">          0 :                         &quot;chunk_size=%i\n&quot;,</span>
+<span class="lineNum">     547 </span><span class="lineNoCov">          0 :                         SDL_SwapBE32(file-&gt;header.chunk_header.chunk_size));</span>
+<span class="lineNum">     548 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     549 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     550 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     551 </span><span class="lineNoCov">          0 :     format_type = SDL_SwapBE16(file-&gt;header.format_type);</span>
+<span class="lineNum">     552 </span><span class="lineNoCov">          0 :     file-&gt;num_tracks = SDL_SwapBE16(file-&gt;header.num_tracks);</span>
+<span class="lineNum">     553 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     554 </span><span class="lineNoCov">          0 :     if ((format_type != 0 &amp;&amp; format_type != 1)</span>
+<span class="lineNum">     555 </span><span class="lineNoCov">          0 :      || file-&gt;num_tracks &lt; 1)</span>
+<span class="lineNum">     556 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     557 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;ReadFileHeader: Only type 0/1 &quot;</span>
+<span class="lineNum">     558 </span><span class="lineNoCov">          0 :                                          &quot;MIDI files supported!\n&quot;);</span>
+<span class="lineNum">     559 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     560 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     562 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     563 </span><span class="lineNoCov">          0 : }</span>
+<a name="564"><span class="lineNum">     564 </span>            : </a>
+<span class="lineNum">     565 </span>            : void MIDI_FreeFile(midi_file_t *file)
+<span class="lineNum">     566 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     567 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     569 </span><span class="lineNoCov">          0 :     if (file-&gt;tracks != NULL)</span>
+<span class="lineNum">     570 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     571 </span><span class="lineNoCov">          0 :         for (i=0; i&lt;file-&gt;num_tracks; ++i)</span>
+<span class="lineNum">     572 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     573 </span><span class="lineNoCov">          0 :             FreeTrack(&amp;file-&gt;tracks[i]);</span>
+<span class="lineNum">     574 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :         free(file-&gt;tracks);</span>
+<span class="lineNum">     577 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :     free(file);</span>
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 : }</span>
+<a name="581"><span class="lineNum">     581 </span>            : </a>
+<span class="lineNum">     582 </span>            : midi_file_t *MIDI_LoadFile(char *filename)
+<span class="lineNum">     583 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     584 </span><span class="lineNoCov">          0 :     midi_file_t *file;</span>
+<span class="lineNum">     585 </span><span class="lineNoCov">          0 :     FILE *stream;</span>
+<span class="lineNum">     586 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     587 </span><span class="lineNoCov">          0 :     file = malloc(sizeof(midi_file_t));</span>
+<span class="lineNum">     588 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     589 </span><span class="lineNoCov">          0 :     if (file == NULL)</span>
+<span class="lineNum">     590 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     591 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     592 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     593 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     594 </span><span class="lineNoCov">          0 :     file-&gt;tracks = NULL;</span>
+<span class="lineNum">     595 </span><span class="lineNoCov">          0 :     file-&gt;num_tracks = 0;</span>
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :     file-&gt;buffer = NULL;</span>
+<span class="lineNum">     597 </span><span class="lineNoCov">          0 :     file-&gt;buffer_size = 0;</span>
+<span class="lineNum">     598 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     599 </span><span class="lineNoCov">          0 :     // Open file</span>
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     601 </span><span class="lineNoCov">          0 :     stream = fopen(filename, &quot;rb&quot;);</span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 :     if (stream == NULL)</span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     605 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;MIDI_LoadFile: Failed to open '%s'\n&quot;, filename);</span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 :         MIDI_FreeFile(file);</span>
+<span class="lineNum">     607 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     608 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     609 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     610 </span><span class="lineNoCov">          0 :     // Read MIDI file header</span>
+<span class="lineNum">     611 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     612 </span><span class="lineNoCov">          0 :     if (!ReadFileHeader(file, stream))</span>
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     614 </span><span class="lineNoCov">          0 :         fclose(stream);</span>
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 :         MIDI_FreeFile(file);</span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 :     // Read all tracks:</span>
+<span class="lineNum">     620 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     621 </span><span class="lineNoCov">          0 :     if (!ReadAllTracks(file, stream))</span>
+<span class="lineNum">     622 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 :         fclose(stream);</span>
+<span class="lineNum">     624 </span><span class="lineNoCov">          0 :         MIDI_FreeFile(file);</span>
+<span class="lineNum">     625 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 :     fclose(stream);</span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 :     return file;</span>
+<span class="lineNum">     631 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     632 </span>            : 
+<span class="lineNum">     633 </span>            : // Get the number of tracks in a MIDI file.
+<a name="634"><span class="lineNum">     634 </span>            : </a>
+<span class="lineNum">     635 </span>            : unsigned int MIDI_NumTracks(midi_file_t *file)
+<span class="lineNum">     636 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     637 </span><span class="lineNoCov">          0 :     return file-&gt;num_tracks;</span>
+<span class="lineNum">     638 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     639 </span>            : 
+<span class="lineNum">     640 </span>            : // Start iterating over the events in a track.
+<span class="lineNum">     641 </span>            : 
+<span class="lineNum">     642 </span>            : midi_track_iter_t *MIDI_IterateTrack(midi_file_t *file, unsigned int track)
+<span class="lineNum">     643 </span>            : {
+<span class="lineNum">     644 </span>            :     midi_track_iter_t *iter;
+<span class="lineNum">     645 </span>            : 
+<span class="lineNum">     646 </span>            :     assert(track &lt; file-&gt;num_tracks);
+<span class="lineNum">     647 </span>            : 
+<span class="lineNum">     648 </span>            :     iter = malloc(sizeof(*iter));
+<span class="lineNum">     649 </span>            :     iter-&gt;track = &amp;file-&gt;tracks[track];
+<span class="lineNum">     650 </span>            :     iter-&gt;position = 0;
+<span class="lineNum">     651 </span>            : 
+<span class="lineNum">     652 </span>            :     return iter;
+<span class="lineNum">     653 </span>            : }
+<a name="654"><span class="lineNum">     654 </span>            : </a>
+<span class="lineNum">     655 </span>            : void MIDI_FreeIterator(midi_track_iter_t *iter)
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 :     free(iter);</span>
+<span class="lineNum">     658 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     659 </span>            : 
+<span class="lineNum">     660 </span>            : // Get the time until the next MIDI event in a track.
+<a name="661"><span class="lineNum">     661 </span>            : </a>
+<span class="lineNum">     662 </span>            : unsigned int MIDI_GetDeltaTime(midi_track_iter_t *iter)
+<span class="lineNum">     663 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     664 </span><span class="lineNoCov">          0 :     if (iter-&gt;position &lt; iter-&gt;track-&gt;num_events)</span>
+<span class="lineNum">     665 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     666 </span><span class="lineNoCov">          0 :         midi_event_t *next_event;</span>
+<span class="lineNum">     667 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     668 </span><span class="lineNoCov">          0 :         next_event = &amp;iter-&gt;track-&gt;events[iter-&gt;position];</span>
+<span class="lineNum">     669 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     670 </span><span class="lineNoCov">          0 :         return next_event-&gt;delta_time;</span>
+<span class="lineNum">     671 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     672 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     673 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     674 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     675 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     676 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     677 </span>            : 
+<span class="lineNum">     678 </span>            : // Get a pointer to the next MIDI event.
+<a name="679"><span class="lineNum">     679 </span>            : </a>
+<span class="lineNum">     680 </span>            : int MIDI_GetNextEvent(midi_track_iter_t *iter, midi_event_t **event)
+<span class="lineNum">     681 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     682 </span><span class="lineNoCov">          0 :     if (iter-&gt;position &lt; iter-&gt;track-&gt;num_events)</span>
+<span class="lineNum">     683 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     684 </span><span class="lineNoCov">          0 :         *event = &amp;iter-&gt;track-&gt;events[iter-&gt;position];</span>
+<span class="lineNum">     685 </span><span class="lineNoCov">          0 :         ++iter-&gt;position;</span>
+<span class="lineNum">     686 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     687 </span><span class="lineNoCov">          0 :         return 1;</span>
+<span class="lineNum">     688 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     689 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     690 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     691 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     692 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     693 </span><span class="lineNoCov">          0 : }</span>
+<a name="694"><span class="lineNum">     694 </span>            : </a>
+<span class="lineNum">     695 </span>            : unsigned int MIDI_GetFileTimeDivision(midi_file_t *file)
+<span class="lineNum">     696 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     697 </span><span class="lineNoCov">          0 :     short result = SDL_SwapBE16(file-&gt;header.time_division);</span>
+<span class="lineNum">     698 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     699 </span><span class="lineNoCov">          0 :     // Negative time division indicates SMPTE time and must be handled</span>
+<span class="lineNum">     700 </span><span class="lineNoCov">          0 :     // differently.</span>
+<span class="lineNum">     701 </span><span class="lineNoCov">          0 :     if (result &lt; 0)</span>
+<span class="lineNum">     702 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     703 </span><span class="lineNoCov">          0 :         return (signed int)(-(result/256))</span>
+<span class="lineNum">     704 </span><span class="lineNoCov">          0 :              * (signed int)(result &amp; 0xFF);</span>
+<span class="lineNum">     705 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     707 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     708 </span><span class="lineNoCov">          0 :         return result;</span>
+<span class="lineNum">     709 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     710 </span><span class="lineNoCov">          0 : }</span>
+<a name="711"><span class="lineNum">     711 </span>            : </a>
+<span class="lineNum">     712 </span>            : void MIDI_RestartIterator(midi_track_iter_t *iter)
+<span class="lineNum">     713 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     714 </span><span class="lineNoCov">          0 :     iter-&gt;position = 0;</span>
+<span class="lineNum">     715 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     716 </span>            : 
+<span class="lineNum">     717 </span>            : #ifdef TEST
+<span class="lineNum">     718 </span>            : 
+<span class="lineNum">     719 </span>            : static char *MIDI_EventTypeToString(midi_event_type_t event_type)
+<span class="lineNum">     720 </span>            : {
+<span class="lineNum">     721 </span>            :     switch (event_type)
+<span class="lineNum">     722 </span>            :     {
+<span class="lineNum">     723 </span>            :         case MIDI_EVENT_NOTE_OFF:
+<span class="lineNum">     724 </span>            :             return &quot;MIDI_EVENT_NOTE_OFF&quot;;
+<span class="lineNum">     725 </span>            :         case MIDI_EVENT_NOTE_ON:
+<span class="lineNum">     726 </span>            :             return &quot;MIDI_EVENT_NOTE_ON&quot;;
+<span class="lineNum">     727 </span>            :         case MIDI_EVENT_AFTERTOUCH:
+<span class="lineNum">     728 </span>            :             return &quot;MIDI_EVENT_AFTERTOUCH&quot;;
+<span class="lineNum">     729 </span>            :         case MIDI_EVENT_CONTROLLER:
+<span class="lineNum">     730 </span>            :             return &quot;MIDI_EVENT_CONTROLLER&quot;;
+<span class="lineNum">     731 </span>            :         case MIDI_EVENT_PROGRAM_CHANGE:
+<span class="lineNum">     732 </span>            :             return &quot;MIDI_EVENT_PROGRAM_CHANGE&quot;;
+<span class="lineNum">     733 </span>            :         case MIDI_EVENT_CHAN_AFTERTOUCH:
+<span class="lineNum">     734 </span>            :             return &quot;MIDI_EVENT_CHAN_AFTERTOUCH&quot;;
+<span class="lineNum">     735 </span>            :         case MIDI_EVENT_PITCH_BEND:
+<span class="lineNum">     736 </span>            :             return &quot;MIDI_EVENT_PITCH_BEND&quot;;
+<span class="lineNum">     737 </span>            :         case MIDI_EVENT_SYSEX:
+<span class="lineNum">     738 </span>            :             return &quot;MIDI_EVENT_SYSEX&quot;;
+<span class="lineNum">     739 </span>            :         case MIDI_EVENT_SYSEX_SPLIT:
+<span class="lineNum">     740 </span>            :             return &quot;MIDI_EVENT_SYSEX_SPLIT&quot;;
+<span class="lineNum">     741 </span>            :         case MIDI_EVENT_META:
+<span class="lineNum">     742 </span>            :             return &quot;MIDI_EVENT_META&quot;;
+<span class="lineNum">     743 </span>            : 
+<span class="lineNum">     744 </span>            :         default:
+<span class="lineNum">     745 </span>            :             return &quot;(unknown)&quot;;
+<span class="lineNum">     746 </span>            :     }
+<span class="lineNum">     747 </span>            : }
+<span class="lineNum">     748 </span>            : 
+<span class="lineNum">     749 </span>            : void PrintTrack(midi_track_t *track)
+<span class="lineNum">     750 </span>            : {
+<span class="lineNum">     751 </span>            :     midi_event_t *event;
+<span class="lineNum">     752 </span>            :     unsigned int i;
+<span class="lineNum">     753 </span>            : 
+<span class="lineNum">     754 </span>            :     for (i=0; i&lt;track-&gt;num_events; ++i)
+<span class="lineNum">     755 </span>            :     {
+<span class="lineNum">     756 </span>            :         event = &amp;track-&gt;events[i];
+<span class="lineNum">     757 </span>            : 
+<span class="lineNum">     758 </span>            :         if (event-&gt;delta_time &gt; 0)
+<span class="lineNum">     759 </span>            :         {
+<span class="lineNum">     760 </span>            :             printf(&quot;Delay: %u ticks\n&quot;, event-&gt;delta_time);
+<span class="lineNum">     761 </span>            :         }
+<span class="lineNum">     762 </span>            : 
+<span class="lineNum">     763 </span>            :         printf(&quot;Event type: %s (%i)\n&quot;,
+<span class="lineNum">     764 </span>            :                MIDI_EventTypeToString(event-&gt;event_type),
+<span class="lineNum">     765 </span>            :                event-&gt;event_type);
+<span class="lineNum">     766 </span>            : 
+<span class="lineNum">     767 </span>            :         switch(event-&gt;event_type)
+<span class="lineNum">     768 </span>            :         {
+<span class="lineNum">     769 </span>            :             case MIDI_EVENT_NOTE_OFF:
+<span class="lineNum">     770 </span>            :             case MIDI_EVENT_NOTE_ON:
+<span class="lineNum">     771 </span>            :             case MIDI_EVENT_AFTERTOUCH:
+<span class="lineNum">     772 </span>            :             case MIDI_EVENT_CONTROLLER:
+<span class="lineNum">     773 </span>            :             case MIDI_EVENT_PROGRAM_CHANGE:
+<span class="lineNum">     774 </span>            :             case MIDI_EVENT_CHAN_AFTERTOUCH:
+<span class="lineNum">     775 </span>            :             case MIDI_EVENT_PITCH_BEND:
+<span class="lineNum">     776 </span>            :                 printf(&quot;\tChannel: %u\n&quot;, event-&gt;data.channel.channel);
+<span class="lineNum">     777 </span>            :                 printf(&quot;\tParameter 1: %u\n&quot;, event-&gt;data.channel.param1);
+<span class="lineNum">     778 </span>            :                 printf(&quot;\tParameter 2: %u\n&quot;, event-&gt;data.channel.param2);
+<span class="lineNum">     779 </span>            :                 break;
+<span class="lineNum">     780 </span>            : 
+<span class="lineNum">     781 </span>            :             case MIDI_EVENT_SYSEX:
+<span class="lineNum">     782 </span>            :             case MIDI_EVENT_SYSEX_SPLIT:
+<span class="lineNum">     783 </span>            :                 printf(&quot;\tLength: %u\n&quot;, event-&gt;data.sysex.length);
+<span class="lineNum">     784 </span>            :                 break;
+<span class="lineNum">     785 </span>            : 
+<span class="lineNum">     786 </span>            :             case MIDI_EVENT_META:
+<span class="lineNum">     787 </span>            :                 printf(&quot;\tMeta type: %u\n&quot;, event-&gt;data.meta.type);
+<span class="lineNum">     788 </span>            :                 printf(&quot;\tLength: %u\n&quot;, event-&gt;data.meta.length);
+<span class="lineNum">     789 </span>            :                 break;
+<span class="lineNum">     790 </span>            :         }
+<span class="lineNum">     791 </span>            :     }
+<span class="lineNum">     792 </span>            : }
+<span class="lineNum">     793 </span>            : 
+<span class="lineNum">     794 </span>            : int main(int argc, char *argv[])
+<span class="lineNum">     795 </span>            : {
+<span class="lineNum">     796 </span>            :     midi_file_t *file;
+<span class="lineNum">     797 </span>            :     unsigned int i;
+<span class="lineNum">     798 </span>            : 
+<span class="lineNum">     799 </span>            :     if (argc &lt; 2)
+<span class="lineNum">     800 </span>            :     {
+<span class="lineNum">     801 </span>            :         printf(&quot;Usage: %s &lt;filename&gt;\n&quot;, argv[0]);
+<span class="lineNum">     802 </span>            :         exit(1);
+<span class="lineNum">     803 </span>            :     }
+<span class="lineNum">     804 </span>            : 
+<span class="lineNum">     805 </span>            :     file = MIDI_LoadFile(argv[1]);
+<span class="lineNum">     806 </span>            : 
+<span class="lineNum">     807 </span>            :     if (file == NULL)
+<span class="lineNum">     808 </span>            :     {
+<span class="lineNum">     809 </span>            :         fprintf(stderr, &quot;Failed to open %s\n&quot;, argv[1]);
+<span class="lineNum">     810 </span>            :         exit(1);
+<span class="lineNum">     811 </span>            :     }
+<span class="lineNum">     812 </span>            : 
+<span class="lineNum">     813 </span>            :     for (i=0; i&lt;file-&gt;num_tracks; ++i)
+<span class="lineNum">     814 </span>            :     {
+<span class="lineNum">     815 </span>            :         printf(&quot;\n== Track %u ==\n\n&quot;, i);
+<span class="lineNum">     816 </span>            : 
+<span class="lineNum">     817 </span>            :         PrintTrack(&amp;file-&gt;tracks[i]);
+<span class="lineNum">     818 </span>            :     }
+<span class="lineNum">     819 </span>            : 
+<span class="lineNum">     820 </span>            :     return 0;
+<span class="lineNum">     821 </span>            : }
+<span class="lineNum">     822 </span>            : 
+<span class="lineNum">     823 </span>            : #endif
+<span class="lineNum">     824 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

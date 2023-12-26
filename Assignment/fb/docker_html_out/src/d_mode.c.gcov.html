@@ -1,0 +1,307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/d_mode.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - d_mode.c<span style="font-size: 80%;"> (source / <a href="d_mode.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">141</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //   Functions and definitions relating to the game type and operational
+<span class="lineNum">      17 </span>            : //   mode.
+<span class="lineNum">      18 </span>            : //
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &quot;doomtype.h&quot;
+<span class="lineNum">      21 </span>            : #include &quot;d_mode.h&quot;
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : // Valid game mode/mission combinations, with the number of
+<span class="lineNum">      24 </span>            : // episodes/maps for each.
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span>            : static struct
+<span class="lineNum">      27 </span>            : {
+<span class="lineNum">      28 </span>            :     GameMission_t mission;
+<span class="lineNum">      29 </span>            :     GameMode_t mode;
+<span class="lineNum">      30 </span>            :     int episode;
+<span class="lineNum">      31 </span>            :     int map;
+<span class="lineNum">      32 </span>            : } valid_modes[] = {
+<span class="lineNum">      33 </span>            :     { pack_chex, retail,     1, 5 },
+<span class="lineNum">      34 </span>            :     { doom,      shareware,  1, 9 },
+<span class="lineNum">      35 </span>            :     { doom,      registered, 3, 9 },
+<span class="lineNum">      36 </span>            :     { doom,      retail,     4, 9 },
+<span class="lineNum">      37 </span>            :     { doom2,     commercial, 1, 32 },
+<span class="lineNum">      38 </span>            :     { pack_tnt,  commercial, 1, 32 },
+<span class="lineNum">      39 </span>            :     { pack_plut, commercial, 1, 32 },
+<span class="lineNum">      40 </span>            :     { pack_hacx, commercial, 1, 32 },
+<span class="lineNum">      41 </span>            :     { heretic,   shareware,  1, 9 },
+<span class="lineNum">      42 </span>            :     { heretic,   registered, 3, 9 },
+<span class="lineNum">      43 </span>            :     { heretic,   retail,     5, 9 },
+<span class="lineNum">      44 </span>            :     { hexen,     commercial, 1, 60 },
+<span class="lineNum">      45 </span>            :     { strife,    commercial, 1, 34 },
+<span class="lineNum">      46 </span>            : };
+<span class="lineNum">      47 </span>            : 
+<span class="lineNum">      48 </span>            : // Check that a gamemode+gamemission received over the network is valid.
+<a name="49"><span class="lineNum">      49 </span>            : </a>
+<span class="lineNum">      50 </span>            : boolean D_ValidGameMode(GameMission_t mission, GameMode_t mode)
+<span class="lineNum">      51 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">      53 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      54 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;arrlen(valid_modes); ++i)</span>
+<span class="lineNum">      55 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      56 </span><span class="lineNoCov">          0 :         if (valid_modes[i].mode == mode &amp;&amp; valid_modes[i].mission == mission)</span>
+<span class="lineNum">      57 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">      58 </span><span class="lineNoCov">          0 :             return true;</span>
+<span class="lineNum">      59 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">      60 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      61 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 :     return false;</span>
+<span class="lineNum">      63 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">      64 </span>            : 
+<a name="65"><span class="lineNum">      65 </span>            : boolean D_ValidEpisodeMap(GameMission_t mission, GameMode_t mode,</a>
+<span class="lineNum">      66 </span>            :                           int episode, int map)
+<span class="lineNum">      67 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      68 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">      69 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      70 </span><span class="lineNoCov">          0 :     // Hacks for Heretic secret episodes</span>
+<span class="lineNum">      71 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      72 </span><span class="lineNoCov">          0 :     if (mission == heretic)</span>
+<span class="lineNum">      73 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      74 </span><span class="lineNoCov">          0 :         if (mode == retail &amp;&amp; episode == 6)</span>
+<span class="lineNum">      75 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">      76 </span><span class="lineNoCov">          0 :             return map &gt;= 1 &amp;&amp; map &lt;= 3;</span>
+<span class="lineNum">      77 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">      78 </span><span class="lineNoCov">          0 :         else if (mode == registered &amp;&amp; episode == 4)</span>
+<span class="lineNum">      79 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">      80 </span><span class="lineNoCov">          0 :             return map == 1;</span>
+<span class="lineNum">      81 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">      82 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      83 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      84 </span><span class="lineNoCov">          0 :     // Find the table entry for this mission/mode combination.</span>
+<span class="lineNum">      85 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      86 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;arrlen(valid_modes); ++i) </span>
+<span class="lineNum">      87 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      88 </span><span class="lineNoCov">          0 :         if (mission == valid_modes[i].mission</span>
+<span class="lineNum">      89 </span><span class="lineNoCov">          0 :          &amp;&amp; mode == valid_modes[i].mode)</span>
+<span class="lineNum">      90 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 :             return episode &gt;= 1 &amp;&amp; episode &lt;= valid_modes[i].episode</span>
+<span class="lineNum">      92 </span><span class="lineNoCov">          0 :                 &amp;&amp; map &gt;= 1 &amp;&amp; map &lt;= valid_modes[i].map;</span>
+<span class="lineNum">      93 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      95 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 :     // Unknown mode/mission combination</span>
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 :     return false;</span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     100 </span>            : 
+<span class="lineNum">     101 </span>            : // Get the number of valid episodes for the specified mission/mode.
+<a name="102"><span class="lineNum">     102 </span>            : </a>
+<span class="lineNum">     103 </span>            : int D_GetNumEpisodes(GameMission_t mission, GameMode_t mode)
+<span class="lineNum">     104 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 :     int episode;</span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 :     episode = 1;</span>
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     109 </span><span class="lineNoCov">          0 :     while (D_ValidEpisodeMap(mission, mode, episode, 1))</span>
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :         ++episode;</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 :     return episode - 1;</span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     116 </span>            : 
+<span class="lineNum">     117 </span>            : // Table of valid versions
+<span class="lineNum">     118 </span>            : 
+<span class="lineNum">     119 </span>            : static struct {
+<span class="lineNum">     120 </span>            :     GameMission_t mission;
+<span class="lineNum">     121 </span>            :     GameVersion_t version;
+<span class="lineNum">     122 </span>            : } valid_versions[] = {
+<span class="lineNum">     123 </span>            :     { doom,     exe_doom_1_2 },
+<span class="lineNum">     124 </span>            :     { doom,     exe_doom_1_666 },
+<span class="lineNum">     125 </span>            :     { doom,     exe_doom_1_7 },
+<span class="lineNum">     126 </span>            :     { doom,     exe_doom_1_8 },
+<span class="lineNum">     127 </span>            :     { doom,     exe_doom_1_9 },
+<span class="lineNum">     128 </span>            :     { doom,     exe_hacx },
+<span class="lineNum">     129 </span>            :     { doom,     exe_ultimate },
+<span class="lineNum">     130 </span>            :     { doom,     exe_final },
+<span class="lineNum">     131 </span>            :     { doom,     exe_final2 },
+<span class="lineNum">     132 </span>            :     { doom,     exe_chex },
+<span class="lineNum">     133 </span>            :     { heretic,  exe_heretic_1_3 },
+<span class="lineNum">     134 </span>            :     { hexen,    exe_hexen_1_1 },
+<span class="lineNum">     135 </span>            :     { strife,   exe_strife_1_2 },
+<span class="lineNum">     136 </span>            :     { strife,   exe_strife_1_31 },
+<span class="lineNum">     137 </span>            : };
+<a name="138"><span class="lineNum">     138 </span>            : </a>
+<span class="lineNum">     139 </span>            : boolean D_ValidGameVersion(GameMission_t mission, GameVersion_t version)
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :     // All Doom variants can use the Doom versions.</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :     if (mission == doom2 || mission == pack_plut || mission == pack_tnt</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 :      || mission == pack_hacx || mission == pack_chex)</span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 :         mission = doom;</span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;arrlen(valid_versions); ++i) </span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :         if (valid_versions[i].mission == mission </span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :          &amp;&amp; valid_versions[i].version == version)</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 :             return true;</span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     158 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     159 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     160 </span><span class="lineNoCov">          0 :     return false;</span>
+<span class="lineNum">     161 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     162 </span>            : 
+<span class="lineNum">     163 </span>            : // Does this mission type use ExMy form, rather than MAPxy form?
+<a name="164"><span class="lineNum">     164 </span>            : </a>
+<span class="lineNum">     165 </span>            : boolean D_IsEpisodeMap(GameMission_t mission)
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :     switch (mission)</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 :         case doom:</span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 :         case heretic:</span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 :         case pack_chex:</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :             return true;</span>
+<span class="lineNum">     173 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 :         case none:</span>
+<span class="lineNum">     175 </span><span class="lineNoCov">          0 :         case hexen:</span>
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 :         case doom2:</span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 :         case pack_hacx:</span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 :         case pack_tnt:</span>
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 :         case pack_plut:</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :         case strife:</span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 : }</span>
+<a name="185"><span class="lineNum">     185 </span>            : </a>
+<span class="lineNum">     186 </span>            : const char *D_GameMissionString(GameMission_t mission)
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :     switch (mission)</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 :         case none:</span>
+<span class="lineNum">     191 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 :             return &quot;none&quot;;</span>
+<span class="lineNum">     193 </span><span class="lineNoCov">          0 :         case doom:</span>
+<span class="lineNum">     194 </span><span class="lineNoCov">          0 :             return &quot;doom&quot;;</span>
+<span class="lineNum">     195 </span><span class="lineNoCov">          0 :         case doom2:</span>
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 :             return &quot;doom2&quot;;</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 :         case pack_tnt:</span>
+<span class="lineNum">     198 </span><span class="lineNoCov">          0 :             return &quot;tnt&quot;;</span>
+<span class="lineNum">     199 </span><span class="lineNoCov">          0 :         case pack_plut:</span>
+<span class="lineNum">     200 </span><span class="lineNoCov">          0 :             return &quot;plutonia&quot;;</span>
+<span class="lineNum">     201 </span><span class="lineNoCov">          0 :         case pack_hacx:</span>
+<span class="lineNum">     202 </span><span class="lineNoCov">          0 :             return &quot;hacx&quot;;</span>
+<span class="lineNum">     203 </span><span class="lineNoCov">          0 :         case pack_chex:</span>
+<span class="lineNum">     204 </span><span class="lineNoCov">          0 :             return &quot;chex&quot;;</span>
+<span class="lineNum">     205 </span><span class="lineNoCov">          0 :         case heretic:</span>
+<span class="lineNum">     206 </span><span class="lineNoCov">          0 :             return &quot;heretic&quot;;</span>
+<span class="lineNum">     207 </span><span class="lineNoCov">          0 :         case hexen:</span>
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 :             return &quot;hexen&quot;;</span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 :         case strife:</span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 :             return &quot;strife&quot;;</span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 : }</span>
+<a name="213"><span class="lineNum">     213 </span>            : </a>
+<span class="lineNum">     214 </span>            : const char *D_GameModeString(GameMode_t mode)
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :     switch (mode)</span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 :         case shareware:</span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :             return &quot;shareware&quot;;</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 :         case registered:</span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 :             return &quot;registered&quot;;</span>
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 :         case commercial:</span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 :             return &quot;commercial&quot;;</span>
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 :         case retail:</span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 :             return &quot;retail&quot;;</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 :         case indetermined:</span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 :             return &quot;unknown&quot;;</span>
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     231 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

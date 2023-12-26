@@ -1,0 +1,705 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/w_wad.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - w_wad.c<span style="font-size: 80%;"> (source / <a href="w_wad.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">308</td>
+            <td class="headerCovTableEntry">379</td>
+            <td class="headerCovTableEntryMed">81.3 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">13</td>
+            <td class="headerCovTableEntry">15</td>
+            <td class="headerCovTableEntryMed">86.7 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      Handles WAD file header, directory, lump I/O.
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span>            : #include &lt;ctype.h&gt;
+<span class="lineNum">      23 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      24 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      25 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : #include &quot;doomtype.h&quot;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : #include &quot;i_swap.h&quot;
+<span class="lineNum">      30 </span>            : #include &quot;i_system.h&quot;
+<span class="lineNum">      31 </span>            : #include &quot;i_video.h&quot;
+<span class="lineNum">      32 </span>            : #include &quot;m_misc.h&quot;
+<span class="lineNum">      33 </span>            : #include &quot;v_diskicon.h&quot;
+<span class="lineNum">      34 </span>            : #include &quot;z_zone.h&quot;
+<span class="lineNum">      35 </span>            : 
+<span class="lineNum">      36 </span>            : #include &quot;w_wad.h&quot;
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            : typedef PACKED_STRUCT (
+<span class="lineNum">      39 </span>            : {
+<span class="lineNum">      40 </span>            :     // Should be &quot;IWAD&quot; or &quot;PWAD&quot;.
+<span class="lineNum">      41 </span>            :     char                identification[4];
+<span class="lineNum">      42 </span>            :     int                 numlumps;
+<span class="lineNum">      43 </span>            :     int                 infotableofs;
+<span class="lineNum">      44 </span>            : }) wadinfo_t;
+<span class="lineNum">      45 </span>            : 
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span>            : typedef PACKED_STRUCT (
+<span class="lineNum">      48 </span>            : {
+<span class="lineNum">      49 </span>            :     int                 filepos;
+<span class="lineNum">      50 </span>            :     int                 size;
+<span class="lineNum">      51 </span>            :     char                name[8];
+<span class="lineNum">      52 </span>            : }) filelump_t;
+<span class="lineNum">      53 </span>            : 
+<span class="lineNum">      54 </span>            : //
+<span class="lineNum">      55 </span>            : // GLOBALS
+<span class="lineNum">      56 </span>            : //
+<span class="lineNum">      57 </span>            : 
+<span class="lineNum">      58 </span>            : // Location of each lump on disk.
+<span class="lineNum">      59 </span>            : lumpinfo_t **lumpinfo;
+<span class="lineNum">      60 </span>            : unsigned int numlumps = 0;
+<span class="lineNum">      61 </span>            : 
+<span class="lineNum">      62 </span>            : // Hash table for fast lookups
+<span class="lineNum">      63 </span>            : static lumpindex_t *lumphash;
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span>            : // Variables for the reload hack: filename of the PWAD to reload, and the
+<span class="lineNum">      66 </span>            : // lumps from WADs before the reload file, so we can resent numlumps and
+<span class="lineNum">      67 </span>            : // load the file again.
+<span class="lineNum">      68 </span>            : static wad_file_t *reloadhandle = NULL;
+<span class="lineNum">      69 </span>            : static lumpinfo_t *reloadlumps = NULL;
+<span class="lineNum">      70 </span>            : static char *reloadname = NULL;
+<span class="lineNum">      71 </span>            : static int reloadlump = -1;
+<span class="lineNum">      72 </span>            : 
+<a name="73"><span class="lineNum">      73 </span>            : // Hash function used for lump names.</a>
+<span class="lineNum">      74 </span>            : unsigned int W_LumpNameHash(const char *s)
+<span class="lineNum">      75 </span><span class="lineCov">  631747385 : {</span>
+<span class="lineNum">      76 </span><span class="lineCov">  631747385 :     // This is the djb2 string hash function, modded to work on strings</span>
+<span class="lineNum">      77 </span><span class="lineCov">  631747385 :     // that have a maximum length of 8.</span>
+<span class="lineNum">      78 </span><span class="lineCov">  631747385 : </span>
+<span class="lineNum">      79 </span><span class="lineCov">  631747385 :     unsigned int result = 5381;</span>
+<span class="lineNum">      80 </span><span class="lineCov">  631747385 :     unsigned int i;</span>
+<span class="lineNum">      81 </span><span class="lineCov">  631747385 : </span>
+<span class="lineNum">      82 </span><span class="lineCov"> 4811837974 :     for (i=0; i &lt; 8 &amp;&amp; s[i] != '\0'; ++i)</span>
+<span class="lineNum">      83 </span><span class="lineCov"> 4180090589 :     {</span>
+<span class="lineNum">      84 </span><span class="lineCov"> 4180090589 :         result = ((result &lt;&lt; 5) ^ result ) ^ toupper(s[i]);</span>
+<span class="lineNum">      85 </span><span class="lineCov"> 4180090589 :     }</span>
+<span class="lineNum">      86 </span><span class="lineCov">  631747385 : </span>
+<span class="lineNum">      87 </span><span class="lineCov">  631747385 :     return result;</span>
+<span class="lineNum">      88 </span><span class="lineCov">  631747385 : }</span>
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            : //
+<span class="lineNum">      91 </span>            : // LUMP BASED ROUTINES.
+<span class="lineNum">      92 </span>            : //
+<span class="lineNum">      93 </span>            : 
+<span class="lineNum">      94 </span>            : //
+<span class="lineNum">      95 </span>            : // W_AddFile
+<span class="lineNum">      96 </span>            : // All files are optional, but at least one file must be
+<span class="lineNum">      97 </span>            : //  found (PWAD, if all required lumps are present).
+<span class="lineNum">      98 </span>            : // Files with a .wad extension are wadlink files
+<span class="lineNum">      99 </span>            : //  with multiple lumps.
+<span class="lineNum">     100 </span>            : // Other files are single lumps with the base filename
+<span class="lineNum">     101 </span>            : //  for the lump name.
+<a name="102"><span class="lineNum">     102 </span>            : </a>
+<span class="lineNum">     103 </span>            : wad_file_t *W_AddFile (const char *filename)
+<span class="lineNum">     104 </span><span class="lineCov">      36486 : {</span>
+<span class="lineNum">     105 </span><span class="lineCov">      36486 :     wadinfo_t header;</span>
+<span class="lineNum">     106 </span><span class="lineCov">      36486 :     lumpindex_t i;</span>
+<span class="lineNum">     107 </span><span class="lineCov">      36486 :     wad_file_t *wad_file;</span>
+<span class="lineNum">     108 </span><span class="lineCov">      36486 :     int length;</span>
+<span class="lineNum">     109 </span><span class="lineCov">      36486 :     int startlump;</span>
+<span class="lineNum">     110 </span><span class="lineCov">      36486 :     filelump_t *fileinfo;</span>
+<span class="lineNum">     111 </span><span class="lineCov">      36486 :     filelump_t *filerover;</span>
+<span class="lineNum">     112 </span><span class="lineCov">      36486 :     lumpinfo_t *filelumps;</span>
+<span class="lineNum">     113 </span><span class="lineCov">      36486 :     int numfilelumps;</span>
+<span class="lineNum">     114 </span><span class="lineCov">      36486 : </span>
+<span class="lineNum">     115 </span><span class="lineCov">      36486 :     // If the filename begins with a ~, it indicates that we should use the</span>
+<span class="lineNum">     116 </span><span class="lineCov">      36486 :     // reload hack.</span>
+<span class="lineNum">     117 </span><span class="lineCov">      36486 :     if (filename[0] == '~')</span>
+<span class="lineNum">     118 </span><span class="lineCov">        535 :     {</span>
+<span class="lineNum">     119 </span><span class="lineCov">        535 :         if (reloadname != NULL)</span>
+<span class="lineNum">     120 </span><span class="lineCov">        535 :         {</span>
+<span class="lineNum">     121 </span><span class="lineCov">        510 :             I_Error(&quot;Prefixing a WAD filename with '~' indicates that the &quot;</span>
+<span class="lineNum">     122 </span><span class="lineCov">        510 :                     &quot;WAD should be reloaded\n&quot;</span>
+<span class="lineNum">     123 </span><span class="lineCov">        510 :                     &quot;on each level restart, for use by level authors for &quot;</span>
+<span class="lineNum">     124 </span><span class="lineCov">        510 :                     &quot;rapid development. You\n&quot;</span>
+<span class="lineNum">     125 </span><span class="lineCov">        510 :                     &quot;can only reload one WAD file, and it must be the last &quot;</span>
+<span class="lineNum">     126 </span><span class="lineCov">        510 :                     &quot;file in the -file list.&quot;);</span>
+<span class="lineNum">     127 </span><span class="lineCov">        510 :         }</span>
+<span class="lineNum">     128 </span><span class="lineCov">         25 : </span>
+<span class="lineNum">     129 </span><span class="lineCov">         25 :         reloadname = strdup(filename);</span>
+<span class="lineNum">     130 </span><span class="lineCov">         25 :         reloadlump = numlumps;</span>
+<span class="lineNum">     131 </span><span class="lineCov">         25 :         ++filename;</span>
+<span class="lineNum">     132 </span><span class="lineCov">         25 :     }</span>
+<span class="lineNum">     133 </span><span class="lineCov">      36486 : </span>
+<span class="lineNum">     134 </span><span class="lineCov">      36486 :     // Open the file and add to directory</span>
+<span class="lineNum">     135 </span><span class="lineCov">      36486 :     wad_file = W_OpenFile(filename);</span>
+<span class="lineNum">     136 </span><span class="lineCov">      35976 : </span>
+<span class="lineNum">     137 </span><span class="lineCov">      35976 :     if (wad_file == NULL)</span>
+<span class="lineNum">     138 </span><span class="lineCov">      35976 :     {</span>
+<span class="lineNum">     139 </span><span class="lineCov">        575 :         printf (&quot; couldn't open %s\n&quot;, filename);</span>
+<span class="lineNum">     140 </span><span class="lineCov">        575 :         return NULL;</span>
+<span class="lineNum">     141 </span><span class="lineCov">        575 :     }</span>
+<span class="lineNum">     142 </span><span class="lineCov">      35401 : </span>
+<span class="lineNum">     143 </span><span class="lineCov">      35401 :     if (strcasecmp(filename+strlen(filename)-3 , &quot;wad&quot; ) )</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :         // single lump file</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :         // fraggle: Swap the filepos and size here.  The WAD directory</span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 :         // parsing code expects a little-endian directory, so will swap</span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :         // them back.  Effectively we're constructing a &quot;fake WAD directory&quot;</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 :         // here, as it would appear on disk.</span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :         fileinfo = Z_Malloc(sizeof(filelump_t), PU_STATIC, 0);</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :         fileinfo-&gt;filepos = LONG(0);</span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :         fileinfo-&gt;size = LONG(wad_file-&gt;length);</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 :         // Name the lump after the base of the filename (without the</span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 :         // extension).</span>
+<span class="lineNum">     158 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     159 </span><span class="lineNoCov">          0 :         M_ExtractFileBase (filename, fileinfo-&gt;name);</span>
+<span class="lineNum">     160 </span><span class="lineNoCov">          0 :         numfilelumps = 1;</span>
+<span class="lineNum">     161 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     162 </span><span class="lineCov">      35401 :     else</span>
+<span class="lineNum">     163 </span><span class="lineCov">      35401 :     {</span>
+<span class="lineNum">     164 </span><span class="lineCov">      35401 :         // WAD file</span>
+<span class="lineNum">     165 </span><span class="lineCov">      35401 :         W_Read(wad_file, 0, &amp;header, sizeof(header));</span>
+<span class="lineNum">     166 </span><span class="lineCov">      35401 : </span>
+<span class="lineNum">     167 </span><span class="lineCov">      35401 :         if (strncmp(header.identification,&quot;IWAD&quot;,4))</span>
+<span class="lineNum">     168 </span><span class="lineCov">      18170 :         {</span>
+<span class="lineNum">     169 </span><span class="lineCov">      18170 :             // Homebrew levels?</span>
+<span class="lineNum">     170 </span><span class="lineCov">      18170 :             if (strncmp(header.identification,&quot;PWAD&quot;,4))</span>
+<span class="lineNum">     171 </span><span class="lineCov">       3980 :             {</span>
+<span class="lineNum">     172 </span><span class="lineCov">       3980 :                 W_CloseFile(wad_file);</span>
+<span class="lineNum">     173 </span><span class="lineCov">       3980 :                 I_Error (&quot;Wad file %s doesn't have IWAD &quot;</span>
+<span class="lineNum">     174 </span><span class="lineCov">       3980 :                          &quot;or PWAD id\n&quot;, filename);</span>
+<span class="lineNum">     175 </span><span class="lineCov">       3980 :             }</span>
+<span class="lineNum">     176 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     177 </span><span class="lineCov">      31421 :             // ???modifiedgame = true;</span>
+<span class="lineNum">     178 </span><span class="lineCov">      31421 :         }</span>
+<span class="lineNum">     179 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     180 </span><span class="lineCov">      31421 :         header.numlumps = LONG(header.numlumps);</span>
+<span class="lineNum">     181 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     182 </span><span class="lineCov">      31421 :          // Vanilla Doom doesn't like WADs with more than 4046 lumps</span>
+<span class="lineNum">     183 </span><span class="lineCov">      31421 :          // https://www.doomworld.com/vb/post/1010985</span>
+<span class="lineNum">     184 </span><span class="lineCov">      31421 :          if (!strncmp(header.identification,&quot;PWAD&quot;,4) &amp;&amp; header.numlumps &gt; 4046)</span>
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 :          {</span>
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :                  W_CloseFile(wad_file);</span>
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :                  I_Error (&quot;Error: Vanilla limit for lumps in a WAD is 4046, &quot;</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :                           &quot;PWAD %s has %d&quot;, filename, header.numlumps);</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 :          }</span>
+<span class="lineNum">     190 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     191 </span><span class="lineCov">      31421 :         header.infotableofs = LONG(header.infotableofs);</span>
+<span class="lineNum">     192 </span><span class="lineCov">      31421 :         length = header.numlumps*sizeof(filelump_t);</span>
+<span class="lineNum">     193 </span><span class="lineCov">      31421 :         fileinfo = Z_Malloc(length, PU_STATIC, 0);</span>
+<span class="lineNum">     194 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     195 </span><span class="lineCov">      31421 :         W_Read(wad_file, header.infotableofs, fileinfo, length);</span>
+<span class="lineNum">     196 </span><span class="lineCov">      31421 :         numfilelumps = header.numlumps;</span>
+<span class="lineNum">     197 </span><span class="lineCov">      31421 :     }</span>
+<span class="lineNum">     198 </span><span class="lineCov">      35401 : </span>
+<span class="lineNum">     199 </span><span class="lineCov">      35401 :     // Increase size of numlumps array to accomodate the new file.</span>
+<span class="lineNum">     200 </span><span class="lineCov">      35401 :     filelumps = calloc(numfilelumps, sizeof(lumpinfo_t));</span>
+<span class="lineNum">     201 </span><span class="lineCov">      31421 :     if (filelumps == NULL)</span>
+<span class="lineNum">     202 </span><span class="lineCov">      31421 :     {</span>
+<span class="lineNum">     203 </span><span class="lineNoCov">          0 :         W_CloseFile(wad_file);</span>
+<span class="lineNum">     204 </span><span class="lineNoCov">          0 :         I_Error(&quot;Failed to allocate array for lumps from new file.&quot;);</span>
+<span class="lineNum">     205 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     206 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     207 </span><span class="lineCov">      31421 :     startlump = numlumps;</span>
+<span class="lineNum">     208 </span><span class="lineCov">      31421 :     numlumps += numfilelumps;</span>
+<span class="lineNum">     209 </span><span class="lineCov">      31421 :     lumpinfo = I_Realloc(lumpinfo, numlumps * sizeof(lumpinfo_t *));</span>
+<span class="lineNum">     210 </span><span class="lineCov">      31421 :     filerover = fileinfo;</span>
+<span class="lineNum">     211 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     212 </span><span class="lineCov">   70307373 :     for (i = startlump; i &lt; numlumps; ++i)</span>
+<span class="lineNum">     213 </span><span class="lineCov">   70275952 :     {</span>
+<span class="lineNum">     214 </span><span class="lineCov">   70275952 :         lumpinfo_t *lump_p = &amp;filelumps[i - startlump];</span>
+<span class="lineNum">     215 </span><span class="lineCov">   70275952 :         lump_p-&gt;wad_file = wad_file;</span>
+<span class="lineNum">     216 </span><span class="lineCov">   70275952 :         lump_p-&gt;position = LONG(filerover-&gt;filepos);</span>
+<span class="lineNum">     217 </span><span class="lineCov">   70275952 :         lump_p-&gt;size = LONG(filerover-&gt;size);</span>
+<span class="lineNum">     218 </span><span class="lineCov">   70275952 :         lump_p-&gt;cache = NULL;</span>
+<span class="lineNum">     219 </span><span class="lineCov">   70275952 :         strncpy(lump_p-&gt;name, filerover-&gt;name, 8);</span>
+<span class="lineNum">     220 </span><span class="lineCov">   70275952 :         lumpinfo[i] = lump_p;</span>
+<span class="lineNum">     221 </span><span class="lineCov">   70275952 : </span>
+<span class="lineNum">     222 </span><span class="lineCov">   70275952 :         ++filerover;</span>
+<span class="lineNum">     223 </span><span class="lineCov">   70275952 :     }</span>
+<span class="lineNum">     224 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     225 </span><span class="lineCov">      31421 :     Z_Free(fileinfo);</span>
+<span class="lineNum">     226 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     227 </span><span class="lineCov">      31421 :     if (lumphash != NULL)</span>
+<span class="lineNum">     228 </span><span class="lineCov">      31421 :     {</span>
+<span class="lineNum">     229 </span><span class="lineCov">      13878 :         Z_Free(lumphash);</span>
+<span class="lineNum">     230 </span><span class="lineCov">      13878 :         lumphash = NULL;</span>
+<span class="lineNum">     231 </span><span class="lineCov">      13878 :     }</span>
+<span class="lineNum">     232 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     233 </span><span class="lineCov">      31421 :     // If this is the reload file, we need to save some details about the</span>
+<span class="lineNum">     234 </span><span class="lineCov">      31421 :     // file so that we can close it later on when we do a reload.</span>
+<span class="lineNum">     235 </span><span class="lineCov">      31421 :     if (reloadname)</span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 :         reloadhandle = wad_file;</span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 :         reloadlumps = filelumps;</span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     240 </span><span class="lineCov">      31421 : </span>
+<span class="lineNum">     241 </span><span class="lineCov">      31421 :     return wad_file;</span>
+<span class="lineNum">     242 </span><span class="lineCov">      31421 : }</span>
+<span class="lineNum">     243 </span>            : 
+<span class="lineNum">     244 </span>            : 
+<span class="lineNum">     245 </span>            : 
+<span class="lineNum">     246 </span>            : //
+<span class="lineNum">     247 </span>            : // W_NumLumps
+<a name="248"><span class="lineNum">     248 </span>            : //</a>
+<span class="lineNum">     249 </span>            : int W_NumLumps (void)
+<span class="lineNum">     250 </span><span class="lineCov">        220 : {</span>
+<span class="lineNum">     251 </span><span class="lineCov">        220 :     return numlumps;</span>
+<span class="lineNum">     252 </span><span class="lineCov">        220 : }</span>
+<span class="lineNum">     253 </span>            : 
+<span class="lineNum">     254 </span>            : 
+<span class="lineNum">     255 </span>            : 
+<span class="lineNum">     256 </span>            : //
+<span class="lineNum">     257 </span>            : // W_CheckNumForName
+<span class="lineNum">     258 </span>            : // Returns -1 if name not found.
+<span class="lineNum">     259 </span>            : //
+<a name="260"><span class="lineNum">     260 </span>            : </a>
+<span class="lineNum">     261 </span>            : lumpindex_t W_CheckNumForName(const char *name)
+<span class="lineNum">     262 </span><span class="lineCov">   43365771 : {</span>
+<span class="lineNum">     263 </span><span class="lineCov">   43365771 :     lumpindex_t i;</span>
+<span class="lineNum">     264 </span><span class="lineCov">   43365771 : </span>
+<span class="lineNum">     265 </span><span class="lineCov">   43365771 :     // Do we have a hash table yet?</span>
+<span class="lineNum">     266 </span><span class="lineCov">   43365771 : </span>
+<span class="lineNum">     267 </span><span class="lineCov">   43365771 :     if (lumphash != NULL)</span>
+<span class="lineNum">     268 </span><span class="lineCov">   43365771 :     {</span>
+<span class="lineNum">     269 </span><span class="lineCov">   43299109 :         int hash;</span>
+<span class="lineNum">     270 </span><span class="lineCov">   43299109 : </span>
+<span class="lineNum">     271 </span><span class="lineCov">   43299109 :         // We do! Excellent.</span>
+<span class="lineNum">     272 </span><span class="lineCov">   43299109 : </span>
+<span class="lineNum">     273 </span><span class="lineCov">   43299109 :         hash = W_LumpNameHash(name) % numlumps;</span>
+<span class="lineNum">     274 </span><span class="lineCov">   43299109 : </span>
+<span class="lineNum">     275 </span><span class="lineCov">   45847001 :         for (i = lumphash[hash]; i != -1; i = lumpinfo[i]-&gt;next)</span>
+<span class="lineNum">     276 </span><span class="lineCov">   45802277 :         {</span>
+<span class="lineNum">     277 </span><span class="lineCov">   45802277 :             if (!strncasecmp(lumpinfo[i]-&gt;name, name, 8))</span>
+<span class="lineNum">     278 </span><span class="lineCov">   43254385 :             {</span>
+<span class="lineNum">     279 </span><span class="lineCov">   43254385 :                 return i;</span>
+<span class="lineNum">     280 </span><span class="lineCov">   43254385 :             }</span>
+<span class="lineNum">     281 </span><span class="lineCov">   45802277 :         }</span>
+<span class="lineNum">     282 </span><span class="lineCov">   43299109 :     }</span>
+<span class="lineNum">     283 </span><span class="lineCov">      66662 :     else</span>
+<span class="lineNum">     284 </span><span class="lineCov">      66662 :     {</span>
+<span class="lineNum">     285 </span><span class="lineCov">      66662 :         // We don't have a hash table generate yet. Linear search :-(</span>
+<span class="lineNum">     286 </span><span class="lineCov">      66662 :         //</span>
+<span class="lineNum">     287 </span><span class="lineCov">      66662 :         // scan backwards so patch lump files take precedence</span>
+<span class="lineNum">     288 </span><span class="lineCov">      66662 : </span>
+<span class="lineNum">     289 </span><span class="lineCov"> 1748071202 :         for (i = numlumps - 1; i &gt;= 0; --i)</span>
+<span class="lineNum">     290 </span><span class="lineCov"> 1748021158 :         {</span>
+<span class="lineNum">     291 </span><span class="lineCov"> 1748021158 :             if (!strncasecmp(lumpinfo[i]-&gt;name, name, 8))</span>
+<span class="lineNum">     292 </span><span class="lineCov">      16618 :             {</span>
+<span class="lineNum">     293 </span><span class="lineCov">      16618 :                 return i;</span>
+<span class="lineNum">     294 </span><span class="lineCov">      16618 :             }</span>
+<span class="lineNum">     295 </span><span class="lineCov"> 1748021158 :         }</span>
+<span class="lineNum">     296 </span><span class="lineCov">      66662 :     }</span>
+<span class="lineNum">     297 </span><span class="lineCov">   43365771 : </span>
+<span class="lineNum">     298 </span><span class="lineCov">   43365771 :     // TFB. Not found.</span>
+<span class="lineNum">     299 </span><span class="lineCov">   43365771 : </span>
+<span class="lineNum">     300 </span><span class="lineCov">   43365771 :     return -1;</span>
+<span class="lineNum">     301 </span><span class="lineCov">   43365771 : }</span>
+<span class="lineNum">     302 </span>            : 
+<span class="lineNum">     303 </span>            : 
+<span class="lineNum">     304 </span>            : 
+<span class="lineNum">     305 </span>            : 
+<span class="lineNum">     306 </span>            : //
+<span class="lineNum">     307 </span>            : // W_GetNumForName
+<span class="lineNum">     308 </span>            : // Calls W_CheckNumForName, but bombs out if not found.
+<a name="309"><span class="lineNum">     309 </span>            : //</a>
+<span class="lineNum">     310 </span>            : lumpindex_t W_GetNumForName(const char *name)
+<span class="lineNum">     311 </span><span class="lineCov">   21151577 : {</span>
+<span class="lineNum">     312 </span><span class="lineCov">   21151577 :     lumpindex_t i;</span>
+<span class="lineNum">     313 </span><span class="lineCov">   21151577 : </span>
+<span class="lineNum">     314 </span><span class="lineCov">   21151577 :     i = W_CheckNumForName (name);</span>
+<span class="lineNum">     315 </span><span class="lineCov">   21151577 : </span>
+<span class="lineNum">     316 </span><span class="lineCov">   21151577 :     if (i &lt; 0)</span>
+<span class="lineNum">     317 </span><span class="lineCov">        235 :     {</span>
+<span class="lineNum">     318 </span><span class="lineCov">        235 :         I_Error (&quot;W_GetNumForName: %s not found!&quot;, name);</span>
+<span class="lineNum">     319 </span><span class="lineCov">        235 :     }</span>
+<span class="lineNum">     320 </span><span class="lineCov">   21151342 :  </span>
+<span class="lineNum">     321 </span><span class="lineCov">   21151342 :     return i;</span>
+<span class="lineNum">     322 </span><span class="lineCov">   21151342 : }</span>
+<span class="lineNum">     323 </span>            : 
+<span class="lineNum">     324 </span>            : 
+<span class="lineNum">     325 </span>            : //
+<span class="lineNum">     326 </span>            : // W_LumpLength
+<span class="lineNum">     327 </span>            : // Returns the buffer size needed to load the given lump.
+<a name="328"><span class="lineNum">     328 </span>            : //</a>
+<span class="lineNum">     329 </span>            : int W_LumpLength(lumpindex_t lump)
+<span class="lineNum">     330 </span><span class="lineCov">   41805841 : {</span>
+<span class="lineNum">     331 </span><span class="lineCov">   41805841 :     if (lump &gt;= numlumps)</span>
+<span class="lineNum">     332 </span><span class="lineCov">        220 :     {</span>
+<span class="lineNum">     333 </span><span class="lineCov">        220 :         I_Error (&quot;W_LumpLength: %i &gt;= numlumps&quot;, lump);</span>
+<span class="lineNum">     334 </span><span class="lineCov">        220 :     }</span>
+<span class="lineNum">     335 </span><span class="lineCov">   41805621 : </span>
+<span class="lineNum">     336 </span><span class="lineCov">   41805621 :     return lumpinfo[lump]-&gt;size;</span>
+<span class="lineNum">     337 </span><span class="lineCov">   41805621 : }</span>
+<span class="lineNum">     338 </span>            : 
+<span class="lineNum">     339 </span>            : 
+<span class="lineNum">     340 </span>            : 
+<span class="lineNum">     341 </span>            : //
+<span class="lineNum">     342 </span>            : // W_ReadLump
+<span class="lineNum">     343 </span>            : // Loads the lump into the given buffer,
+<span class="lineNum">     344 </span>            : //  which must be &gt;= W_LumpLength().
+<a name="345"><span class="lineNum">     345 </span>            : //</a>
+<span class="lineNum">     346 </span>            : void W_ReadLump(lumpindex_t lump, void *dest)
+<span class="lineNum">     347 </span><span class="lineCov">   41641128 : {</span>
+<span class="lineNum">     348 </span><span class="lineCov">   41641128 :     int c;</span>
+<span class="lineNum">     349 </span><span class="lineCov">   41641128 :     lumpinfo_t *l;</span>
+<span class="lineNum">     350 </span><span class="lineCov">   41641128 : </span>
+<span class="lineNum">     351 </span><span class="lineCov">   41641128 :     if (lump &gt;= numlumps)</span>
+<span class="lineNum">     352 </span><span class="lineCov">        110 :     {</span>
+<span class="lineNum">     353 </span><span class="lineCov">        110 :         I_Error (&quot;W_ReadLump: %i &gt;= numlumps&quot;, lump);</span>
+<span class="lineNum">     354 </span><span class="lineCov">        110 :     }</span>
+<span class="lineNum">     355 </span><span class="lineCov">   41641018 : </span>
+<span class="lineNum">     356 </span><span class="lineCov">   41641018 :     l = lumpinfo[lump];</span>
+<span class="lineNum">     357 </span><span class="lineCov">   41641018 : </span>
+<span class="lineNum">     358 </span><span class="lineCov">   41641018 :     V_BeginRead(l-&gt;size);</span>
+<span class="lineNum">     359 </span><span class="lineCov">   41641018 : </span>
+<span class="lineNum">     360 </span><span class="lineCov">   41641018 :     c = W_Read(l-&gt;wad_file, l-&gt;position, dest, l-&gt;size);</span>
+<span class="lineNum">     361 </span><span class="lineCov">   41641018 : </span>
+<span class="lineNum">     362 </span><span class="lineCov">   41641018 :     if (c &lt; l-&gt;size)</span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 :         I_Error(&quot;W_ReadLump: only read %i of %i on lump %i&quot;,</span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :                 c, l-&gt;size, lump);</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     367 </span><span class="lineCov">   41641018 : }</span>
+<span class="lineNum">     368 </span>            : 
+<span class="lineNum">     369 </span>            : 
+<span class="lineNum">     370 </span>            : 
+<span class="lineNum">     371 </span>            : 
+<span class="lineNum">     372 </span>            : //
+<span class="lineNum">     373 </span>            : // W_CacheLumpNum
+<span class="lineNum">     374 </span>            : //
+<span class="lineNum">     375 </span>            : // Load a lump into memory and return a pointer to a buffer containing
+<span class="lineNum">     376 </span>            : // the lump data.
+<span class="lineNum">     377 </span>            : //
+<span class="lineNum">     378 </span>            : // 'tag' is the type of zone memory buffer to allocate for the lump
+<span class="lineNum">     379 </span>            : // (usually PU_STATIC or PU_CACHE).  If the lump is loaded as 
+<span class="lineNum">     380 </span>            : // PU_STATIC, it should be released back using W_ReleaseLumpNum
+<span class="lineNum">     381 </span>            : // when no longer needed (do not use Z_ChangeTag).
+<span class="lineNum">     382 </span>            : //
+<a name="383"><span class="lineNum">     383 </span>            : </a>
+<span class="lineNum">     384 </span>            : void *W_CacheLumpNum(lumpindex_t lumpnum, int tag)
+<span class="lineNum">     385 </span><span class="lineCov">   73644539 : {</span>
+<span class="lineNum">     386 </span><span class="lineCov">   73644539 :     byte *result;</span>
+<span class="lineNum">     387 </span><span class="lineCov">   73644539 :     lumpinfo_t *lump;</span>
+<span class="lineNum">     388 </span><span class="lineCov">   73644539 : </span>
+<span class="lineNum">     389 </span><span class="lineCov">   73644539 :     if ((unsigned)lumpnum &gt;= numlumps)</span>
+<span class="lineNum">     390 </span><span class="lineCov">        110 :     {</span>
+<span class="lineNum">     391 </span><span class="lineCov">        110 :         I_Error (&quot;W_CacheLumpNum: %i &gt;= numlumps&quot;, lumpnum);</span>
+<span class="lineNum">     392 </span><span class="lineCov">        110 :     }</span>
+<span class="lineNum">     393 </span><span class="lineCov">   73644429 : </span>
+<span class="lineNum">     394 </span><span class="lineCov">   73644429 :     lump = lumpinfo[lumpnum];</span>
+<span class="lineNum">     395 </span><span class="lineCov">   73644429 : </span>
+<span class="lineNum">     396 </span><span class="lineCov">   73644429 :     // Get the pointer to return.  If the lump is in a memory-mapped</span>
+<span class="lineNum">     397 </span><span class="lineCov">   73644429 :     // file, we can just return a pointer to within the memory-mapped</span>
+<span class="lineNum">     398 </span><span class="lineCov">   73644429 :     // region.  If the lump is in an ordinary file, we may already</span>
+<span class="lineNum">     399 </span><span class="lineCov">   73644429 :     // have it cached; otherwise, load it into memory.</span>
+<span class="lineNum">     400 </span><span class="lineCov">   73644429 : </span>
+<span class="lineNum">     401 </span><span class="lineCov">   73644429 :     if (lump-&gt;wad_file-&gt;mapped != NULL)</span>
+<span class="lineNum">     402 </span><span class="lineCov">   73644429 :     {</span>
+<span class="lineNum">     403 </span><span class="lineCov">      28021 :         // Memory mapped file, return from the mmapped region.</span>
+<span class="lineNum">     404 </span><span class="lineCov">      28021 : </span>
+<span class="lineNum">     405 </span><span class="lineCov">      28021 :         result = lump-&gt;wad_file-&gt;mapped + lump-&gt;position;</span>
+<span class="lineNum">     406 </span><span class="lineCov">      28021 :     }</span>
+<span class="lineNum">     407 </span><span class="lineCov">   73616408 :     else if (lump-&gt;cache != NULL)</span>
+<span class="lineNum">     408 </span><span class="lineCov">   73616408 :     {</span>
+<span class="lineNum">     409 </span><span class="lineCov">   31990088 :         // Already cached, so just switch the zone tag.</span>
+<span class="lineNum">     410 </span><span class="lineCov">   31990088 : </span>
+<span class="lineNum">     411 </span><span class="lineCov">   31990088 :         result = lump-&gt;cache;</span>
+<span class="lineNum">     412 </span><span class="lineCov">   31990088 :         Z_ChangeTag(lump-&gt;cache, tag);</span>
+<span class="lineNum">     413 </span><span class="lineCov">   31990088 :     }</span>
+<span class="lineNum">     414 </span><span class="lineCov">   41626320 :     else</span>
+<span class="lineNum">     415 </span><span class="lineCov">   41626320 :     {</span>
+<span class="lineNum">     416 </span><span class="lineCov">   41626320 :         // Not yet loaded, so load it now</span>
+<span class="lineNum">     417 </span><span class="lineCov">   41626320 : </span>
+<span class="lineNum">     418 </span><span class="lineCov">   41626320 :         lump-&gt;cache = Z_Malloc(W_LumpLength(lumpnum), tag, &amp;lump-&gt;cache);</span>
+<span class="lineNum">     419 </span><span class="lineCov">   41626320 :         W_ReadLump (lumpnum, lump-&gt;cache);</span>
+<span class="lineNum">     420 </span><span class="lineCov">   41626320 :         result = lump-&gt;cache;</span>
+<span class="lineNum">     421 </span><span class="lineCov">   41626320 :     }</span>
+<span class="lineNum">     422 </span><span class="lineCov">   73644429 :         </span>
+<span class="lineNum">     423 </span><span class="lineCov">   73644429 :     return result;</span>
+<span class="lineNum">     424 </span><span class="lineCov">   73644429 : }</span>
+<span class="lineNum">     425 </span>            : 
+<span class="lineNum">     426 </span>            : 
+<span class="lineNum">     427 </span>            : 
+<span class="lineNum">     428 </span>            : //
+<span class="lineNum">     429 </span>            : // W_CacheLumpName
+<a name="430"><span class="lineNum">     430 </span>            : //</a>
+<span class="lineNum">     431 </span>            : void *W_CacheLumpName(const char *name, int tag)
+<span class="lineNum">     432 </span><span class="lineCov">      29501 : {</span>
+<span class="lineNum">     433 </span><span class="lineCov">      29501 :     return W_CacheLumpNum(W_GetNumForName(name), tag);</span>
+<span class="lineNum">     434 </span><span class="lineCov">      29501 : }</span>
+<span class="lineNum">     435 </span>            : 
+<span class="lineNum">     436 </span>            : // 
+<span class="lineNum">     437 </span>            : // Release a lump back to the cache, so that it can be reused later 
+<span class="lineNum">     438 </span>            : // without having to read from disk again, or alternatively, discarded
+<span class="lineNum">     439 </span>            : // if we run out of memory.
+<span class="lineNum">     440 </span>            : //
+<span class="lineNum">     441 </span>            : // Back in Vanilla Doom, this was just done using Z_ChangeTag 
+<span class="lineNum">     442 </span>            : // directly, but now that we have WAD mmap, things are a bit more
+<span class="lineNum">     443 </span>            : // complicated ...
+<span class="lineNum">     444 </span>            : //
+<a name="445"><span class="lineNum">     445 </span>            : </a>
+<span class="lineNum">     446 </span>            : void W_ReleaseLumpNum(lumpindex_t lumpnum)
+<span class="lineNum">     447 </span><span class="lineCov">     164343 : {</span>
+<span class="lineNum">     448 </span><span class="lineCov">     164343 :     lumpinfo_t *lump;</span>
+<span class="lineNum">     449 </span><span class="lineCov">     164343 : </span>
+<span class="lineNum">     450 </span><span class="lineCov">     164343 :     if ((unsigned)lumpnum &gt;= numlumps)</span>
+<span class="lineNum">     451 </span><span class="lineCov">        660 :     {</span>
+<span class="lineNum">     452 </span><span class="lineCov">        660 :         I_Error (&quot;W_ReleaseLumpNum: %i &gt;= numlumps&quot;, lumpnum);</span>
+<span class="lineNum">     453 </span><span class="lineCov">        660 :     }</span>
+<span class="lineNum">     454 </span><span class="lineCov">     163683 : </span>
+<span class="lineNum">     455 </span><span class="lineCov">     163683 :     lump = lumpinfo[lumpnum];</span>
+<span class="lineNum">     456 </span><span class="lineCov">     163683 : </span>
+<span class="lineNum">     457 </span><span class="lineCov">     163683 :     if (lump-&gt;wad_file-&gt;mapped != NULL)</span>
+<span class="lineNum">     458 </span><span class="lineCov">     163683 :     {</span>
+<span class="lineNum">     459 </span><span class="lineCov">      22421 :         // Memory-mapped file, so nothing needs to be done here.</span>
+<span class="lineNum">     460 </span><span class="lineCov">      22421 :     }</span>
+<span class="lineNum">     461 </span><span class="lineCov">     141262 :     else</span>
+<span class="lineNum">     462 </span><span class="lineCov">     141262 :     {</span>
+<span class="lineNum">     463 </span><span class="lineCov">     141262 :         Z_ChangeTag(lump-&gt;cache, PU_CACHE);</span>
+<span class="lineNum">     464 </span><span class="lineCov">     141262 :     }</span>
+<span class="lineNum">     465 </span><span class="lineCov">     163683 : }</span>
+<a name="466"><span class="lineNum">     466 </span>            : </a>
+<span class="lineNum">     467 </span>            : void W_ReleaseLumpName(const char *name)
+<span class="lineNum">     468 </span><span class="lineCov">      29396 : {</span>
+<span class="lineNum">     469 </span><span class="lineCov">      29396 :     W_ReleaseLumpNum(W_GetNumForName(name));</span>
+<span class="lineNum">     470 </span><span class="lineCov">      29396 : }</span>
+<span class="lineNum">     471 </span>            : 
+<span class="lineNum">     472 </span>            : #if 0
+<span class="lineNum">     473 </span>            : 
+<span class="lineNum">     474 </span>            : //
+<span class="lineNum">     475 </span>            : // W_Profile
+<span class="lineNum">     476 </span>            : //
+<span class="lineNum">     477 </span>            : int             info[2500][10];
+<span class="lineNum">     478 </span>            : int             profilecount;
+<span class="lineNum">     479 </span>            : 
+<span class="lineNum">     480 </span>            : void W_Profile (void)
+<span class="lineNum">     481 </span>            : {
+<span class="lineNum">     482 </span>            :     int         i;
+<span class="lineNum">     483 </span>            :     memblock_t* block;
+<span class="lineNum">     484 </span>            :     void*       ptr;
+<span class="lineNum">     485 </span>            :     char        ch;
+<span class="lineNum">     486 </span>            :     FILE*       f;
+<span class="lineNum">     487 </span>            :     int         j;
+<span class="lineNum">     488 </span>            :     char        name[9];
+<span class="lineNum">     489 </span>            :         
+<span class="lineNum">     490 </span>            :         
+<span class="lineNum">     491 </span>            :     for (i=0 ; i&lt;numlumps ; i++)
+<span class="lineNum">     492 </span>            :     {   
+<span class="lineNum">     493 </span>            :         ptr = lumpinfo[i].cache;
+<span class="lineNum">     494 </span>            :         if (!ptr)
+<span class="lineNum">     495 </span>            :         {
+<span class="lineNum">     496 </span>            :             ch = ' ';
+<span class="lineNum">     497 </span>            :             continue;
+<span class="lineNum">     498 </span>            :         }
+<span class="lineNum">     499 </span>            :         else
+<span class="lineNum">     500 </span>            :         {
+<span class="lineNum">     501 </span>            :             block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
+<span class="lineNum">     502 </span>            :             if (block-&gt;tag &lt; PU_PURGELEVEL)
+<span class="lineNum">     503 </span>            :                 ch = 'S';
+<span class="lineNum">     504 </span>            :             else
+<span class="lineNum">     505 </span>            :                 ch = 'P';
+<span class="lineNum">     506 </span>            :         }
+<span class="lineNum">     507 </span>            :         info[i][profilecount] = ch;
+<span class="lineNum">     508 </span>            :     }
+<span class="lineNum">     509 </span>            :     profilecount++;
+<span class="lineNum">     510 </span>            :         
+<span class="lineNum">     511 </span>            :     f = fopen (&quot;waddump.txt&quot;,&quot;w&quot;);
+<span class="lineNum">     512 </span>            :     name[8] = 0;
+<span class="lineNum">     513 </span>            : 
+<span class="lineNum">     514 </span>            :     for (i=0 ; i&lt;numlumps ; i++)
+<span class="lineNum">     515 </span>            :     {
+<span class="lineNum">     516 </span>            :         memcpy (name,lumpinfo[i].name,8);
+<span class="lineNum">     517 </span>            : 
+<span class="lineNum">     518 </span>            :         for (j=0 ; j&lt;8 ; j++)
+<span class="lineNum">     519 </span>            :             if (!name[j])
+<span class="lineNum">     520 </span>            :                 break;
+<span class="lineNum">     521 </span>            : 
+<span class="lineNum">     522 </span>            :         for ( ; j&lt;8 ; j++)
+<span class="lineNum">     523 </span>            :             name[j] = ' ';
+<span class="lineNum">     524 </span>            : 
+<span class="lineNum">     525 </span>            :         fprintf (f,&quot;%s &quot;,name);
+<span class="lineNum">     526 </span>            : 
+<span class="lineNum">     527 </span>            :         for (j=0 ; j&lt;profilecount ; j++)
+<span class="lineNum">     528 </span>            :             fprintf (f,&quot;    %c&quot;,info[i][j]);
+<span class="lineNum">     529 </span>            : 
+<span class="lineNum">     530 </span>            :         fprintf (f,&quot;\n&quot;);
+<span class="lineNum">     531 </span>            :     }
+<span class="lineNum">     532 </span>            :     fclose (f);
+<span class="lineNum">     533 </span>            : }
+<span class="lineNum">     534 </span>            : 
+<span class="lineNum">     535 </span>            : 
+<span class="lineNum">     536 </span>            : #endif
+<span class="lineNum">     537 </span>            : 
+<span class="lineNum">     538 </span>            : // Generate a hash table for fast lookups
+<a name="539"><span class="lineNum">     539 </span>            : </a>
+<span class="lineNum">     540 </span>            : void W_GenerateHashTable(void)
+<span class="lineNum">     541 </span><span class="lineCov">      14803 : {</span>
+<span class="lineNum">     542 </span><span class="lineCov">      14803 :     lumpindex_t i;</span>
+<span class="lineNum">     543 </span><span class="lineCov">      14803 : </span>
+<span class="lineNum">     544 </span><span class="lineCov">      14803 :     // Free the old hash table, if there is one:</span>
+<span class="lineNum">     545 </span><span class="lineCov">      14803 :     if (lumphash != NULL)</span>
+<span class="lineNum">     546 </span><span class="lineCov">      14803 :     {</span>
+<span class="lineNum">     547 </span><span class="lineNoCov">          0 :         Z_Free(lumphash);</span>
+<span class="lineNum">     548 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     549 </span><span class="lineCov">      14803 : </span>
+<span class="lineNum">     550 </span><span class="lineCov">      14803 :     // Generate hash table</span>
+<span class="lineNum">     551 </span><span class="lineCov">      14803 :     if (numlumps &gt; 0)</span>
+<span class="lineNum">     552 </span><span class="lineCov">      14803 :     {</span>
+<span class="lineNum">     553 </span><span class="lineCov">      14803 :         lumphash = Z_Malloc(sizeof(lumpindex_t) * numlumps, PU_STATIC, NULL);</span>
+<span class="lineNum">     554 </span><span class="lineCov">      14803 : </span>
+<span class="lineNum">     555 </span><span class="lineCov">  551181467 :         for (i = 0; i &lt; numlumps; ++i)</span>
+<span class="lineNum">     556 </span><span class="lineCov">  551166664 :         {</span>
+<span class="lineNum">     557 </span><span class="lineCov">  551166664 :             lumphash[i] = -1;</span>
+<span class="lineNum">     558 </span><span class="lineCov">  551166664 :         }</span>
+<span class="lineNum">     559 </span><span class="lineCov">      14803 : </span>
+<span class="lineNum">     560 </span><span class="lineCov">  551181467 :         for (i = 0; i &lt; numlumps; ++i)</span>
+<span class="lineNum">     561 </span><span class="lineCov">  551166664 :         {</span>
+<span class="lineNum">     562 </span><span class="lineCov">  551166664 :             unsigned int hash;</span>
+<span class="lineNum">     563 </span><span class="lineCov">  551166664 : </span>
+<span class="lineNum">     564 </span><span class="lineCov">  551166664 :             hash = W_LumpNameHash(lumpinfo[i]-&gt;name) % numlumps;</span>
+<span class="lineNum">     565 </span><span class="lineCov">  551166664 : </span>
+<span class="lineNum">     566 </span><span class="lineCov">  551166664 :             // Hook into the hash table</span>
+<span class="lineNum">     567 </span><span class="lineCov">  551166664 : </span>
+<span class="lineNum">     568 </span><span class="lineCov">  551166664 :             lumpinfo[i]-&gt;next = lumphash[hash];</span>
+<span class="lineNum">     569 </span><span class="lineCov">  551166664 :             lumphash[hash] = i;</span>
+<span class="lineNum">     570 </span><span class="lineCov">  551166664 :         }</span>
+<span class="lineNum">     571 </span><span class="lineCov">      14803 :     }</span>
+<span class="lineNum">     572 </span><span class="lineCov">      14803 : </span>
+<span class="lineNum">     573 </span><span class="lineCov">      14803 :     // All done!</span>
+<span class="lineNum">     574 </span><span class="lineCov">      14803 : }</span>
+<span class="lineNum">     575 </span>            : 
+<span class="lineNum">     576 </span>            : // The Doom reload hack. The idea here is that if you give a WAD file to -file
+<span class="lineNum">     577 </span>            : // prefixed with the ~ hack, that WAD file will be reloaded each time a new
+<span class="lineNum">     578 </span>            : // level is loaded. This lets you use a level editor in parallel and make
+<span class="lineNum">     579 </span>            : // incremental changes to the level you're working on without having to restart
+<span class="lineNum">     580 </span>            : // the game after every change.
+<a name="581"><span class="lineNum">     581 </span>            : // But: the reload feature is a fragile hack...</a>
+<span class="lineNum">     582 </span>            : void W_Reload(void)
+<span class="lineNum">     583 </span><span class="lineCov">      14698 : {</span>
+<span class="lineNum">     584 </span><span class="lineCov">      14698 :     char *filename;</span>
+<span class="lineNum">     585 </span><span class="lineCov">      14698 :     lumpindex_t i;</span>
+<span class="lineNum">     586 </span><span class="lineCov">      14698 : </span>
+<span class="lineNum">     587 </span><span class="lineCov">      14698 :     if (reloadname == NULL)</span>
+<span class="lineNum">     588 </span><span class="lineCov">      14698 :     {</span>
+<span class="lineNum">     589 </span><span class="lineCov">      14698 :         return;</span>
+<span class="lineNum">     590 </span><span class="lineCov">      14698 :     }</span>
+<span class="lineNum">     591 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     592 </span><span class="lineNoCov">          0 :     // We must free any lumps being cached from the PWAD we're about to reload:</span>
+<span class="lineNum">     593 </span><span class="lineNoCov">          0 :     for (i = reloadlump; i &lt; numlumps; ++i)</span>
+<span class="lineNum">     594 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     595 </span><span class="lineNoCov">          0 :         if (lumpinfo[i]-&gt;cache != NULL)</span>
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     597 </span><span class="lineNoCov">          0 :             Z_Free(lumpinfo[i]-&gt;cache);</span>
+<span class="lineNum">     598 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     599 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     601 </span><span class="lineNoCov">          0 :     // Reset numlumps to remove the reload WAD file:</span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 :     numlumps = reloadlump;</span>
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 :     // Now reload the WAD file.</span>
+<span class="lineNum">     605 </span><span class="lineNoCov">          0 :     filename = reloadname;</span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     607 </span><span class="lineNoCov">          0 :     W_CloseFile(reloadhandle);</span>
+<span class="lineNum">     608 </span><span class="lineNoCov">          0 :     free(reloadlumps);</span>
+<span class="lineNum">     609 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     610 </span><span class="lineNoCov">          0 :     reloadname = NULL;</span>
+<span class="lineNum">     611 </span><span class="lineNoCov">          0 :     reloadlump = -1;</span>
+<span class="lineNum">     612 </span><span class="lineNoCov">          0 :     reloadhandle = NULL;</span>
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 :     W_AddFile(filename);</span>
+<span class="lineNum">     614 </span><span class="lineNoCov">          0 :     free(filename);</span>
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :     // The WAD directory has changed, so we have to regenerate the</span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 :     // fast lookup hashtable:</span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 :     W_GenerateHashTable();</span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 : }</span>
+<a name="620"><span class="lineNum">     620 </span>            : </a>
+<span class="lineNum">     621 </span>            : const char *W_WadNameForLump(const lumpinfo_t *lump)
+<span class="lineNum">     622 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 :         return M_BaseName(lump-&gt;wad_file-&gt;path);</span>
+<span class="lineNum">     624 </span><span class="lineNoCov">          0 : }</span>
+<a name="625"><span class="lineNum">     625 </span>            : </a>
+<span class="lineNum">     626 </span>            : boolean W_IsIWADLump(const lumpinfo_t *lump)
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 :         return lump-&gt;wad_file == lumpinfo[0]-&gt;wad_file;</span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

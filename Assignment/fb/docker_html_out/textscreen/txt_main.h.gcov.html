@@ -1,0 +1,277 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - textscreen/txt_main.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">textscreen</a> - txt_main.h<span style="font-size: 80%;"> (source / <a href="txt_main.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // Base interface that abstracts the text mode screen.
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #ifndef TXT_MAIN_H
+<span class="lineNum">      19 </span>            : #define TXT_MAIN_H
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : // For the moment, txt_sdl.c is the only implementation of the base 
+<span class="lineNum">      22 </span>            : // text mode screen API:
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #include &quot;txt_sdl.h&quot;
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span>            : // textscreen key values:
+<span class="lineNum">      27 </span>            : // Key values are difficult because we have to support multiple conflicting
+<span class="lineNum">      28 </span>            : // address spaces.
+<span class="lineNum">      29 </span>            : // First, Doom's key constants use 0-127 as ASCII and extra values from
+<span class="lineNum">      30 </span>            : // 128-255 to represent special keys. Second, mouse buttons are represented
+<span class="lineNum">      31 </span>            : // as buttons. Finally, we want to be able to support Unicode.
+<span class="lineNum">      32 </span>            : //
+<span class="lineNum">      33 </span>            : // So we define different ranges:
+<span class="lineNum">      34 </span>            : // 0-255:    Doom key constants, including ASCII.
+<span class="lineNum">      35 </span>            : // 256-511:  Mouse buttons and other reserved.
+<span class="lineNum">      36 </span>            : // &gt;=512:    Unicode values greater than 127 are offset up into this range.
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            : // Special keypress values that correspond to mouse button clicks
+<span class="lineNum">      39 </span>            : 
+<span class="lineNum">      40 </span><span class="lineNoCov">          0 : #define TXT_MOUSE_BASE         256</span>
+<span class="lineNum">      41 </span><span class="lineNoCov">          0 : #define TXT_MOUSE_LEFT         (TXT_MOUSE_BASE + 0)</span>
+<span class="lineNum">      42 </span><span class="lineNoCov">          0 : #define TXT_MOUSE_RIGHT        (TXT_MOUSE_BASE + 1)</span>
+<span class="lineNum">      43 </span><span class="lineNoCov">          0 : #define TXT_MOUSE_MIDDLE       (TXT_MOUSE_BASE + 2)</span>
+<span class="lineNum">      44 </span><span class="lineNoCov">          0 : #define TXT_MOUSE_SCROLLUP     (TXT_MOUSE_BASE + 3)</span>
+<span class="lineNum">      45 </span><span class="lineNoCov">          0 : #define TXT_MOUSE_SCROLLDOWN   (TXT_MOUSE_BASE + 4)</span>
+<span class="lineNum">      46 </span><span class="lineNoCov">          0 : #define TXT_MAX_MOUSE_BUTTONS  16</span>
+<span class="lineNum">      47 </span>            : 
+<span class="lineNum">      48 </span>            : #define TXT_KEY_TO_MOUSE_BUTTON(x)                                        \
+<span class="lineNum">      49 </span>            :         ( (x) &gt;= TXT_MOUSE_BASE                                           \
+<span class="lineNum">      50 </span>            :        &amp;&amp; (x) &lt; TXT_MOUSE_BASE + TXT_MAX_MOUSE_BUTTONS ?                  \
+<span class="lineNum">      51 </span>            :           (x) - TXT_MOUSE_BASE : -1 )
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span>            : // Unicode offset. Unicode values from 128 onwards are offset up into
+<span class="lineNum">      54 </span>            : // this range, so TXT_UNICODE_BASE = Unicode character #128, and so on.
+<span class="lineNum">      55 </span>            : 
+<span class="lineNum">      56 </span><span class="lineNoCov">          0 : #define TXT_UNICODE_BASE       512</span>
+<span class="lineNum">      57 </span>            : 
+<span class="lineNum">      58 </span>            : // Convert a key value to a Unicode character:
+<span class="lineNum">      59 </span>            : 
+<span class="lineNum">      60 </span>            : #define TXT_KEY_TO_UNICODE(x)                                             \
+<span class="lineNum">      61 </span>            :         ( (x) &lt; 128 ? (x) :                                               \
+<span class="lineNum">      62 </span>            :           (x) &gt;= TXT_UNICODE_BASE ? ((x) - TXT_UNICODE_BASE + 128) : 0 )
+<span class="lineNum">      63 </span>            : 
+<span class="lineNum">      64 </span>            : // Convert a Unicode character to a key value:
+<span class="lineNum">      65 </span>            : 
+<span class="lineNum">      66 </span>            : #define TXT_UNICODE_TO_KEY(u)                                            \
+<span class="lineNum">      67 </span><span class="lineNoCov">          0 :         ( (u) &lt; 128 ? (u) : ((u) - 128 + TXT_UNICODE_BASE) )</span>
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : // Screen size
+<span class="lineNum">      70 </span>            : 
+<span class="lineNum">      71 </span><span class="lineNoCov">          0 : #define TXT_SCREEN_W 80</span>
+<span class="lineNum">      72 </span><span class="lineNoCov">          0 : #define TXT_SCREEN_H 25</span>
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span><span class="lineNoCov">          0 : #define TXT_COLOR_BLINKING (1 &lt;&lt; 3)</span>
+<span class="lineNum">      75 </span>            : 
+<span class="lineNum">      76 </span>            : typedef enum
+<span class="lineNum">      77 </span>            : {
+<span class="lineNum">      78 </span>            :     TXT_COLOR_BLACK,
+<span class="lineNum">      79 </span>            :     TXT_COLOR_BLUE,
+<span class="lineNum">      80 </span>            :     TXT_COLOR_GREEN,
+<span class="lineNum">      81 </span>            :     TXT_COLOR_CYAN,
+<span class="lineNum">      82 </span>            :     TXT_COLOR_RED,
+<span class="lineNum">      83 </span>            :     TXT_COLOR_MAGENTA,
+<span class="lineNum">      84 </span>            :     TXT_COLOR_BROWN,
+<span class="lineNum">      85 </span>            :     TXT_COLOR_GREY,
+<span class="lineNum">      86 </span>            :     TXT_COLOR_DARK_GREY,
+<span class="lineNum">      87 </span>            :     TXT_COLOR_BRIGHT_BLUE,
+<span class="lineNum">      88 </span>            :     TXT_COLOR_BRIGHT_GREEN,
+<span class="lineNum">      89 </span>            :     TXT_COLOR_BRIGHT_CYAN,
+<span class="lineNum">      90 </span>            :     TXT_COLOR_BRIGHT_RED,
+<span class="lineNum">      91 </span>            :     TXT_COLOR_BRIGHT_MAGENTA,
+<span class="lineNum">      92 </span>            :     TXT_COLOR_YELLOW,
+<span class="lineNum">      93 </span>            :     TXT_COLOR_BRIGHT_WHITE,
+<span class="lineNum">      94 </span>            : } txt_color_t;
+<span class="lineNum">      95 </span>            : 
+<span class="lineNum">      96 </span>            : // Modifier keys.
+<span class="lineNum">      97 </span>            : 
+<span class="lineNum">      98 </span>            : typedef enum
+<span class="lineNum">      99 </span>            : {
+<span class="lineNum">     100 </span>            :     TXT_MOD_SHIFT,
+<span class="lineNum">     101 </span>            :     TXT_MOD_CTRL,
+<span class="lineNum">     102 </span>            :     TXT_MOD_ALT,
+<span class="lineNum">     103 </span>            :     TXT_NUM_MODIFIERS
+<span class="lineNum">     104 </span>            : } txt_modifier_t;
+<span class="lineNum">     105 </span>            : 
+<span class="lineNum">     106 </span>            : // Due to the way the SDL API works, we provide different ways of configuring
+<span class="lineNum">     107 </span>            : // how we read input events, each of which is useful in different scenarios.
+<span class="lineNum">     108 </span>            : typedef enum
+<span class="lineNum">     109 </span>            : {
+<span class="lineNum">     110 </span>            :     // &quot;Localized&quot; output that takes software keyboard layout into account,
+<span class="lineNum">     111 </span>            :     // but key shifting has no effect.
+<span class="lineNum">     112 </span>            :     TXT_INPUT_NORMAL,
+<span class="lineNum">     113 </span>            : 
+<span class="lineNum">     114 </span>            :     // &quot;Raw&quot; input; the keys correspond to physical keyboard layout and
+<span class="lineNum">     115 </span>            :     // software keyboard layout has no effect.
+<span class="lineNum">     116 </span>            :     TXT_INPUT_RAW,
+<span class="lineNum">     117 </span>            : 
+<span class="lineNum">     118 </span>            :     // Used for full text input. Events are fully shifted and localized.
+<span class="lineNum">     119 </span>            :     // However, not all keyboard keys will generate input.
+<span class="lineNum">     120 </span>            :     // Setting this mode may activate the on-screen keyboard, depending on
+<span class="lineNum">     121 </span>            :     // device and OS.
+<span class="lineNum">     122 </span>            :     TXT_INPUT_TEXT,
+<span class="lineNum">     123 </span>            : } txt_input_mode_t;
+<span class="lineNum">     124 </span>            : 
+<span class="lineNum">     125 </span>            : 
+<span class="lineNum">     126 </span>            : #ifdef __GNUC__
+<span class="lineNum">     127 </span>            : 
+<span class="lineNum">     128 </span>            : #define PRINTF_ATTR(fmt, first) __attribute__((format(printf, fmt, first)))
+<span class="lineNum">     129 </span>            : 
+<span class="lineNum">     130 </span>            : #else  // __GNUC__
+<span class="lineNum">     131 </span>            : 
+<span class="lineNum">     132 </span>            : #define PRINTF_ATTR(fmt, first)
+<span class="lineNum">     133 </span>            : 
+<span class="lineNum">     134 </span>            : #endif  // __GNUC__
+<span class="lineNum">     135 </span>            : 
+<span class="lineNum">     136 </span>            : // Initialize the screen
+<span class="lineNum">     137 </span>            : // Returns 1 if successful, 0 if failed.
+<span class="lineNum">     138 </span>            : int TXT_Init(void);
+<span class="lineNum">     139 </span>            : 
+<span class="lineNum">     140 </span>            : // Shut down text mode emulation
+<span class="lineNum">     141 </span>            : void TXT_Shutdown(void);
+<span class="lineNum">     142 </span>            : 
+<span class="lineNum">     143 </span>            : // Get a pointer to the buffer containing the raw screen data.
+<span class="lineNum">     144 </span>            : unsigned char *TXT_GetScreenData(void);
+<span class="lineNum">     145 </span>            : 
+<span class="lineNum">     146 </span>            : // Update an area of the screen
+<span class="lineNum">     147 </span>            : void TXT_UpdateScreenArea(int x, int y, int w, int h);
+<span class="lineNum">     148 </span>            : 
+<span class="lineNum">     149 </span>            : // Update the whole screen
+<span class="lineNum">     150 </span>            : void TXT_UpdateScreen(void);
+<span class="lineNum">     151 </span>            : 
+<span class="lineNum">     152 </span>            : // Set the RGB value for a particular entry in the color palette:
+<span class="lineNum">     153 </span>            : void TXT_SetColor(txt_color_t color, int r, int g, int b);
+<span class="lineNum">     154 </span>            : 
+<span class="lineNum">     155 </span>            : // Read a character from the keyboard
+<span class="lineNum">     156 </span>            : int TXT_GetChar(void);
+<span class="lineNum">     157 </span>            : 
+<span class="lineNum">     158 </span>            : // Given a Unicode character, get a character that can be used to represent
+<span class="lineNum">     159 </span>            : // it on the code page being displayed on the screen. If the character cannot
+<span class="lineNum">     160 </span>            : // be represented, this returns -1.
+<span class="lineNum">     161 </span>            : int TXT_UnicodeCharacter(unsigned int c);
+<span class="lineNum">     162 </span>            : 
+<span class="lineNum">     163 </span>            : // Read the current state of modifier keys that are held down.
+<span class="lineNum">     164 </span>            : int TXT_GetModifierState(txt_modifier_t mod);
+<span class="lineNum">     165 </span>            : 
+<span class="lineNum">     166 </span>            : // Provides a short description of a key code, placing into the provided
+<span class="lineNum">     167 </span>            : // buffer. Note that the key is assumed to represent a physical key on the
+<span class="lineNum">     168 </span>            : // keyboard (like that returned by TXT_INPUT_RAW), and the resulting string
+<span class="lineNum">     169 </span>            : // takes keyboard layout into consideration. For example,
+<span class="lineNum">     170 </span>            : // TXT_GetKeyDescription('q') on a French keyboard returns &quot;A&quot;.
+<span class="lineNum">     171 </span>            : // The contents of the filled buffer will be in UTF-8 format, but will never
+<span class="lineNum">     172 </span>            : // contain characters which can't be shown on the screen.
+<span class="lineNum">     173 </span>            : void TXT_GetKeyDescription(int key, char *buf, size_t buf_len);
+<span class="lineNum">     174 </span>            : 
+<span class="lineNum">     175 </span>            : // Retrieve the current position of the mouse
+<span class="lineNum">     176 </span>            : void TXT_GetMousePosition(int *x, int *y);
+<span class="lineNum">     177 </span>            : 
+<span class="lineNum">     178 </span>            : // Sleep until an event is received or the screen needs updating
+<span class="lineNum">     179 </span>            : // Optional timeout in ms (timeout == 0 : sleep forever)
+<span class="lineNum">     180 </span>            : void TXT_Sleep(int timeout);
+<span class="lineNum">     181 </span>            : 
+<span class="lineNum">     182 </span>            : // Change mode for text input.
+<span class="lineNum">     183 </span>            : void TXT_SetInputMode(txt_input_mode_t mode);
+<span class="lineNum">     184 </span>            : 
+<span class="lineNum">     185 </span>            : // Set the window title of the window containing the text mode screen
+<span class="lineNum">     186 </span>            : void TXT_SetWindowTitle(const char *title);
+<span class="lineNum">     187 </span>            : 
+<span class="lineNum">     188 </span>            : // Safe string copy.
+<span class="lineNum">     189 </span>            : void TXT_StringCopy(char *dest, const char *src, size_t dest_len);
+<span class="lineNum">     190 </span>            : 
+<span class="lineNum">     191 </span>            : // Safe string concatenate.
+<span class="lineNum">     192 </span>            : void TXT_StringConcat(char *dest, const char *src, size_t dest_len);
+<span class="lineNum">     193 </span>            : 
+<span class="lineNum">     194 </span>            : // Safe version of vsnprintf().
+<span class="lineNum">     195 </span>            : int TXT_vsnprintf(char *buf, size_t buf_len, const char *s, va_list args);
+<span class="lineNum">     196 </span>            : 
+<span class="lineNum">     197 </span>            : // Safe version of snprintf().
+<span class="lineNum">     198 </span>            : int TXT_snprintf(char *buf, size_t buf_len, const char *s, ...) PRINTF_ATTR(3, 4);
+<span class="lineNum">     199 </span>            : 
+<span class="lineNum">     200 </span>            : #endif /* #ifndef TXT_MAIN_H */
+<span class="lineNum">     201 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

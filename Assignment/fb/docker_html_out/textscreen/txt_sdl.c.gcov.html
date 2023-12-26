@@ -1,0 +1,1058 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - textscreen/txt_sdl.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">textscreen</a> - txt_sdl.c<span style="font-size: 80%;"> (source / <a href="txt_sdl.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">731</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">32</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // Text mode emulation in SDL
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #include &quot;SDL.h&quot;
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &lt;ctype.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      22 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      23 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span>            : #include &quot;doomkeys.h&quot;
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : #include &quot;txt_main.h&quot;
+<span class="lineNum">      28 </span>            : #include &quot;txt_sdl.h&quot;
+<span class="lineNum">      29 </span>            : #include &quot;txt_utf8.h&quot;
+<span class="lineNum">      30 </span>            : 
+<span class="lineNum">      31 </span>            : #if defined(_MSC_VER) &amp;&amp; !defined(__cplusplus)
+<span class="lineNum">      32 </span>            : #define inline __inline
+<span class="lineNum">      33 </span>            : #endif
+<span class="lineNum">      34 </span>            : 
+<span class="lineNum">      35 </span>            : typedef struct
+<span class="lineNum">      36 </span>            : {
+<span class="lineNum">      37 </span>            :     const char *name;
+<span class="lineNum">      38 </span>            :     const uint8_t *data;
+<span class="lineNum">      39 </span>            :     unsigned int w;
+<span class="lineNum">      40 </span>            :     unsigned int h;
+<span class="lineNum">      41 </span>            : } txt_font_t;
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span>            : // Fonts:
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span>            : #include &quot;fonts/small.h&quot;
+<span class="lineNum">      46 </span>            : #include &quot;fonts/normal.h&quot;
+<span class="lineNum">      47 </span>            : #include &quot;fonts/large.h&quot;
+<span class="lineNum">      48 </span>            : #include &quot;fonts/codepage.h&quot;
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span>            : // Time between character blinks in ms
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 : #define BLINK_PERIOD 250</span>
+<span class="lineNum">      53 </span>            : 
+<span class="lineNum">      54 </span>            : SDL_Window *TXT_SDLWindow;
+<span class="lineNum">      55 </span>            : static SDL_Surface *screenbuffer;
+<span class="lineNum">      56 </span>            : static unsigned char *screendata;
+<span class="lineNum">      57 </span>            : static SDL_Renderer *renderer;
+<span class="lineNum">      58 </span>            : 
+<span class="lineNum">      59 </span>            : // Current input mode.
+<span class="lineNum">      60 </span>            : static txt_input_mode_t input_mode = TXT_INPUT_NORMAL;
+<span class="lineNum">      61 </span>            : 
+<span class="lineNum">      62 </span>            : // Dimensions of the screen image in screen coordinates (not pixels); this
+<span class="lineNum">      63 </span>            : // is the value that was passed to SDL_CreateWindow().
+<span class="lineNum">      64 </span>            : static int screen_image_w, screen_image_h;
+<span class="lineNum">      65 </span>            : 
+<span class="lineNum">      66 </span>            : static TxtSDLEventCallbackFunc event_callback;
+<span class="lineNum">      67 </span>            : static void *event_callback_data;
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : // Font we are using:
+<span class="lineNum">      70 </span>            : static const txt_font_t *font;
+<span class="lineNum">      71 </span>            : 
+<span class="lineNum">      72 </span>            : // Dummy &quot;font&quot; that means to try highdpi rendering, or fallback to
+<span class="lineNum">      73 </span>            : // normal_font otherwise.
+<span class="lineNum">      74 </span>            : static const txt_font_t highdpi_font = { &quot;normal-highdpi&quot;, NULL, 8, 16 };
+<span class="lineNum">      75 </span>            : 
+<span class="lineNum">      76 </span>            : // Mapping from SDL keyboard scancode to internal key code.
+<span class="lineNum">      77 </span>            : static const int scancode_translate_table[] = SCANCODE_TO_KEYS_ARRAY;
+<span class="lineNum">      78 </span>            : 
+<span class="lineNum">      79 </span>            : // String names of keys. This is a fallback; we usually use the SDL API.
+<span class="lineNum">      80 </span>            : static const struct {
+<span class="lineNum">      81 </span>            :     int key;
+<span class="lineNum">      82 </span>            :     const char *name;
+<span class="lineNum">      83 </span>            : } key_names[] = KEY_NAMES_ARRAY;
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            : // Unicode key mapping; see codepage.h.
+<span class="lineNum">      86 </span>            : static const short code_page_to_unicode[] = CODE_PAGE_TO_UNICODE;
+<span class="lineNum">      87 </span>            : 
+<span class="lineNum">      88 </span>            : static const SDL_Color ega_colors[] =
+<span class="lineNum">      89 </span>            : {
+<span class="lineNum">      90 </span>            :     {0x00, 0x00, 0x00, 0xff},          // 0: Black
+<span class="lineNum">      91 </span>            :     {0x00, 0x00, 0xa8, 0xff},          // 1: Blue
+<span class="lineNum">      92 </span>            :     {0x00, 0xa8, 0x00, 0xff},          // 2: Green
+<span class="lineNum">      93 </span>            :     {0x00, 0xa8, 0xa8, 0xff},          // 3: Cyan
+<span class="lineNum">      94 </span>            :     {0xa8, 0x00, 0x00, 0xff},          // 4: Red
+<span class="lineNum">      95 </span>            :     {0xa8, 0x00, 0xa8, 0xff},          // 5: Magenta
+<span class="lineNum">      96 </span>            :     {0xa8, 0x54, 0x00, 0xff},          // 6: Brown
+<span class="lineNum">      97 </span>            :     {0xa8, 0xa8, 0xa8, 0xff},          // 7: Grey
+<span class="lineNum">      98 </span>            :     {0x54, 0x54, 0x54, 0xff},          // 8: Dark grey
+<span class="lineNum">      99 </span>            :     {0x54, 0x54, 0xfe, 0xff},          // 9: Bright blue
+<span class="lineNum">     100 </span>            :     {0x54, 0xfe, 0x54, 0xff},          // 10: Bright green
+<span class="lineNum">     101 </span>            :     {0x54, 0xfe, 0xfe, 0xff},          // 11: Bright cyan
+<span class="lineNum">     102 </span>            :     {0xfe, 0x54, 0x54, 0xff},          // 12: Bright red
+<span class="lineNum">     103 </span>            :     {0xfe, 0x54, 0xfe, 0xff},          // 13: Bright magenta
+<span class="lineNum">     104 </span>            :     {0xfe, 0xfe, 0x54, 0xff},          // 14: Yellow
+<span class="lineNum">     105 </span>            :     {0xfe, 0xfe, 0xfe, 0xff},          // 15: Bright white
+<span class="lineNum">     106 </span>            : };
+<span class="lineNum">     107 </span>            : 
+<span class="lineNum">     108 </span>            : #ifdef _WIN32
+<span class="lineNum">     109 </span>            : 
+<span class="lineNum">     110 </span>            : #define WIN32_LEAN_AND_MEAN
+<span class="lineNum">     111 </span>            : #include &lt;windows.h&gt;
+<span class="lineNum">     112 </span>            : 
+<span class="lineNum">     113 </span>            : // Examine system DPI settings to determine whether to use the large font.
+<span class="lineNum">     114 </span>            : 
+<span class="lineNum">     115 </span>            : static int Win32_UseLargeFont(void)
+<span class="lineNum">     116 </span>            : {
+<span class="lineNum">     117 </span>            :     HDC hdc = GetDC(NULL);
+<span class="lineNum">     118 </span>            :     int dpix;
+<span class="lineNum">     119 </span>            : 
+<span class="lineNum">     120 </span>            :     if (!hdc)
+<span class="lineNum">     121 </span>            :     {
+<span class="lineNum">     122 </span>            :         return 0;
+<span class="lineNum">     123 </span>            :     }
+<span class="lineNum">     124 </span>            : 
+<span class="lineNum">     125 </span>            :     dpix = GetDeviceCaps(hdc, LOGPIXELSX);
+<span class="lineNum">     126 </span>            :     ReleaseDC(NULL, hdc);
+<span class="lineNum">     127 </span>            : 
+<span class="lineNum">     128 </span>            :     // 144 is the DPI when using &quot;150%&quot; scaling. If the user has this set
+<span class="lineNum">     129 </span>            :     // then consider this an appropriate threshold for using the large font.
+<span class="lineNum">     130 </span>            : 
+<span class="lineNum">     131 </span>            :     return dpix &gt;= 144;
+<span class="lineNum">     132 </span>            : }
+<span class="lineNum">     133 </span>            : 
+<span class="lineNum">     134 </span>            : #endif
+<a name="135"><span class="lineNum">     135 </span>            : </a>
+<span class="lineNum">     136 </span>            : static const txt_font_t *FontForName(const char *name)
+<span class="lineNum">     137 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 :     const txt_font_t *fonts[] =</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :         &amp;small_font,</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :         &amp;normal_font,</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :         &amp;large_font,</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 :         &amp;highdpi_font,</span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :         NULL,</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 :     };</span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 :     for (i = 0; fonts[i]-&gt;name != NULL; ++i)</span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 :         if (!strcmp(fonts[i]-&gt;name, name))</span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :             return fonts[i];</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 :     return NULL;</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     157 </span>            : 
+<span class="lineNum">     158 </span>            : //
+<span class="lineNum">     159 </span>            : // Select the font to use, based on screen resolution
+<span class="lineNum">     160 </span>            : //
+<span class="lineNum">     161 </span>            : // If the highest screen resolution available is less than
+<span class="lineNum">     162 </span>            : // 640x480, use the small font.
+<span class="lineNum">     163 </span>            : //
+<a name="164"><span class="lineNum">     164 </span>            : </a>
+<span class="lineNum">     165 </span>            : static void ChooseFont(void)
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :     SDL_DisplayMode desktop_info;</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 :     char *env;</span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 :     // Allow normal selection to be overridden from an environment variable:</span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 :     env = getenv(&quot;TEXTSCREEN_FONT&quot;);</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :     if (env != NULL)</span>
+<span class="lineNum">     173 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 :         font = FontForName(env);</span>
+<span class="lineNum">     175 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 :         if (font != NULL)</span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 :             return;</span>
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 :     // Get desktop resolution.</span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :     // If in doubt and we can't get a list, always prefer to</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 :     // fall back to the normal font:</span>
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 :     if (SDL_GetCurrentDisplayMode(0, &amp;desktop_info))</span>
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :         font = &amp;highdpi_font;</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     191 </span><span class="lineNoCov">          0 :     // On tiny low-res screens (eg. palmtops) use the small font.</span>
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 :     // If the screen resolution is at least 1920x1080, this is</span>
+<span class="lineNum">     193 </span><span class="lineNoCov">          0 :     // a modern high-resolution display, and we can use the</span>
+<span class="lineNum">     194 </span><span class="lineNoCov">          0 :     // large font.</span>
+<span class="lineNum">     195 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 :     if (desktop_info.w &lt; 640 || desktop_info.h &lt; 480)</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     198 </span><span class="lineNoCov">          0 :         font = &amp;small_font;</span>
+<span class="lineNum">     199 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     200 </span>            : #ifdef _WIN32
+<span class="lineNum">     201 </span>            :     // On Windows we can use the system DPI settings to make a
+<span class="lineNum">     202 </span>            :     // more educated guess about whether to use the large font.
+<span class="lineNum">     203 </span>            : 
+<span class="lineNum">     204 </span>            :     else if (Win32_UseLargeFont())
+<span class="lineNum">     205 </span>            :     {
+<span class="lineNum">     206 </span>            :         font = &amp;large_font;
+<span class="lineNum">     207 </span>            :     }
+<span class="lineNum">     208 </span>            : #endif
+<span class="lineNum">     209 </span>            :     // TODO: Detect high DPI on Linux by inquiring about Gtk+ scale
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 :     // settings. This looks like it should just be a case of shelling</span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :     // out to invoke the 'gsettings' command, eg.</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 :     //   gsettings get org.gnome.desktop.interface text-scaling-factor</span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 :     // and using large_font if the result is &gt;= 2.</span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :         // highdpi_font usually means normal_font (the normal resolution</span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :         // version), but actually means &quot;set the HIGHDPI flag and try</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 :         // to use large_font if we initialize successfully&quot;.</span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :         font = &amp;highdpi_font;</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     222 </span>            : 
+<span class="lineNum">     223 </span>            : //
+<span class="lineNum">     224 </span>            : // Initialize text mode screen
+<span class="lineNum">     225 </span>            : //
+<span class="lineNum">     226 </span>            : // Returns 1 if successful, 0 if an error occurred
+<span class="lineNum">     227 </span>            : //
+<a name="228"><span class="lineNum">     228 </span>            : </a>
+<span class="lineNum">     229 </span>            : int TXT_Init(void)
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :     int flags = 0;</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 :     if (SDL_Init(SDL_INIT_VIDEO) &lt; 0)</span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 :     ChooseFont();</span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     240 </span><span class="lineNoCov">          0 :     screen_image_w = TXT_SCREEN_W * font-&gt;w;</span>
+<span class="lineNum">     241 </span><span class="lineNoCov">          0 :     screen_image_h = TXT_SCREEN_H * font-&gt;h;</span>
+<span class="lineNum">     242 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     243 </span><span class="lineNoCov">          0 :     // If highdpi_font is selected, try to initialize high dpi rendering.</span>
+<span class="lineNum">     244 </span><span class="lineNoCov">          0 :     if (font == &amp;highdpi_font)</span>
+<span class="lineNum">     245 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     246 </span><span class="lineNoCov">          0 :         flags |= SDL_WINDOW_ALLOW_HIGHDPI;</span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     248 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 :     TXT_SDLWindow =</span>
+<span class="lineNum">     250 </span><span class="lineNoCov">          0 :         SDL_CreateWindow(&quot;&quot;, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,</span>
+<span class="lineNum">     251 </span><span class="lineNoCov">          0 :                          screen_image_w, screen_image_h, flags);</span>
+<span class="lineNum">     252 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     253 </span><span class="lineNoCov">          0 :     if (TXT_SDLWindow == NULL)</span>
+<span class="lineNum">     254 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     255 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     256 </span><span class="lineNoCov">          0 :     renderer = SDL_CreateRenderer(TXT_SDLWindow, -1, SDL_RENDERER_SOFTWARE);</span>
+<span class="lineNum">     257 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     258 </span><span class="lineNoCov">          0 :     // Special handling for OS X retina display. If we successfully set the</span>
+<span class="lineNum">     259 </span><span class="lineNoCov">          0 :     // highdpi flag, check the output size for the screen renderer. If we get</span>
+<span class="lineNum">     260 </span><span class="lineNoCov">          0 :     // the 2x doubled size we expect from a retina display, use the large font</span>
+<span class="lineNum">     261 </span><span class="lineNoCov">          0 :     // for drawing the screen.</span>
+<span class="lineNum">     262 </span><span class="lineNoCov">          0 :     if ((SDL_GetWindowFlags(TXT_SDLWindow) &amp; SDL_WINDOW_ALLOW_HIGHDPI) != 0)</span>
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 :         int render_w, render_h;</span>
+<span class="lineNum">     265 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     266 </span><span class="lineNoCov">          0 :         if (SDL_GetRendererOutputSize(renderer, &amp;render_w, &amp;render_h) == 0</span>
+<span class="lineNum">     267 </span><span class="lineNoCov">          0 :          &amp;&amp; render_w &gt;= TXT_SCREEN_W * large_font.w</span>
+<span class="lineNum">     268 </span><span class="lineNoCov">          0 :          &amp;&amp; render_h &gt;= TXT_SCREEN_H * large_font.h)</span>
+<span class="lineNum">     269 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     270 </span><span class="lineNoCov">          0 :             font = &amp;large_font;</span>
+<span class="lineNum">     271 </span><span class="lineNoCov">          0 :             // Note that we deliberately do not update screen_image_{w,h}</span>
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 :             // since these are the dimensions of textscreen image in screen</span>
+<span class="lineNum">     273 </span><span class="lineNoCov">          0 :             // coordinates, not pixels.</span>
+<span class="lineNum">     274 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     275 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     276 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 :     // Failed to initialize for high dpi (retina display) rendering? If so</span>
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 :     // then use the normal resolution font instead.</span>
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 :     if (font == &amp;highdpi_font)</span>
+<span class="lineNum">     280 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 :         font = &amp;normal_font;</span>
+<span class="lineNum">     282 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     283 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 :     // Instead, we draw everything into an intermediate 8-bit surface</span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 :     // the same dimensions as the screen. SDL then takes care of all the</span>
+<span class="lineNum">     286 </span><span class="lineNoCov">          0 :     // 8-&gt;32 bit (or whatever depth) color conversions for us.</span>
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 :     screenbuffer = SDL_CreateRGBSurface(0,</span>
+<span class="lineNum">     288 </span><span class="lineNoCov">          0 :                                         TXT_SCREEN_W * font-&gt;w,</span>
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 :                                         TXT_SCREEN_H * font-&gt;h,</span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 :                                         8, 0, 0, 0, 0);</span>
+<span class="lineNum">     291 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     292 </span><span class="lineNoCov">          0 :     SDL_LockSurface(screenbuffer);</span>
+<span class="lineNum">     293 </span><span class="lineNoCov">          0 :     SDL_SetPaletteColors(screenbuffer-&gt;format-&gt;palette, ega_colors, 0, 16);</span>
+<span class="lineNum">     294 </span><span class="lineNoCov">          0 :     SDL_UnlockSurface(screenbuffer);</span>
+<span class="lineNum">     295 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     296 </span><span class="lineNoCov">          0 :     screendata = malloc(TXT_SCREEN_W * TXT_SCREEN_H * 2);</span>
+<span class="lineNum">     297 </span><span class="lineNoCov">          0 :     memset(screendata, 0, TXT_SCREEN_W * TXT_SCREEN_H * 2);</span>
+<span class="lineNum">     298 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 :     return 1;</span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 : }</span>
+<a name="301"><span class="lineNum">     301 </span>            : </a>
+<span class="lineNum">     302 </span>            : void TXT_Shutdown(void)
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :     free(screendata);</span>
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 :     screendata = NULL;</span>
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 :     SDL_FreeSurface(screenbuffer);</span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 :     screenbuffer = NULL;</span>
+<span class="lineNum">     308 </span><span class="lineNoCov">          0 :     SDL_QuitSubSystem(SDL_INIT_VIDEO);</span>
+<span class="lineNum">     309 </span><span class="lineNoCov">          0 : }</span>
+<a name="310"><span class="lineNum">     310 </span>            : </a>
+<span class="lineNum">     311 </span>            : void TXT_SetColor(txt_color_t color, int r, int g, int b)
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :     SDL_Color c = {r, g, b, 0xff};</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :     SDL_LockSurface(screenbuffer);</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 :     SDL_SetPaletteColors(screenbuffer-&gt;format-&gt;palette, &amp;c, color, 1);</span>
+<span class="lineNum">     317 </span><span class="lineNoCov">          0 :     SDL_UnlockSurface(screenbuffer);</span>
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 : }</span>
+<a name="319"><span class="lineNum">     319 </span>            : </a>
+<span class="lineNum">     320 </span>            : unsigned char *TXT_GetScreenData(void)
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :     return screendata;</span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 : }</span>
+<a name="324"><span class="lineNum">     324 </span>            : </a>
+<span class="lineNum">     325 </span>            : static inline void UpdateCharacter(int x, int y)
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 :     unsigned char character;</span>
+<span class="lineNum">     328 </span><span class="lineNoCov">          0 :     const uint8_t *p;</span>
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 :     unsigned char *s, *s1;</span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 :     unsigned int bit;</span>
+<span class="lineNum">     331 </span><span class="lineNoCov">          0 :     int bg, fg;</span>
+<span class="lineNum">     332 </span><span class="lineNoCov">          0 :     unsigned int x1, y1;</span>
+<span class="lineNum">     333 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     334 </span><span class="lineNoCov">          0 :     p = &amp;screendata[(y * TXT_SCREEN_W + x) * 2];</span>
+<span class="lineNum">     335 </span><span class="lineNoCov">          0 :     character = p[0];</span>
+<span class="lineNum">     336 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 :     fg = p[1] &amp; 0xf;</span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :     bg = (p[1] &gt;&gt; 4) &amp; 0xf;</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     340 </span><span class="lineNoCov">          0 :     if (bg &amp; 0x8)</span>
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 :         // blinking</span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 :         bg &amp;= ~0x8;</span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 :         if (((SDL_GetTicks() / BLINK_PERIOD) % 2) == 0)</span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :             fg = bg;</span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 :     // How many bytes per line?</span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 :     p = &amp;font-&gt;data[(character * font-&gt;w * font-&gt;h) / 8];</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :     bit = 0;</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :     s = ((unsigned char *) screenbuffer-&gt;pixels)</span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :       + (y * font-&gt;h * screenbuffer-&gt;pitch)</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 :       + (x * font-&gt;w);</span>
+<span class="lineNum">     359 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 :     for (y1=0; y1&lt;font-&gt;h; ++y1)</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 :         s1 = s;</span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 :         for (x1=0; x1&lt;font-&gt;w; ++x1)</span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :             if (*p &amp; (1 &lt;&lt; bit))</span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 :                 *s1++ = fg;</span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     371 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     372 </span><span class="lineNoCov">          0 :                 *s1++ = bg;</span>
+<span class="lineNum">     373 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     374 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 :             ++bit;</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 :             if (bit == 8)</span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :                 ++p;</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 :                 bit = 0;</span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     382 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     383 </span><span class="lineNoCov">          0 :         s += screenbuffer-&gt;pitch;</span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 : }</span>
+<a name="386"><span class="lineNum">     386 </span>            : </a>
+<span class="lineNum">     387 </span>            : static int LimitToRange(int val, int min, int max)
+<span class="lineNum">     388 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     389 </span><span class="lineNoCov">          0 :     if (val &lt; min)</span>
+<span class="lineNum">     390 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     391 </span><span class="lineNoCov">          0 :         return min;</span>
+<span class="lineNum">     392 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     393 </span><span class="lineNoCov">          0 :     else if (val &gt; max)</span>
+<span class="lineNum">     394 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     395 </span><span class="lineNoCov">          0 :         return max;</span>
+<span class="lineNum">     396 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     397 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     398 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 :         return val;</span>
+<span class="lineNum">     400 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 : }</span>
+<a name="402"><span class="lineNum">     402 </span>            : </a>
+<span class="lineNum">     403 </span>            : static void GetDestRect(SDL_Rect *rect)
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 :     int w, h;</span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 :     SDL_GetRendererOutputSize(renderer, &amp;w, &amp;h);</span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 :     rect-&gt;x = (w - screenbuffer-&gt;w) / 2;</span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :     rect-&gt;y = (h - screenbuffer-&gt;h) / 2;</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 :     rect-&gt;w = screenbuffer-&gt;w;</span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 :     rect-&gt;h = screenbuffer-&gt;h;</span>
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 : }</span>
+<a name="413"><span class="lineNum">     413 </span>            : </a>
+<span class="lineNum">     414 </span>            : void TXT_UpdateScreenArea(int x, int y, int w, int h)
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 :     SDL_Texture *screentx;</span>
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 :     SDL_Rect rect;</span>
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 :     int x1, y1;</span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :     int x_end;</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 :     int y_end;</span>
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :     SDL_LockSurface(screenbuffer);</span>
+<span class="lineNum">     423 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :     x_end = LimitToRange(x + w, 0, TXT_SCREEN_W);</span>
+<span class="lineNum">     425 </span><span class="lineNoCov">          0 :     y_end = LimitToRange(y + h, 0, TXT_SCREEN_H);</span>
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 :     x = LimitToRange(x, 0, TXT_SCREEN_W);</span>
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 :     y = LimitToRange(y, 0, TXT_SCREEN_H);</span>
+<span class="lineNum">     428 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     429 </span><span class="lineNoCov">          0 :     for (y1=y; y1&lt;y_end; ++y1)</span>
+<span class="lineNum">     430 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     431 </span><span class="lineNoCov">          0 :         for (x1=x; x1&lt;x_end; ++x1)</span>
+<span class="lineNum">     432 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     433 </span><span class="lineNoCov">          0 :             UpdateCharacter(x1, y1);</span>
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     435 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 :     SDL_UnlockSurface(screenbuffer);</span>
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 :     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, &quot;linear&quot;);</span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 :     // TODO: This is currently creating a new texture every time we render</span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 :     // the screen; find a more efficient way to do it.</span>
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 :     screentx = SDL_CreateTextureFromSurface(renderer, screenbuffer);</span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :     SDL_RenderClear(renderer);</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 :     GetDestRect(&amp;rect);</span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :     SDL_RenderCopy(renderer, screentx, NULL, &amp;rect);</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 :     SDL_RenderPresent(renderer);</span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 :     SDL_DestroyTexture(screentx);</span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 : }</span>
+<a name="452"><span class="lineNum">     452 </span>            : </a>
+<span class="lineNum">     453 </span>            : void TXT_UpdateScreen(void)
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 :     TXT_UpdateScreenArea(0, 0, TXT_SCREEN_W, TXT_SCREEN_H);</span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 : }</span>
+<a name="457"><span class="lineNum">     457 </span>            : </a>
+<span class="lineNum">     458 </span>            : void TXT_GetMousePosition(int *x, int *y)
+<span class="lineNum">     459 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     460 </span><span class="lineNoCov">          0 :     int window_w, window_h;</span>
+<span class="lineNum">     461 </span><span class="lineNoCov">          0 :     int origin_x, origin_y;</span>
+<span class="lineNum">     462 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     463 </span><span class="lineNoCov">          0 :     SDL_GetMouseState(x, y);</span>
+<span class="lineNum">     464 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     465 </span><span class="lineNoCov">          0 :     // Translate mouse position from 'pixel' position into character position.</span>
+<span class="lineNum">     466 </span><span class="lineNoCov">          0 :     // We are working here in screen coordinates and not pixels, since this is</span>
+<span class="lineNum">     467 </span><span class="lineNoCov">          0 :     // what SDL_GetWindowSize() returns; we must calculate and subtract the</span>
+<span class="lineNum">     468 </span><span class="lineNoCov">          0 :     // origin position since we center the image within the window.</span>
+<span class="lineNum">     469 </span><span class="lineNoCov">          0 :     SDL_GetWindowSize(TXT_SDLWindow, &amp;window_w, &amp;window_h);</span>
+<span class="lineNum">     470 </span><span class="lineNoCov">          0 :     origin_x = (window_w - screen_image_w) / 2;</span>
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 :     origin_y = (window_h - screen_image_h) / 2;</span>
+<span class="lineNum">     472 </span><span class="lineNoCov">          0 :     *x = ((*x - origin_x) * TXT_SCREEN_W) / screen_image_w;</span>
+<span class="lineNum">     473 </span><span class="lineNoCov">          0 :     *y = ((*y - origin_y) * TXT_SCREEN_H) / screen_image_h;</span>
+<span class="lineNum">     474 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     475 </span><span class="lineNoCov">          0 :     if (*x &lt; 0)</span>
+<span class="lineNum">     476 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     477 </span><span class="lineNoCov">          0 :         *x = 0;</span>
+<span class="lineNum">     478 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     479 </span><span class="lineNoCov">          0 :     else if (*x &gt;= TXT_SCREEN_W)</span>
+<span class="lineNum">     480 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     481 </span><span class="lineNoCov">          0 :         *x = TXT_SCREEN_W - 1;</span>
+<span class="lineNum">     482 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 :     if (*y &lt; 0)</span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     485 </span><span class="lineNoCov">          0 :         *y = 0;</span>
+<span class="lineNum">     486 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 :     else if (*y &gt;= TXT_SCREEN_H)</span>
+<span class="lineNum">     488 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :         *y = TXT_SCREEN_H - 1;</span>
+<span class="lineNum">     490 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     491 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     492 </span>            : 
+<span class="lineNum">     493 </span>            : //
+<span class="lineNum">     494 </span>            : // Translates the SDL key
+<span class="lineNum">     495 </span>            : //
+<span class="lineNum">     496 </span>            : 
+<span class="lineNum">     497 </span>            : // XXX: duplicate from doomtype.h
+<span class="lineNum">     498 </span><span class="lineNoCov">          0 : #define arrlen(array) (sizeof(array) / sizeof(*array))</span>
+<a name="499"><span class="lineNum">     499 </span>            : </a>
+<span class="lineNum">     500 </span>            : static int TranslateScancode(SDL_Scancode scancode)
+<span class="lineNum">     501 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     502 </span><span class="lineNoCov">          0 :     switch (scancode)</span>
+<span class="lineNum">     503 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     504 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_LCTRL:</span>
+<span class="lineNum">     505 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_RCTRL:</span>
+<span class="lineNum">     506 </span><span class="lineNoCov">          0 :             return KEY_RCTRL;</span>
+<span class="lineNum">     507 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_LSHIFT:</span>
+<span class="lineNum">     509 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_RSHIFT:</span>
+<span class="lineNum">     510 </span><span class="lineNoCov">          0 :             return KEY_RSHIFT;</span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     512 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_LALT:</span>
+<span class="lineNum">     513 </span><span class="lineNoCov">          0 :             return KEY_LALT;</span>
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     515 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_RALT:</span>
+<span class="lineNum">     516 </span><span class="lineNoCov">          0 :             return KEY_RALT;</span>
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     518 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 :             if (scancode &lt; arrlen(scancode_translate_table))</span>
+<span class="lineNum">     520 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 :                 return scancode_translate_table[scancode];</span>
+<span class="lineNum">     522 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     524 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :                 return 0;</span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     527 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 : }</span>
+<a name="529"><span class="lineNum">     529 </span>            : </a>
+<span class="lineNum">     530 </span>            : static int TranslateKeysym(const SDL_Keysym *sym)
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     532 </span><span class="lineNoCov">          0 :     int translated;</span>
+<span class="lineNum">     533 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     534 </span><span class="lineNoCov">          0 :     // We cheat here and make use of TranslateScancode. The range of keys</span>
+<span class="lineNum">     535 </span><span class="lineNoCov">          0 :     // associated with printable characters is pretty contiguous, so if it's</span>
+<span class="lineNum">     536 </span><span class="lineNoCov">          0 :     // inside that range we want the localized version of the key instead.</span>
+<span class="lineNum">     537 </span><span class="lineNoCov">          0 :     translated = TranslateScancode(sym-&gt;scancode);</span>
+<span class="lineNum">     538 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     539 </span><span class="lineNoCov">          0 :     if (translated &gt;= 0x20 &amp;&amp; translated &lt; 0x7f)</span>
+<span class="lineNum">     540 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     541 </span><span class="lineNoCov">          0 :         return sym-&gt;sym;</span>
+<span class="lineNum">     542 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     543 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     544 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     545 </span><span class="lineNoCov">          0 :         return translated;</span>
+<span class="lineNum">     546 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     547 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     548 </span>            : 
+<span class="lineNum">     549 </span>            : // Convert an SDL button index to textscreen button index.
+<span class="lineNum">     550 </span>            : //
+<span class="lineNum">     551 </span>            : // Note special cases because 2 == mid in SDL, 3 == mid in textscreen/setup
+<a name="552"><span class="lineNum">     552 </span>            : </a>
+<span class="lineNum">     553 </span>            : static int SDLButtonToTXTButton(int button)
+<span class="lineNum">     554 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     555 </span><span class="lineNoCov">          0 :     switch (button)</span>
+<span class="lineNum">     556 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     557 </span><span class="lineNoCov">          0 :         case SDL_BUTTON_LEFT:</span>
+<span class="lineNum">     558 </span><span class="lineNoCov">          0 :             return TXT_MOUSE_LEFT;</span>
+<span class="lineNum">     559 </span><span class="lineNoCov">          0 :         case SDL_BUTTON_RIGHT:</span>
+<span class="lineNum">     560 </span><span class="lineNoCov">          0 :             return TXT_MOUSE_RIGHT;</span>
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 :         case SDL_BUTTON_MIDDLE:</span>
+<span class="lineNum">     562 </span><span class="lineNoCov">          0 :             return TXT_MOUSE_MIDDLE;</span>
+<span class="lineNum">     563 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     564 </span><span class="lineNoCov">          0 :             return TXT_MOUSE_BASE + button - 1;</span>
+<span class="lineNum">     565 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     566 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     567 </span>            : 
+<span class="lineNum">     568 </span>            : // Convert an SDL wheel motion to a textscreen button index.
+<a name="569"><span class="lineNum">     569 </span>            : </a>
+<span class="lineNum">     570 </span>            : static int SDLWheelToTXTButton(const SDL_MouseWheelEvent *wheel)
+<span class="lineNum">     571 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     572 </span><span class="lineNoCov">          0 :     if (wheel-&gt;y &lt;= 0)</span>
+<span class="lineNum">     573 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     574 </span><span class="lineNoCov">          0 :         return TXT_MOUSE_SCROLLDOWN;</span>
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     577 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :         return TXT_MOUSE_SCROLLUP;</span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 : }</span>
+<a name="581"><span class="lineNum">     581 </span>            : </a>
+<span class="lineNum">     582 </span>            : static int MouseHasMoved(void)
+<span class="lineNum">     583 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     584 </span><span class="lineNoCov">          0 :     static int last_x = 0, last_y = 0;</span>
+<span class="lineNum">     585 </span><span class="lineNoCov">          0 :     int x, y;</span>
+<span class="lineNum">     586 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     587 </span><span class="lineNoCov">          0 :     TXT_GetMousePosition(&amp;x, &amp;y);</span>
+<span class="lineNum">     588 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     589 </span><span class="lineNoCov">          0 :     if (x != last_x || y != last_y)</span>
+<span class="lineNum">     590 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     591 </span><span class="lineNoCov">          0 :         last_x = x; last_y = y;</span>
+<span class="lineNum">     592 </span><span class="lineNoCov">          0 :         return 1;</span>
+<span class="lineNum">     593 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     594 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     595 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     597 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     598 </span><span class="lineNoCov">          0 : }</span>
+<a name="599"><span class="lineNum">     599 </span>            : </a>
+<span class="lineNum">     600 </span>            : signed int TXT_GetChar(void)
+<span class="lineNum">     601 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 :     SDL_Event ev;</span>
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 :     while (SDL_PollEvent(&amp;ev))</span>
+<span class="lineNum">     605 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 :         // If there is an event callback, allow it to intercept this</span>
+<span class="lineNum">     607 </span><span class="lineNoCov">          0 :         // event.</span>
+<span class="lineNum">     608 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     609 </span><span class="lineNoCov">          0 :         if (event_callback != NULL)</span>
+<span class="lineNum">     610 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     611 </span><span class="lineNoCov">          0 :             if (event_callback(&amp;ev, event_callback_data))</span>
+<span class="lineNum">     612 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 :                 continue;</span>
+<span class="lineNum">     614 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 :         // Process the event.</span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 :         switch (ev.type)</span>
+<span class="lineNum">     620 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     621 </span><span class="lineNoCov">          0 :             case SDL_MOUSEBUTTONDOWN:</span>
+<span class="lineNum">     622 </span><span class="lineNoCov">          0 :                 if (ev.button.button &lt; TXT_MAX_MOUSE_BUTTONS)</span>
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     624 </span><span class="lineNoCov">          0 :                     return SDLButtonToTXTButton(ev.button.button);</span>
+<span class="lineNum">     625 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 :             case SDL_MOUSEWHEEL:</span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 :                 return SDLWheelToTXTButton(&amp;ev.wheel);</span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     631 </span><span class="lineNoCov">          0 :             case SDL_KEYDOWN:</span>
+<span class="lineNum">     632 </span><span class="lineNoCov">          0 :                 switch (input_mode)</span>
+<span class="lineNum">     633 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     634 </span><span class="lineNoCov">          0 :                     case TXT_INPUT_RAW:</span>
+<span class="lineNum">     635 </span><span class="lineNoCov">          0 :                         return TranslateScancode(ev.key.keysym.scancode);</span>
+<span class="lineNum">     636 </span><span class="lineNoCov">          0 :                     case TXT_INPUT_NORMAL:</span>
+<span class="lineNum">     637 </span><span class="lineNoCov">          0 :                         return TranslateKeysym(&amp;ev.key.keysym);</span>
+<span class="lineNum">     638 </span><span class="lineNoCov">          0 :                     case TXT_INPUT_TEXT:</span>
+<span class="lineNum">     639 </span><span class="lineNoCov">          0 :                         // We ignore key inputs in this mode, except for a</span>
+<span class="lineNum">     640 </span><span class="lineNoCov">          0 :                         // few special cases needed during text input:</span>
+<span class="lineNum">     641 </span><span class="lineNoCov">          0 :                         if (ev.key.keysym.sym == SDLK_ESCAPE</span>
+<span class="lineNum">     642 </span><span class="lineNoCov">          0 :                          || ev.key.keysym.sym == SDLK_BACKSPACE</span>
+<span class="lineNum">     643 </span><span class="lineNoCov">          0 :                          || ev.key.keysym.sym == SDLK_RETURN)</span>
+<span class="lineNum">     644 </span><span class="lineNoCov">          0 :                         {</span>
+<span class="lineNum">     645 </span><span class="lineNoCov">          0 :                             return TranslateKeysym(&amp;ev.key.keysym);</span>
+<span class="lineNum">     646 </span><span class="lineNoCov">          0 :                         }</span>
+<span class="lineNum">     647 </span><span class="lineNoCov">          0 :                         break;</span>
+<span class="lineNum">     648 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     649 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     650 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     651 </span><span class="lineNoCov">          0 :             case SDL_TEXTINPUT:</span>
+<span class="lineNum">     652 </span><span class="lineNoCov">          0 :                 if (input_mode == TXT_INPUT_TEXT)</span>
+<span class="lineNum">     653 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     654 </span><span class="lineNoCov">          0 :                     // TODO: Support input of more than just the first char?</span>
+<span class="lineNum">     655 </span><span class="lineNoCov">          0 :                     const char *p = ev.text.text;</span>
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 :                     int result = TXT_DecodeUTF8(&amp;p);</span>
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 :                     // 0-127 is ASCII, but we map non-ASCII Unicode chars into</span>
+<span class="lineNum">     658 </span><span class="lineNoCov">          0 :                     // a higher range to avoid conflicts with special keys.</span>
+<span class="lineNum">     659 </span><span class="lineNoCov">          0 :                     return TXT_UNICODE_TO_KEY(result);</span>
+<span class="lineNum">     660 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     661 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     662 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     663 </span><span class="lineNoCov">          0 :             case SDL_QUIT:</span>
+<span class="lineNum">     664 </span><span class="lineNoCov">          0 :                 // Quit = escape</span>
+<span class="lineNum">     665 </span><span class="lineNoCov">          0 :                 return 27;</span>
+<span class="lineNum">     666 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     667 </span><span class="lineNoCov">          0 :             case SDL_MOUSEMOTION:</span>
+<span class="lineNum">     668 </span><span class="lineNoCov">          0 :                 if (MouseHasMoved())</span>
+<span class="lineNum">     669 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     670 </span><span class="lineNoCov">          0 :                     return 0;</span>
+<span class="lineNum">     671 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     672 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     673 </span><span class="lineNoCov">          0 :             default:</span>
+<span class="lineNum">     674 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     675 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     676 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     677 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     678 </span><span class="lineNoCov">          0 :     return -1;</span>
+<span class="lineNum">     679 </span><span class="lineNoCov">          0 : }</span>
+<a name="680"><span class="lineNum">     680 </span>            : </a>
+<span class="lineNum">     681 </span>            : int TXT_GetModifierState(txt_modifier_t mod)
+<span class="lineNum">     682 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     683 </span><span class="lineNoCov">          0 :     SDL_Keymod state;</span>
+<span class="lineNum">     684 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     685 </span><span class="lineNoCov">          0 :     state = SDL_GetModState();</span>
+<span class="lineNum">     686 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     687 </span><span class="lineNoCov">          0 :     switch (mod)</span>
+<span class="lineNum">     688 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     689 </span><span class="lineNoCov">          0 :         case TXT_MOD_SHIFT:</span>
+<span class="lineNum">     690 </span><span class="lineNoCov">          0 :             return (state &amp; KMOD_SHIFT) != 0;</span>
+<span class="lineNum">     691 </span><span class="lineNoCov">          0 :         case TXT_MOD_CTRL:</span>
+<span class="lineNum">     692 </span><span class="lineNoCov">          0 :             return (state &amp; KMOD_CTRL) != 0;</span>
+<span class="lineNum">     693 </span><span class="lineNoCov">          0 :         case TXT_MOD_ALT:</span>
+<span class="lineNum">     694 </span><span class="lineNoCov">          0 :             return (state &amp; KMOD_ALT) != 0;</span>
+<span class="lineNum">     695 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     696 </span><span class="lineNoCov">          0 :             return 0;</span>
+<span class="lineNum">     697 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     698 </span><span class="lineNoCov">          0 : }</span>
+<a name="699"><span class="lineNum">     699 </span>            : </a>
+<span class="lineNum">     700 </span>            : int TXT_UnicodeCharacter(unsigned int c)
+<span class="lineNum">     701 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     702 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">     703 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     704 </span><span class="lineNoCov">          0 :     // Check the code page mapping to see if this character maps</span>
+<span class="lineNum">     705 </span><span class="lineNoCov">          0 :     // to anything.</span>
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     707 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; arrlen(code_page_to_unicode); ++i)</span>
+<span class="lineNum">     708 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     709 </span><span class="lineNoCov">          0 :         if (code_page_to_unicode[i] == c)</span>
+<span class="lineNum">     710 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     711 </span><span class="lineNoCov">          0 :             return i;</span>
+<span class="lineNum">     712 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     713 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     714 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     715 </span><span class="lineNoCov">          0 :     return -1;</span>
+<span class="lineNum">     716 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     717 </span>            : 
+<a name="718"><span class="lineNum">     718 </span>            : // Returns true if the given UTF8 key name is printable to the screen.</a>
+<span class="lineNum">     719 </span>            : static int PrintableName(const char *s)
+<span class="lineNum">     720 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     721 </span><span class="lineNoCov">          0 :     const char *p;</span>
+<span class="lineNum">     722 </span><span class="lineNoCov">          0 :     unsigned int c;</span>
+<span class="lineNum">     723 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     724 </span><span class="lineNoCov">          0 :     p = s;</span>
+<span class="lineNum">     725 </span><span class="lineNoCov">          0 :     while (*p != '\0')</span>
+<span class="lineNum">     726 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     727 </span><span class="lineNoCov">          0 :         c = TXT_DecodeUTF8(&amp;p);</span>
+<span class="lineNum">     728 </span><span class="lineNoCov">          0 :         if (TXT_UnicodeCharacter(c) &lt; 0)</span>
+<span class="lineNum">     729 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     730 </span><span class="lineNoCov">          0 :             return 0;</span>
+<span class="lineNum">     731 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     732 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     733 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     734 </span><span class="lineNoCov">          0 :     return 1;</span>
+<span class="lineNum">     735 </span><span class="lineNoCov">          0 : }</span>
+<a name="736"><span class="lineNum">     736 </span>            : </a>
+<span class="lineNum">     737 </span>            : static const char *NameForKey(int key)
+<span class="lineNum">     738 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     739 </span><span class="lineNoCov">          0 :     const char *result;</span>
+<span class="lineNum">     740 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     741 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     742 </span><span class="lineNoCov">          0 :     // Overrides purely for aesthetical reasons, so that default</span>
+<span class="lineNum">     743 </span><span class="lineNoCov">          0 :     // window accelerator keys match those of setup.exe.</span>
+<span class="lineNum">     744 </span><span class="lineNoCov">          0 :     switch (key)</span>
+<span class="lineNum">     745 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     746 </span><span class="lineNoCov">          0 :         case KEY_ESCAPE: return &quot;ESC&quot;;</span>
+<span class="lineNum">     747 </span><span class="lineNoCov">          0 :         case KEY_ENTER:  return &quot;ENTER&quot;;</span>
+<span class="lineNum">     748 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     749 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     750 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     751 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     752 </span><span class="lineNoCov">          0 :     // This key presumably maps to a scan code that is listed in the</span>
+<span class="lineNum">     753 </span><span class="lineNoCov">          0 :     // translation table. Find which mapping and once we have a scancode,</span>
+<span class="lineNum">     754 </span><span class="lineNoCov">          0 :     // we can convert it into a virtual key, then a string via SDL.</span>
+<span class="lineNum">     755 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; arrlen(scancode_translate_table); ++i)</span>
+<span class="lineNum">     756 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     757 </span><span class="lineNoCov">          0 :         if (scancode_translate_table[i] == key)</span>
+<span class="lineNum">     758 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     759 </span><span class="lineNoCov">          0 :             result = SDL_GetKeyName(SDL_GetKeyFromScancode(i));</span>
+<span class="lineNum">     760 </span><span class="lineNoCov">          0 :             if (TXT_UTF8_Strlen(result) &gt; 6 || !PrintableName(result))</span>
+<span class="lineNum">     761 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     762 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     763 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     764 </span><span class="lineNoCov">          0 :             return result;</span>
+<span class="lineNum">     765 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     766 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     767 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     768 </span><span class="lineNoCov">          0 :     // Use US English fallback names, if the localized name is too long,</span>
+<span class="lineNum">     769 </span><span class="lineNoCov">          0 :     // not found in the scancode table, or contains unprintable chars</span>
+<span class="lineNum">     770 </span><span class="lineNoCov">          0 :     // (non-extended ASCII character set):</span>
+<span class="lineNum">     771 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; arrlen(key_names); ++i)</span>
+<span class="lineNum">     772 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     773 </span><span class="lineNoCov">          0 :         if (key_names[i].key == key)</span>
+<span class="lineNum">     774 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     775 </span><span class="lineNoCov">          0 :             return key_names[i].name;</span>
+<span class="lineNum">     776 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     777 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     778 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     779 </span><span class="lineNoCov">          0 :     return NULL;</span>
+<span class="lineNum">     780 </span><span class="lineNoCov">          0 : }</span>
+<a name="781"><span class="lineNum">     781 </span>            : </a>
+<span class="lineNum">     782 </span>            : void TXT_GetKeyDescription(int key, char *buf, size_t buf_len)
+<span class="lineNum">     783 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     784 </span><span class="lineNoCov">          0 :     const char *keyname;</span>
+<span class="lineNum">     785 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     786 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     787 </span><span class="lineNoCov">          0 :     keyname = NameForKey(key);</span>
+<span class="lineNum">     788 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     789 </span><span class="lineNoCov">          0 :     if (keyname != NULL)</span>
+<span class="lineNum">     790 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     791 </span><span class="lineNoCov">          0 :         TXT_StringCopy(buf, keyname, buf_len);</span>
+<span class="lineNum">     792 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     793 </span><span class="lineNoCov">          0 :         // Key description should be all-uppercase to match setup.exe.</span>
+<span class="lineNum">     794 </span><span class="lineNoCov">          0 :         for (i = 0; buf[i] != '\0'; ++i)</span>
+<span class="lineNum">     795 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     796 </span><span class="lineNoCov">          0 :             buf[i] = toupper(buf[i]);</span>
+<span class="lineNum">     797 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     798 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     799 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     800 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     801 </span><span class="lineNoCov">          0 :         TXT_snprintf(buf, buf_len, &quot;??%i&quot;, key);</span>
+<span class="lineNum">     802 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     803 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     804 </span>            : 
+<span class="lineNum">     805 </span>            : // Searches the desktop screen buffer to determine whether there are any
+<span class="lineNum">     806 </span>            : // blinking characters.
+<a name="807"><span class="lineNum">     807 </span>            : </a>
+<span class="lineNum">     808 </span>            : int TXT_ScreenHasBlinkingChars(void)
+<span class="lineNum">     809 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     810 </span><span class="lineNoCov">          0 :     int x, y;</span>
+<span class="lineNum">     811 </span><span class="lineNoCov">          0 :     unsigned char *p;</span>
+<span class="lineNum">     812 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     813 </span><span class="lineNoCov">          0 :     // Check all characters in screen buffer</span>
+<span class="lineNum">     814 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     815 </span><span class="lineNoCov">          0 :     for (y=0; y&lt;TXT_SCREEN_H; ++y)</span>
+<span class="lineNum">     816 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     817 </span><span class="lineNoCov">          0 :         for (x=0; x&lt;TXT_SCREEN_W; ++x) </span>
+<span class="lineNum">     818 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     819 </span><span class="lineNoCov">          0 :             p = &amp;screendata[(y * TXT_SCREEN_W + x) * 2];</span>
+<span class="lineNum">     820 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     821 </span><span class="lineNoCov">          0 :             if (p[1] &amp; 0x80)</span>
+<span class="lineNum">     822 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     823 </span><span class="lineNoCov">          0 :                 // This character is blinking</span>
+<span class="lineNum">     824 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     825 </span><span class="lineNoCov">          0 :                 return 1;</span>
+<span class="lineNum">     826 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     827 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     828 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     829 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     830 </span><span class="lineNoCov">          0 :     // None found</span>
+<span class="lineNum">     831 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     832 </span><span class="lineNoCov">          0 :     return 0;</span>
+<span class="lineNum">     833 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     834 </span>            : 
+<span class="lineNum">     835 </span>            : // Sleeps until an event is received, the screen needs to be redrawn, 
+<span class="lineNum">     836 </span>            : // or until timeout expires (if timeout != 0)
+<a name="837"><span class="lineNum">     837 </span>            : </a>
+<span class="lineNum">     838 </span>            : void TXT_Sleep(int timeout)
+<span class="lineNum">     839 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     840 </span><span class="lineNoCov">          0 :     unsigned int start_time;</span>
+<span class="lineNum">     841 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     842 </span><span class="lineNoCov">          0 :     if (TXT_ScreenHasBlinkingChars())</span>
+<span class="lineNum">     843 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     844 </span><span class="lineNoCov">          0 :         int time_to_next_blink;</span>
+<span class="lineNum">     845 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     846 </span><span class="lineNoCov">          0 :         time_to_next_blink = BLINK_PERIOD - (SDL_GetTicks() % BLINK_PERIOD);</span>
+<span class="lineNum">     847 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     848 </span><span class="lineNoCov">          0 :         // There are blinking characters on the screen, so we </span>
+<span class="lineNum">     849 </span><span class="lineNoCov">          0 :         // must time out after a while</span>
+<span class="lineNum">     850 </span><span class="lineNoCov">          0 :        </span>
+<span class="lineNum">     851 </span><span class="lineNoCov">          0 :         if (timeout == 0 || timeout &gt; time_to_next_blink)</span>
+<span class="lineNum">     852 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     853 </span><span class="lineNoCov">          0 :             // Add one so it is always positive</span>
+<span class="lineNum">     854 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     855 </span><span class="lineNoCov">          0 :             timeout = time_to_next_blink + 1;</span>
+<span class="lineNum">     856 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     857 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     858 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     859 </span><span class="lineNoCov">          0 :     if (timeout == 0)</span>
+<span class="lineNum">     860 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     861 </span><span class="lineNoCov">          0 :         // We can just wait forever until an event occurs</span>
+<span class="lineNum">     862 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     863 </span><span class="lineNoCov">          0 :         SDL_WaitEvent(NULL);</span>
+<span class="lineNum">     864 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     865 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     866 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     867 </span><span class="lineNoCov">          0 :         // Sit in a busy loop until the timeout expires or we have to</span>
+<span class="lineNum">     868 </span><span class="lineNoCov">          0 :         // redraw the blinking screen</span>
+<span class="lineNum">     869 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     870 </span><span class="lineNoCov">          0 :         start_time = SDL_GetTicks();</span>
+<span class="lineNum">     871 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     872 </span><span class="lineNoCov">          0 :         while (SDL_GetTicks() &lt; start_time + timeout)</span>
+<span class="lineNum">     873 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     874 </span><span class="lineNoCov">          0 :             if (SDL_PollEvent(NULL) != 0)</span>
+<span class="lineNum">     875 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     876 </span><span class="lineNoCov">          0 :                 // Received an event, so stop waiting</span>
+<span class="lineNum">     877 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     878 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     879 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     880 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     881 </span><span class="lineNoCov">          0 :             // Don't hog the CPU</span>
+<span class="lineNum">     882 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     883 </span><span class="lineNoCov">          0 :             SDL_Delay(1);</span>
+<span class="lineNum">     884 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     885 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     886 </span><span class="lineNoCov">          0 : }</span>
+<a name="887"><span class="lineNum">     887 </span>            : </a>
+<span class="lineNum">     888 </span>            : void TXT_SetInputMode(txt_input_mode_t mode)
+<span class="lineNum">     889 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     890 </span><span class="lineNoCov">          0 :     if (mode == TXT_INPUT_TEXT &amp;&amp; !SDL_IsTextInputActive())</span>
+<span class="lineNum">     891 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     892 </span><span class="lineNoCov">          0 :         SDL_StartTextInput();</span>
+<span class="lineNum">     893 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     894 </span><span class="lineNoCov">          0 :     else if (SDL_IsTextInputActive() &amp;&amp; mode != TXT_INPUT_TEXT)</span>
+<span class="lineNum">     895 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     896 </span><span class="lineNoCov">          0 :         SDL_StopTextInput();</span>
+<span class="lineNum">     897 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     898 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     899 </span><span class="lineNoCov">          0 :     input_mode = mode;</span>
+<span class="lineNum">     900 </span><span class="lineNoCov">          0 : }</span>
+<a name="901"><span class="lineNum">     901 </span>            : </a>
+<span class="lineNum">     902 </span>            : void TXT_SetWindowTitle(const char *title)
+<span class="lineNum">     903 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     904 </span><span class="lineNoCov">          0 :     SDL_SetWindowTitle(TXT_SDLWindow, title);</span>
+<span class="lineNum">     905 </span><span class="lineNoCov">          0 : }</span>
+<a name="906"><span class="lineNum">     906 </span>            : </a>
+<span class="lineNum">     907 </span>            : void TXT_SDL_SetEventCallback(TxtSDLEventCallbackFunc callback, void *user_data)
+<span class="lineNum">     908 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     909 </span><span class="lineNoCov">          0 :     event_callback = callback;</span>
+<span class="lineNum">     910 </span><span class="lineNoCov">          0 :     event_callback_data = user_data;</span>
+<span class="lineNum">     911 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     912 </span>            : 
+<span class="lineNum">     913 </span>            : // Safe string functions.
+<a name="914"><span class="lineNum">     914 </span>            : </a>
+<span class="lineNum">     915 </span>            : void TXT_StringCopy(char *dest, const char *src, size_t dest_len)
+<span class="lineNum">     916 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     917 </span><span class="lineNoCov">          0 :     if (dest_len &lt; 1)</span>
+<span class="lineNum">     918 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     919 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     920 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     921 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     922 </span><span class="lineNoCov">          0 :     dest[dest_len - 1] = '\0';</span>
+<span class="lineNum">     923 </span><span class="lineNoCov">          0 :     strncpy(dest, src, dest_len - 1);</span>
+<span class="lineNum">     924 </span><span class="lineNoCov">          0 : }</span>
+<a name="925"><span class="lineNum">     925 </span>            : </a>
+<span class="lineNum">     926 </span>            : void TXT_StringConcat(char *dest, const char *src, size_t dest_len)
+<span class="lineNum">     927 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     928 </span><span class="lineNoCov">          0 :     size_t offset;</span>
+<span class="lineNum">     929 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     930 </span><span class="lineNoCov">          0 :     offset = strlen(dest);</span>
+<span class="lineNum">     931 </span><span class="lineNoCov">          0 :     if (offset &gt; dest_len)</span>
+<span class="lineNum">     932 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     933 </span><span class="lineNoCov">          0 :         offset = dest_len;</span>
+<span class="lineNum">     934 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     935 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     936 </span><span class="lineNoCov">          0 :     TXT_StringCopy(dest + offset, src, dest_len - offset);</span>
+<span class="lineNum">     937 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     938 </span>            : 
+<span class="lineNum">     939 </span>            : // On Windows, vsnprintf() is _vsnprintf().
+<span class="lineNum">     940 </span>            : #ifdef _WIN32
+<span class="lineNum">     941 </span>            : #if _MSC_VER &lt; 1400 /* not needed for Visual Studio 2008 */
+<span class="lineNum">     942 </span>            : #define vsnprintf _vsnprintf
+<span class="lineNum">     943 </span>            : #endif
+<span class="lineNum">     944 </span>            : #endif
+<span class="lineNum">     945 </span>            : 
+<a name="946"><span class="lineNum">     946 </span>            : // Safe, portable vsnprintf().</a>
+<span class="lineNum">     947 </span>            : int TXT_vsnprintf(char *buf, size_t buf_len, const char *s, va_list args)
+<span class="lineNum">     948 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     949 </span><span class="lineNoCov">          0 :     int result;</span>
+<span class="lineNum">     950 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     951 </span><span class="lineNoCov">          0 :     if (buf_len &lt; 1)</span>
+<span class="lineNum">     952 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     953 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     954 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     955 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     956 </span><span class="lineNoCov">          0 :     // Windows (and other OSes?) has a vsnprintf() that doesn't always</span>
+<span class="lineNum">     957 </span><span class="lineNoCov">          0 :     // append a trailing \0. So we must do it, and write into a buffer</span>
+<span class="lineNum">     958 </span><span class="lineNoCov">          0 :     // that is one byte shorter; otherwise this function is unsafe.</span>
+<span class="lineNum">     959 </span><span class="lineNoCov">          0 :     result = vsnprintf(buf, buf_len, s, args);</span>
+<span class="lineNum">     960 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     961 </span><span class="lineNoCov">          0 :     // If truncated, change the final char in the buffer to a \0.</span>
+<span class="lineNum">     962 </span><span class="lineNoCov">          0 :     // A negative result indicates a truncated buffer on Windows.</span>
+<span class="lineNum">     963 </span><span class="lineNoCov">          0 :     if (result &lt; 0 || result &gt;= buf_len)</span>
+<span class="lineNum">     964 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     965 </span><span class="lineNoCov">          0 :         buf[buf_len - 1] = '\0';</span>
+<span class="lineNum">     966 </span><span class="lineNoCov">          0 :         result = buf_len - 1;</span>
+<span class="lineNum">     967 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     968 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     969 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     970 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     971 </span>            : 
+<a name="972"><span class="lineNum">     972 </span>            : // Safe, portable snprintf().</a>
+<span class="lineNum">     973 </span>            : int TXT_snprintf(char *buf, size_t buf_len, const char *s, ...)
+<span class="lineNum">     974 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     975 </span><span class="lineNoCov">          0 :     va_list args;</span>
+<span class="lineNum">     976 </span><span class="lineNoCov">          0 :     int result;</span>
+<span class="lineNum">     977 </span><span class="lineNoCov">          0 :     va_start(args, s);</span>
+<span class="lineNum">     978 </span><span class="lineNoCov">          0 :     result = TXT_vsnprintf(buf, buf_len, s, args);</span>
+<span class="lineNum">     979 </span><span class="lineNoCov">          0 :     va_end(args);</span>
+<span class="lineNum">     980 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     981 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     982 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

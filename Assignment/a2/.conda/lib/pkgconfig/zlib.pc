@@ -1,0 +1,13 @@
+prefix=/Users/kevinchen/Desktop/Waterloo/ECE653/z585chen/a2/.conda
+exec_prefix=/Users/kevinchen/Desktop/Waterloo/ECE653/z585chen/a2/.conda
+libdir=/Users/kevinchen/Desktop/Waterloo/ECE653/z585chen/a2/.conda/lib
+sharedlibdir=/Users/kevinchen/Desktop/Waterloo/ECE653/z585chen/a2/.conda/lib
+includedir=/Users/kevinchen/Desktop/Waterloo/ECE653/z585chen/a2/.conda/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.2.13
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}

@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/hu_lib.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - hu_lib.h<span style="font-size: 80%;"> (source / <a href="hu_lib.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:  none
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #ifndef __HULIB__
+<span class="lineNum">      19 </span>            : #define __HULIB__
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : // We are referring to patches.
+<span class="lineNum">      22 </span>            : #include &quot;r_defs.h&quot;
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : // font stuff
+<span class="lineNum">      25 </span>            : #define HU_CHARERASE    KEY_BACKSPACE
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : #define HU_MAXLINES             4
+<span class="lineNum">      28 </span><span class="lineNoCov">          0 : #define HU_MAXLINELENGTH        80</span>
+<span class="lineNum">      29 </span>            : 
+<span class="lineNum">      30 </span>            : //
+<span class="lineNum">      31 </span>            : // Typedefs of widgets
+<span class="lineNum">      32 </span>            : //
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span>            : // Text Line widget
+<span class="lineNum">      35 </span>            : //  (parent of Scrolling Text and Input Text widgets)
+<span class="lineNum">      36 </span>            : typedef struct
+<span class="lineNum">      37 </span>            : {
+<span class="lineNum">      38 </span>            :     // left-justified position of scrolling text window
+<span class="lineNum">      39 </span>            :     int         x;
+<span class="lineNum">      40 </span>            :     int         y;
+<span class="lineNum">      41 </span>            :     
+<span class="lineNum">      42 </span>            :     patch_t**   f;                      // font
+<span class="lineNum">      43 </span>            :     int         sc;                     // start character
+<span class="lineNum">      44 </span>            :     char        l[HU_MAXLINELENGTH+1];  // line of text
+<span class="lineNum">      45 </span>            :     int         len;                    // current line length
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span>            :     // whether this line needs to be udpated
+<span class="lineNum">      48 </span>            :     int         needsupdate;          
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span>            : } hu_textline_t;
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span>            : 
+<span class="lineNum">      54 </span>            : // Scrolling Text window widget
+<span class="lineNum">      55 </span>            : //  (child of Text Line widget)
+<span class="lineNum">      56 </span>            : typedef struct
+<span class="lineNum">      57 </span>            : {
+<span class="lineNum">      58 </span>            :     hu_textline_t       l[HU_MAXLINES]; // text lines to draw
+<span class="lineNum">      59 </span>            :     int                 h;              // height in lines
+<span class="lineNum">      60 </span>            :     int                 cl;             // current line number
+<span class="lineNum">      61 </span>            : 
+<span class="lineNum">      62 </span>            :     // pointer to boolean stating whether to update window
+<span class="lineNum">      63 </span>            :     boolean*            on;
+<span class="lineNum">      64 </span>            :     boolean             laston;         // last value of *-&gt;on.
+<span class="lineNum">      65 </span>            : 
+<span class="lineNum">      66 </span>            : } hu_stext_t;
+<span class="lineNum">      67 </span>            : 
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : 
+<span class="lineNum">      70 </span>            : // Input Text Line widget
+<span class="lineNum">      71 </span>            : //  (child of Text Line widget)
+<span class="lineNum">      72 </span>            : typedef struct
+<span class="lineNum">      73 </span>            : {
+<span class="lineNum">      74 </span>            :     hu_textline_t       l;              // text line to input on
+<span class="lineNum">      75 </span>            : 
+<span class="lineNum">      76 </span>            :      // left margin past which I am not to delete characters
+<span class="lineNum">      77 </span>            :     int                 lm;
+<span class="lineNum">      78 </span>            : 
+<span class="lineNum">      79 </span>            :     // pointer to boolean stating whether to update window
+<span class="lineNum">      80 </span>            :     boolean*            on; 
+<span class="lineNum">      81 </span>            :     boolean             laston; // last value of *-&gt;on;
+<span class="lineNum">      82 </span>            : 
+<span class="lineNum">      83 </span>            : } hu_itext_t;
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            : 
+<span class="lineNum">      86 </span>            : //
+<span class="lineNum">      87 </span>            : // Widget creation, access, and update routines
+<span class="lineNum">      88 </span>            : //
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            : // initializes heads-up widget library
+<span class="lineNum">      91 </span>            : void HUlib_init(void);
+<span class="lineNum">      92 </span>            : 
+<span class="lineNum">      93 </span>            : //
+<span class="lineNum">      94 </span>            : // textline code
+<span class="lineNum">      95 </span>            : //
+<span class="lineNum">      96 </span>            : 
+<span class="lineNum">      97 </span>            : // clear a line of text
+<span class="lineNum">      98 </span>            : void    HUlib_clearTextLine(hu_textline_t *t);
+<span class="lineNum">      99 </span>            : 
+<span class="lineNum">     100 </span>            : void    HUlib_initTextLine(hu_textline_t *t, int x, int y, patch_t **f, int sc);
+<span class="lineNum">     101 </span>            : 
+<span class="lineNum">     102 </span>            : // returns success
+<span class="lineNum">     103 </span>            : boolean HUlib_addCharToTextLine(hu_textline_t *t, char ch);
+<span class="lineNum">     104 </span>            : 
+<span class="lineNum">     105 </span>            : // returns success
+<span class="lineNum">     106 </span>            : boolean HUlib_delCharFromTextLine(hu_textline_t *t);
+<span class="lineNum">     107 </span>            : 
+<span class="lineNum">     108 </span>            : // draws tline
+<span class="lineNum">     109 </span>            : void    HUlib_drawTextLine(hu_textline_t *l, boolean drawcursor);
+<span class="lineNum">     110 </span>            : 
+<span class="lineNum">     111 </span>            : // erases text line
+<span class="lineNum">     112 </span>            : void    HUlib_eraseTextLine(hu_textline_t *l); 
+<span class="lineNum">     113 </span>            : 
+<span class="lineNum">     114 </span>            : 
+<span class="lineNum">     115 </span>            : //
+<span class="lineNum">     116 </span>            : // Scrolling Text window widget routines
+<span class="lineNum">     117 </span>            : //
+<span class="lineNum">     118 </span>            : 
+<span class="lineNum">     119 </span>            : // ?
+<span class="lineNum">     120 </span>            : void
+<span class="lineNum">     121 </span>            : HUlib_initSText
+<span class="lineNum">     122 </span>            : ( hu_stext_t*   s,
+<span class="lineNum">     123 </span>            :   int           x,
+<span class="lineNum">     124 </span>            :   int           y,
+<span class="lineNum">     125 </span>            :   int           h,
+<span class="lineNum">     126 </span>            :   patch_t**     font,
+<span class="lineNum">     127 </span>            :   int           startchar,
+<span class="lineNum">     128 </span>            :   boolean*      on );
+<span class="lineNum">     129 </span>            : 
+<span class="lineNum">     130 </span>            : // add a new line
+<span class="lineNum">     131 </span>            : void HUlib_addLineToSText(hu_stext_t* s);  
+<span class="lineNum">     132 </span>            : 
+<span class="lineNum">     133 </span>            : // ?
+<span class="lineNum">     134 </span>            : void
+<span class="lineNum">     135 </span>            : HUlib_addMessageToSText
+<span class="lineNum">     136 </span>            : ( hu_stext_t*   s,
+<span class="lineNum">     137 </span>            :   const char*   prefix,
+<span class="lineNum">     138 </span>            :   const char*   msg );
+<span class="lineNum">     139 </span>            : 
+<span class="lineNum">     140 </span>            : // draws stext
+<span class="lineNum">     141 </span>            : void HUlib_drawSText(hu_stext_t* s);
+<span class="lineNum">     142 </span>            : 
+<span class="lineNum">     143 </span>            : // erases all stext lines
+<span class="lineNum">     144 </span>            : void HUlib_eraseSText(hu_stext_t* s); 
+<span class="lineNum">     145 </span>            : 
+<span class="lineNum">     146 </span>            : // Input Text Line widget routines
+<span class="lineNum">     147 </span>            : void
+<span class="lineNum">     148 </span>            : HUlib_initIText
+<span class="lineNum">     149 </span>            : ( hu_itext_t*   it,
+<span class="lineNum">     150 </span>            :   int           x,
+<span class="lineNum">     151 </span>            :   int           y,
+<span class="lineNum">     152 </span>            :   patch_t**     font,
+<span class="lineNum">     153 </span>            :   int           startchar,
+<span class="lineNum">     154 </span>            :   boolean*      on );
+<span class="lineNum">     155 </span>            : 
+<span class="lineNum">     156 </span>            : // enforces left margin
+<span class="lineNum">     157 </span>            : void HUlib_delCharFromIText(hu_itext_t* it);
+<span class="lineNum">     158 </span>            : 
+<span class="lineNum">     159 </span>            : // enforces left margin
+<span class="lineNum">     160 </span>            : void HUlib_eraseLineFromIText(hu_itext_t* it);
+<span class="lineNum">     161 </span>            : 
+<span class="lineNum">     162 </span>            : // resets line and left margin
+<span class="lineNum">     163 </span>            : void HUlib_resetIText(hu_itext_t* it);
+<span class="lineNum">     164 </span>            : 
+<span class="lineNum">     165 </span>            : // left of left-margin
+<span class="lineNum">     166 </span>            : void
+<span class="lineNum">     167 </span>            : HUlib_addPrefixToIText
+<span class="lineNum">     168 </span>            : ( hu_itext_t*   it,
+<span class="lineNum">     169 </span>            :   char*         str );
+<span class="lineNum">     170 </span>            : 
+<span class="lineNum">     171 </span>            : // whether eaten
+<span class="lineNum">     172 </span>            : boolean
+<span class="lineNum">     173 </span>            : HUlib_keyInIText
+<span class="lineNum">     174 </span>            : ( hu_itext_t*   it,
+<span class="lineNum">     175 </span>            :   unsigned char ch );
+<span class="lineNum">     176 </span>            : 
+<span class="lineNum">     177 </span>            : void HUlib_drawIText(hu_itext_t* it);
+<span class="lineNum">     178 </span>            : 
+<span class="lineNum">     179 </span>            : // erases all itext lines
+<span class="lineNum">     180 </span>            : void HUlib_eraseIText(hu_itext_t* it); 
+<span class="lineNum">     181 </span>            : 
+<span class="lineNum">     182 </span>            : #endif
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

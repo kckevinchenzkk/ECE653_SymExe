@@ -1,0 +1,544 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/i_input.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - i_input.c<span style="font-size: 80%;"> (source / <a href="i_input.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntry">332</td>
+            <td class="headerCovTableEntryLo">1.8 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryLo">8.3 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //     SDL implementation of system-specific input interface.
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &quot;SDL.h&quot;
+<span class="lineNum">      21 </span>            : #include &quot;SDL_keycode.h&quot;
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;doomkeys.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;doomtype.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;d_event.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;i_input.h&quot;
+<span class="lineNum">      27 </span>            : #include &quot;m_argv.h&quot;
+<span class="lineNum">      28 </span>            : #include &quot;m_config.h&quot;
+<span class="lineNum">      29 </span>            : 
+<span class="lineNum">      30 </span>            : static const int scancode_translate_table[] = SCANCODE_TO_KEYS_ARRAY;
+<span class="lineNum">      31 </span>            : 
+<span class="lineNum">      32 </span>            : // Lookup table for mapping ASCII characters to their equivalent when
+<span class="lineNum">      33 </span>            : // shift is pressed on a US layout keyboard. This is the original table
+<span class="lineNum">      34 </span>            : // as found in the Doom sources, comments and all.
+<span class="lineNum">      35 </span>            : static const char shiftxform[] =
+<span class="lineNum">      36 </span>            : {
+<span class="lineNum">      37 </span>            :     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+<span class="lineNum">      38 </span>            :     11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+<span class="lineNum">      39 </span>            :     21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+<span class="lineNum">      40 </span>            :     31, ' ', '!', '&quot;', '#', '$', '%', '&amp;',
+<span class="lineNum">      41 </span>            :     '&quot;', // shift-'
+<span class="lineNum">      42 </span>            :     '(', ')', '*', '+',
+<span class="lineNum">      43 </span>            :     '&lt;', // shift-,
+<span class="lineNum">      44 </span>            :     '_', // shift--
+<span class="lineNum">      45 </span>            :     '&gt;', // shift-.
+<span class="lineNum">      46 </span>            :     '?', // shift-/
+<span class="lineNum">      47 </span>            :     ')', // shift-0
+<span class="lineNum">      48 </span>            :     '!', // shift-1
+<span class="lineNum">      49 </span>            :     '@', // shift-2
+<span class="lineNum">      50 </span>            :     '#', // shift-3
+<span class="lineNum">      51 </span>            :     '$', // shift-4
+<span class="lineNum">      52 </span>            :     '%', // shift-5
+<span class="lineNum">      53 </span>            :     '^', // shift-6
+<span class="lineNum">      54 </span>            :     '&amp;', // shift-7
+<span class="lineNum">      55 </span>            :     '*', // shift-8
+<span class="lineNum">      56 </span>            :     '(', // shift-9
+<span class="lineNum">      57 </span>            :     ':',
+<span class="lineNum">      58 </span>            :     ':', // shift-;
+<span class="lineNum">      59 </span>            :     '&lt;',
+<span class="lineNum">      60 </span>            :     '+', // shift-=
+<span class="lineNum">      61 </span>            :     '&gt;', '?', '@',
+<span class="lineNum">      62 </span>            :     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+<span class="lineNum">      63 </span>            :     'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+<span class="lineNum">      64 </span>            :     '[', // shift-[
+<span class="lineNum">      65 </span>            :     '!', // shift-backslash - OH MY GOD DOES WATCOM SUCK
+<span class="lineNum">      66 </span>            :     ']', // shift-]
+<span class="lineNum">      67 </span>            :     '&quot;', '_',
+<span class="lineNum">      68 </span>            :     '\'', // shift-`
+<span class="lineNum">      69 </span>            :     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+<span class="lineNum">      70 </span>            :     'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+<span class="lineNum">      71 </span>            :     '{', '|', '}', '~', 127
+<span class="lineNum">      72 </span>            : };
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span>            : // If true, I_StartTextInput() has been called, and we are populating
+<span class="lineNum">      75 </span>            : // the data3 field of ev_keydown events.
+<span class="lineNum">      76 </span>            : static boolean text_input_enabled = true;
+<span class="lineNum">      77 </span>            : 
+<span class="lineNum">      78 </span>            : // Bit mask of mouse button state.
+<span class="lineNum">      79 </span>            : static unsigned int mouse_button_state = 0;
+<span class="lineNum">      80 </span>            : 
+<span class="lineNum">      81 </span>            : // Disallow mouse and joystick movement to cause forward/backward
+<span class="lineNum">      82 </span>            : // motion.  Specified with the '-novert' command line parameter.
+<span class="lineNum">      83 </span>            : // This is an int to allow saving to config file
+<span class="lineNum">      84 </span>            : int novert = 0;
+<span class="lineNum">      85 </span>            : 
+<span class="lineNum">      86 </span>            : // If true, keyboard mapping is ignored, like in Vanilla Doom.
+<span class="lineNum">      87 </span>            : // The sensible thing to do is to disable this if you have a non-US
+<span class="lineNum">      88 </span>            : // keyboard.
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            : int vanilla_keyboard_mapping = true;
+<span class="lineNum">      91 </span>            : 
+<span class="lineNum">      92 </span>            : // Mouse acceleration
+<span class="lineNum">      93 </span>            : //
+<span class="lineNum">      94 </span>            : // This emulates some of the behavior of DOS mouse drivers by increasing
+<span class="lineNum">      95 </span>            : // the speed when the mouse is moved fast.
+<span class="lineNum">      96 </span>            : //
+<span class="lineNum">      97 </span>            : // The mouse input values are input directly to the game, but when
+<span class="lineNum">      98 </span>            : // the values exceed the value of mouse_threshold, they are multiplied
+<span class="lineNum">      99 </span>            : // by mouse_acceleration to increase the speed.
+<span class="lineNum">     100 </span>            : float mouse_acceleration = 2.0;
+<span class="lineNum">     101 </span>            : int mouse_threshold = 10;
+<span class="lineNum">     102 </span>            : 
+<a name="103"><span class="lineNum">     103 </span>            : // Translates the SDL key to a value of the type found in doomkeys.h</a>
+<span class="lineNum">     104 </span>            : static int TranslateKey(SDL_Keysym *sym)
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 :     int scancode = sym-&gt;scancode;</span>
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 :     switch (scancode)</span>
+<span class="lineNum">     109 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_LCTRL:</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_RCTRL:</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 :             return KEY_RCTRL;</span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_LSHIFT:</span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_RSHIFT:</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 :             return KEY_RSHIFT;</span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_LALT:</span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 :             return KEY_LALT;</span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 :         case SDL_SCANCODE_RALT:</span>
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 :             return KEY_RALT;</span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 :             if (scancode &gt;= 0 &amp;&amp; scancode &lt; arrlen(scancode_translate_table))</span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 :                 return scancode_translate_table[scancode];</span>
+<span class="lineNum">     128 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     129 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     131 </span><span class="lineNoCov">          0 :                 return 0;</span>
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     135 </span>            : 
+<span class="lineNum">     136 </span>            : // Get the localized version of the key press. This takes into account the
+<span class="lineNum">     137 </span>            : // keyboard layout, but does not apply any changes due to modifiers, (eg.
+<a name="138"><span class="lineNum">     138 </span>            : // shift-, alt-, etc.)</a>
+<span class="lineNum">     139 </span>            : static int GetLocalizedKey(SDL_Keysym *sym)
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :     // When using Vanilla mapping, we just base everything off the scancode</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :     // and always pretend the user is using a US layout keyboard.</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :     if (vanilla_keyboard_mapping)</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :         return TranslateKey(sym);</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :         int result = sym-&gt;sym;</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 :         if (result &lt; 0 || result &gt;= 128)</span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :             result = 0;</span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 :         return result;</span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     158 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     159 </span>            : 
+<a name="160"><span class="lineNum">     160 </span>            : // Get the equivalent ASCII (Unicode?) character for a keypress.</a>
+<span class="lineNum">     161 </span>            : static int GetTypedChar(SDL_Keysym *sym)
+<span class="lineNum">     162 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     163 </span><span class="lineNoCov">          0 :     // We only return typed characters when entering text, after</span>
+<span class="lineNum">     164 </span><span class="lineNoCov">          0 :     // I_StartTextInput() has been called. Otherwise we return nothing.</span>
+<span class="lineNum">     165 </span><span class="lineNoCov">          0 :     if (!text_input_enabled)</span>
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 :     // If we're strictly emulating Vanilla, we should always act like</span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 :     // we're using a US layout keyboard (in ev_keydown, data1=data2).</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :     // Otherwise we should use the native key mapping.</span>
+<span class="lineNum">     173 </span><span class="lineNoCov">          0 :     if (vanilla_keyboard_mapping)</span>
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     175 </span><span class="lineNoCov">          0 :         int result = TranslateKey(sym);</span>
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 :         // If shift is held down, apply the original uppercase</span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 :         // translation table used under DOS.</span>
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 :         if ((SDL_GetModState() &amp; KMOD_SHIFT) != 0</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :          &amp;&amp; result &gt;= 0 &amp;&amp; result &lt; arrlen(shiftxform))</span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 :             result = shiftxform[result];</span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 :         return result;</span>
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 :         SDL_Event next_event;</span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     191 </span><span class="lineNoCov">          0 :         // Special cases, where we always return a fixed value.</span>
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 :         switch (sym-&gt;sym)</span>
+<span class="lineNum">     193 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     194 </span><span class="lineNoCov">          0 :             case SDLK_BACKSPACE: return KEY_BACKSPACE;</span>
+<span class="lineNum">     195 </span><span class="lineNoCov">          0 :             case SDLK_RETURN:    return KEY_ENTER;</span>
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 :             default:</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     198 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     199 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     200 </span><span class="lineNoCov">          0 :         // The following is a gross hack, but I don't see an easier way</span>
+<span class="lineNum">     201 </span><span class="lineNoCov">          0 :         // of doing this within the SDL2 API (in SDL1 it was easier).</span>
+<span class="lineNum">     202 </span><span class="lineNoCov">          0 :         // We want to get the fully transformed input character associated</span>
+<span class="lineNum">     203 </span><span class="lineNoCov">          0 :         // with this keypress - correct keyboard layout, appropriately</span>
+<span class="lineNum">     204 </span><span class="lineNoCov">          0 :         // transformed by any modifier keys, etc. So peek ahead in the SDL</span>
+<span class="lineNum">     205 </span><span class="lineNoCov">          0 :         // event queue and see if the key press is immediately followed by</span>
+<span class="lineNum">     206 </span><span class="lineNoCov">          0 :         // an SDL_TEXTINPUT event. If it is, it's reasonable to assume the</span>
+<span class="lineNum">     207 </span><span class="lineNoCov">          0 :         // key press and the text input are connected. Technically the SDL</span>
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 :         // API does not guarantee anything of the sort, but in practice this</span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 :         // is what happens and I've verified it through manual inspect of</span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 :         // the SDL source code.</span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :         //</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 :         // In an ideal world we'd split out ev_keydown into a separate</span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 :         // ev_textinput event, as SDL2 has done. But this doesn't work</span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 :         // (I experimented with the idea), because lots of Doom's code is</span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 :         // based around different responders &quot;eating&quot; events to stop them</span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :         // being passed on to another responder. If code is listening for</span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :         // a text input, it cannot block the corresponding keydown events</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 :         // which can affect other responders.</span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :         //</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 :         // So we're stuck with this as a rather fragile alternative.</span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 :         if (SDL_PeepEvents(&amp;next_event, 1, SDL_PEEKEVENT,</span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 :                            SDL_FIRSTEVENT, SDL_LASTEVENT) == 1</span>
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 :          &amp;&amp; next_event.type == SDL_TEXTINPUT)</span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 :             // If an SDL_TEXTINPUT event is found, we always assume it</span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 :             // matches the key press. The input text must be a single</span>
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 :             // ASCII character - if it isn't, it's possible the input</span>
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 :             // char is a Unicode value instead; better to send a null</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 :             // character than the unshifted key.</span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :             if (strlen(next_event.text.text) == 1</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :              &amp;&amp; (next_event.text.text[0] &amp; 0x80) == 0)</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :                 return next_event.text.text[0];</span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 :         // Failed to find anything :/</span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     240 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     241 </span><span class="lineNoCov">          0 : }</span>
+<a name="242"><span class="lineNum">     242 </span>            : </a>
+<span class="lineNum">     243 </span>            : void I_HandleKeyboardEvent(SDL_Event *sdlevent)
+<span class="lineNum">     244 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     245 </span><span class="lineNoCov">          0 :     // XXX: passing pointers to event for access after this function</span>
+<span class="lineNum">     246 </span><span class="lineNoCov">          0 :     // has terminated is undefined behaviour</span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :     event_t event;</span>
+<span class="lineNum">     248 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 :     switch (sdlevent-&gt;type)</span>
+<span class="lineNum">     250 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     251 </span><span class="lineNoCov">          0 :         case SDL_KEYDOWN:</span>
+<span class="lineNum">     252 </span><span class="lineNoCov">          0 :             event.type = ev_keydown;</span>
+<span class="lineNum">     253 </span><span class="lineNoCov">          0 :             event.data1 = TranslateKey(&amp;sdlevent-&gt;key.keysym);</span>
+<span class="lineNum">     254 </span><span class="lineNoCov">          0 :             event.data2 = GetLocalizedKey(&amp;sdlevent-&gt;key.keysym);</span>
+<span class="lineNum">     255 </span><span class="lineNoCov">          0 :             event.data3 = GetTypedChar(&amp;sdlevent-&gt;key.keysym);</span>
+<span class="lineNum">     256 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     257 </span><span class="lineNoCov">          0 :             if (event.data1 != 0)</span>
+<span class="lineNum">     258 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     259 </span><span class="lineNoCov">          0 :                 D_PostEvent(&amp;event);</span>
+<span class="lineNum">     260 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     261 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     262 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 :         case SDL_KEYUP:</span>
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 :             event.type = ev_keyup;</span>
+<span class="lineNum">     265 </span><span class="lineNoCov">          0 :             event.data1 = TranslateKey(&amp;sdlevent-&gt;key.keysym);</span>
+<span class="lineNum">     266 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     267 </span><span class="lineNoCov">          0 :             // data2/data3 are initialized to zero for ev_keyup.</span>
+<span class="lineNum">     268 </span><span class="lineNoCov">          0 :             // For ev_keydown it's the shifted Unicode character</span>
+<span class="lineNum">     269 </span><span class="lineNoCov">          0 :             // that was typed, but if something wants to detect</span>
+<span class="lineNum">     270 </span><span class="lineNoCov">          0 :             // key releases it should do so based on data1</span>
+<span class="lineNum">     271 </span><span class="lineNoCov">          0 :             // (key ID), not the printable char.</span>
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     273 </span><span class="lineNoCov">          0 :             event.data2 = 0;</span>
+<span class="lineNum">     274 </span><span class="lineNoCov">          0 :             event.data3 = 0;</span>
+<span class="lineNum">     275 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     276 </span><span class="lineNoCov">          0 :             if (event.data1 != 0)</span>
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 :                 D_PostEvent(&amp;event);</span>
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     280 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     282 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     283 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 : }</span>
+<a name="286"><span class="lineNum">     286 </span>            : </a>
+<span class="lineNum">     287 </span>            : void I_StartTextInput(int x1, int y1, int x2, int y2)
+<span class="lineNum">     288 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 :     text_input_enabled = true;</span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     291 </span><span class="lineNoCov">          0 :     if (!vanilla_keyboard_mapping)</span>
+<span class="lineNum">     292 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     293 </span><span class="lineNoCov">          0 :         // SDL2-TODO: SDL_SetTextInputRect(...);</span>
+<span class="lineNum">     294 </span><span class="lineNoCov">          0 :         SDL_StartTextInput();</span>
+<span class="lineNum">     295 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     296 </span><span class="lineNoCov">          0 : }</span>
+<a name="297"><span class="lineNum">     297 </span>            : </a>
+<span class="lineNum">     298 </span>            : void I_StopTextInput(void)
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :     text_input_enabled = false;</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 :     if (!vanilla_keyboard_mapping)</span>
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :         SDL_StopTextInput();</span>
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 : }</span>
+<a name="307"><span class="lineNum">     307 </span>            : </a>
+<span class="lineNum">     308 </span>            : static void UpdateMouseButtonState(unsigned int button, boolean on)
+<span class="lineNum">     309 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     310 </span><span class="lineNoCov">          0 :     static event_t event;</span>
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :     if (button &lt; SDL_BUTTON_LEFT || button &gt; MAX_MOUSE_BUTTONS)</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     317 </span><span class="lineNoCov">          0 :     // Note: button &quot;0&quot; is left, button &quot;1&quot; is right,</span>
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 :     // button &quot;2&quot; is middle for Doom.  This is different</span>
+<span class="lineNum">     319 </span><span class="lineNoCov">          0 :     // to how SDL sees things.</span>
+<span class="lineNum">     320 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 :     switch (button)</span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 :         case SDL_BUTTON_LEFT:</span>
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 :             button = 0;</span>
+<span class="lineNum">     325 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 :         case SDL_BUTTON_RIGHT:</span>
+<span class="lineNum">     328 </span><span class="lineNoCov">          0 :             button = 1;</span>
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     331 </span><span class="lineNoCov">          0 :         case SDL_BUTTON_MIDDLE:</span>
+<span class="lineNum">     332 </span><span class="lineNoCov">          0 :             button = 2;</span>
+<span class="lineNum">     333 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     334 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     335 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     336 </span><span class="lineNoCov">          0 :             // SDL buttons are indexed from 1.</span>
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 :             --button;</span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     340 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 :     // Turn bit representing this button on or off.</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 :     if (on)</span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 :         mouse_button_state |= (1 &lt;&lt; button);</span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :         mouse_button_state &amp;= ~(1 &lt;&lt; button);</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 :     // Post an event with the new button state.</span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :     event.type = ev_mouse;</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :     event.data1 = mouse_button_state;</span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :     event.data2 = event.data3 = 0;</span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :     D_PostEvent(&amp;event);</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 : }</span>
+<a name="359"><span class="lineNum">     359 </span>            : </a>
+<span class="lineNum">     360 </span>            : static void MapMouseWheelToButtons(SDL_MouseWheelEvent *wheel)
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 :     // SDL2 distinguishes button events from mouse wheel events.</span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :     // We want to treat the mouse wheel as two buttons, as per</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 :     // SDL1</span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :     static event_t up, down;</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :     int button;</span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 :     if (wheel-&gt;y &lt;= 0)</span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :     {   // scroll down</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 :         button = 4;</span>
+<span class="lineNum">     371 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     372 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     373 </span><span class="lineNoCov">          0 :     {   // scroll up</span>
+<span class="lineNum">     374 </span><span class="lineNoCov">          0 :         button = 3;</span>
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :     // post a button down event</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :     mouse_button_state |= (1 &lt;&lt; button);</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 :     down.type = ev_mouse;</span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :     down.data1 = mouse_button_state;</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 :     down.data2 = down.data3 = 0;</span>
+<span class="lineNum">     382 </span><span class="lineNoCov">          0 :     D_PostEvent(&amp;down);</span>
+<span class="lineNum">     383 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 :     // post a button up event</span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 :     mouse_button_state &amp;= ~(1 &lt;&lt; button);</span>
+<span class="lineNum">     386 </span><span class="lineNoCov">          0 :     up.type = ev_mouse;</span>
+<span class="lineNum">     387 </span><span class="lineNoCov">          0 :     up.data1 = mouse_button_state;</span>
+<span class="lineNum">     388 </span><span class="lineNoCov">          0 :     up.data2 = up.data3 = 0;</span>
+<span class="lineNum">     389 </span><span class="lineNoCov">          0 :     D_PostEvent(&amp;up);</span>
+<span class="lineNum">     390 </span><span class="lineNoCov">          0 : }</span>
+<a name="391"><span class="lineNum">     391 </span>            : </a>
+<span class="lineNum">     392 </span>            : void I_HandleMouseEvent(SDL_Event *sdlevent)
+<span class="lineNum">     393 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     394 </span><span class="lineNoCov">          0 :     switch (sdlevent-&gt;type)</span>
+<span class="lineNum">     395 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     396 </span><span class="lineNoCov">          0 :         case SDL_MOUSEBUTTONDOWN:</span>
+<span class="lineNum">     397 </span><span class="lineNoCov">          0 :             UpdateMouseButtonState(sdlevent-&gt;button.button, true);</span>
+<span class="lineNum">     398 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     400 </span><span class="lineNoCov">          0 :         case SDL_MOUSEBUTTONUP:</span>
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 :             UpdateMouseButtonState(sdlevent-&gt;button.button, false);</span>
+<span class="lineNum">     402 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     403 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 :         case SDL_MOUSEWHEEL:</span>
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 :             MapMouseWheelToButtons(&amp;(sdlevent-&gt;wheel));</span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 : }</span>
+<a name="412"><span class="lineNum">     412 </span>            : </a>
+<span class="lineNum">     413 </span>            : static int AccelerateMouse(int val)
+<span class="lineNum">     414 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 :     if (val &lt; 0)</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 :         return -AccelerateMouse(-val);</span>
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 :     if (val &gt; mouse_threshold)</span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 :         return (int)((val - mouse_threshold) * mouse_acceleration + mouse_threshold);</span>
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     423 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :         return val;</span>
+<span class="lineNum">     425 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     427 </span>            : 
+<span class="lineNum">     428 </span>            : //
+<span class="lineNum">     429 </span>            : // Read the change in mouse state to generate mouse motion events
+<span class="lineNum">     430 </span>            : //
+<span class="lineNum">     431 </span>            : // This is to combine all mouse movement for a tic into one mouse
+<a name="432"><span class="lineNum">     432 </span>            : // motion event.</a>
+<span class="lineNum">     433 </span>            : void I_ReadMouse(void)
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     435 </span><span class="lineNoCov">          0 :     int x, y;</span>
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 :     event_t ev;</span>
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 :     SDL_GetRelativeMouseState(&amp;x, &amp;y);</span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :     if (x != 0 || y != 0) </span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 :         ev.type = ev_mouse;</span>
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 :         ev.data1 = mouse_button_state;</span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 :         ev.data2 = AccelerateMouse(x);</span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 :         if (!novert)</span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 :             ev.data3 = -AccelerateMouse(y);</span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 :             ev.data3 = 0;</span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 :         // XXX: undefined behaviour since event is scoped to</span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :         // this function</span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 :         D_PostEvent(&amp;ev);</span>
+<span class="lineNum">     458 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     459 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     460 </span>            : 
+<a name="461"><span class="lineNum">     461 </span>            : // Bind all variables controlling input options.</a>
+<span class="lineNum">     462 </span>            : void I_BindInputVariables(void)
+<span class="lineNum">     463 </span><span class="lineCov">      23123 : {</span>
+<span class="lineNum">     464 </span><span class="lineCov">      23123 :     M_BindFloatVariable(&quot;mouse_acceleration&quot;,      &amp;mouse_acceleration);</span>
+<span class="lineNum">     465 </span><span class="lineCov">      23123 :     M_BindIntVariable(&quot;mouse_threshold&quot;,           &amp;mouse_threshold);</span>
+<span class="lineNum">     466 </span><span class="lineCov">      23123 :     M_BindIntVariable(&quot;vanilla_keyboard_mapping&quot;,  &amp;vanilla_keyboard_mapping);</span>
+<span class="lineNum">     467 </span><span class="lineCov">      23123 :     M_BindIntVariable(&quot;novert&quot;,                    &amp;novert);</span>
+<span class="lineNum">     468 </span><span class="lineCov">      23123 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

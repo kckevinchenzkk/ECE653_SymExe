@@ -1,0 +1,326 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/i_sound.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - i_sound.h<span style="font-size: 80%;"> (source / <a href="i_sound.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      The not so system specific sound interface.
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #ifndef __I_SOUND__
+<span class="lineNum">      21 </span>            : #define __I_SOUND__
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;doomtype.h&quot;
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span>            : // so that the individual game logic and sound driver code agree
+<span class="lineNum">      26 </span><span class="lineNoCov">          0 : #define NORM_PITCH 127</span>
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span>            : //
+<span class="lineNum">      29 </span>            : // SoundFX struct.
+<span class="lineNum">      30 </span>            : //
+<span class="lineNum">      31 </span>            : typedef struct sfxinfo_struct   sfxinfo_t;
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : struct sfxinfo_struct
+<span class="lineNum">      34 </span>            : {
+<span class="lineNum">      35 </span>            :     // tag name, used for hexen.
+<span class="lineNum">      36 </span>            :     const char *tagname;
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            :     // lump name.  If we are running with use_sfx_prefix=true, a
+<span class="lineNum">      39 </span>            :     // 'DS' (or 'DP' for PC speaker sounds) is prepended to this.
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            :     char name[9];
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span>            :     // Sfx priority
+<span class="lineNum">      44 </span>            :     int priority;
+<span class="lineNum">      45 </span>            : 
+<span class="lineNum">      46 </span>            :     // referenced sound if a link
+<span class="lineNum">      47 </span>            :     sfxinfo_t *link;
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            :     // pitch if a link (Doom), whether to pitch-shift (Hexen)
+<span class="lineNum">      50 </span>            :     int pitch;
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span>            :     // volume if a link
+<span class="lineNum">      53 </span>            :     int volume;
+<span class="lineNum">      54 </span>            : 
+<span class="lineNum">      55 </span>            :     // this is checked every second to see if sound
+<span class="lineNum">      56 </span>            :     // can be thrown out (if 0, then decrement, if -1,
+<span class="lineNum">      57 </span>            :     // then throw out, if &gt; 0, then it is in use)
+<span class="lineNum">      58 </span>            :     int usefulness;
+<span class="lineNum">      59 </span>            : 
+<span class="lineNum">      60 </span>            :     // lump number of sfx
+<span class="lineNum">      61 </span>            :     int lumpnum;
+<span class="lineNum">      62 </span>            : 
+<span class="lineNum">      63 </span>            :     // Maximum number of channels that the sound can be played on 
+<span class="lineNum">      64 </span>            :     // (Heretic)
+<span class="lineNum">      65 </span>            :     int numchannels;
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span>            :     // data used by the low level code
+<span class="lineNum">      68 </span>            :     void *driver_data;
+<span class="lineNum">      69 </span>            : };
+<span class="lineNum">      70 </span>            : 
+<span class="lineNum">      71 </span>            : //
+<span class="lineNum">      72 </span>            : // MusicInfo struct.
+<span class="lineNum">      73 </span>            : //
+<span class="lineNum">      74 </span>            : typedef struct
+<span class="lineNum">      75 </span>            : {
+<span class="lineNum">      76 </span>            :     // up to 6-character name
+<span class="lineNum">      77 </span>            :     const char *name;
+<span class="lineNum">      78 </span>            : 
+<span class="lineNum">      79 </span>            :     // lump number of music
+<span class="lineNum">      80 </span>            :     int lumpnum;
+<span class="lineNum">      81 </span>            : 
+<span class="lineNum">      82 </span>            :     // music data
+<span class="lineNum">      83 </span>            :     void *data;
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            :     // music handle once registered
+<span class="lineNum">      86 </span>            :     void *handle;
+<span class="lineNum">      87 </span>            : 
+<span class="lineNum">      88 </span>            : } musicinfo_t;
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            : typedef enum 
+<span class="lineNum">      91 </span>            : {
+<span class="lineNum">      92 </span>            :     SNDDEVICE_NONE = 0,
+<span class="lineNum">      93 </span>            :     SNDDEVICE_PCSPEAKER = 1,
+<span class="lineNum">      94 </span>            :     SNDDEVICE_ADLIB = 2,
+<span class="lineNum">      95 </span>            :     SNDDEVICE_SB = 3,
+<span class="lineNum">      96 </span>            :     SNDDEVICE_PAS = 4,
+<span class="lineNum">      97 </span>            :     SNDDEVICE_GUS = 5,
+<span class="lineNum">      98 </span>            :     SNDDEVICE_WAVEBLASTER = 6,
+<span class="lineNum">      99 </span>            :     SNDDEVICE_SOUNDCANVAS = 7,
+<span class="lineNum">     100 </span>            :     SNDDEVICE_GENMIDI = 8,
+<span class="lineNum">     101 </span>            :     SNDDEVICE_AWE32 = 9,
+<span class="lineNum">     102 </span>            :     SNDDEVICE_CD = 10,
+<span class="lineNum">     103 </span>            : } snddevice_t;
+<span class="lineNum">     104 </span>            : 
+<span class="lineNum">     105 </span>            : // Interface for sound modules
+<span class="lineNum">     106 </span>            : 
+<span class="lineNum">     107 </span>            : typedef struct
+<span class="lineNum">     108 </span>            : {
+<span class="lineNum">     109 </span>            :     // List of sound devices that this sound module is used for.
+<span class="lineNum">     110 </span>            : 
+<span class="lineNum">     111 </span>            :     snddevice_t *sound_devices;
+<span class="lineNum">     112 </span>            :     int num_sound_devices;
+<span class="lineNum">     113 </span>            : 
+<span class="lineNum">     114 </span>            :     // Initialise sound module
+<span class="lineNum">     115 </span>            :     // Returns true if successfully initialised
+<span class="lineNum">     116 </span>            : 
+<span class="lineNum">     117 </span>            :     boolean (*Init)(boolean use_sfx_prefix);
+<span class="lineNum">     118 </span>            : 
+<span class="lineNum">     119 </span>            :     // Shutdown sound module
+<span class="lineNum">     120 </span>            : 
+<span class="lineNum">     121 </span>            :     void (*Shutdown)(void);
+<span class="lineNum">     122 </span>            : 
+<span class="lineNum">     123 </span>            :     // Returns the lump index of the given sound.
+<span class="lineNum">     124 </span>            : 
+<span class="lineNum">     125 </span>            :     int (*GetSfxLumpNum)(sfxinfo_t *sfxinfo);
+<span class="lineNum">     126 </span>            : 
+<span class="lineNum">     127 </span>            :     // Called periodically to update the subsystem.
+<span class="lineNum">     128 </span>            : 
+<span class="lineNum">     129 </span>            :     void (*Update)(void);
+<span class="lineNum">     130 </span>            : 
+<span class="lineNum">     131 </span>            :     // Update the sound settings on the given channel.
+<span class="lineNum">     132 </span>            : 
+<span class="lineNum">     133 </span>            :     void (*UpdateSoundParams)(int channel, int vol, int sep);
+<span class="lineNum">     134 </span>            : 
+<span class="lineNum">     135 </span>            :     // Start a sound on a given channel.  Returns the channel id
+<span class="lineNum">     136 </span>            :     // or -1 on failure.
+<span class="lineNum">     137 </span>            : 
+<span class="lineNum">     138 </span>            :     int (*StartSound)(sfxinfo_t *sfxinfo, int channel, int vol, int sep, int pitch);
+<span class="lineNum">     139 </span>            : 
+<span class="lineNum">     140 </span>            :     // Stop the sound playing on the given channel.
+<span class="lineNum">     141 </span>            : 
+<span class="lineNum">     142 </span>            :     void (*StopSound)(int channel);
+<span class="lineNum">     143 </span>            : 
+<span class="lineNum">     144 </span>            :     // Query if a sound is playing on the given channel
+<span class="lineNum">     145 </span>            : 
+<span class="lineNum">     146 </span>            :     boolean (*SoundIsPlaying)(int channel);
+<span class="lineNum">     147 </span>            : 
+<span class="lineNum">     148 </span>            :     // Called on startup to precache sound effects (if necessary)
+<span class="lineNum">     149 </span>            : 
+<span class="lineNum">     150 </span>            :     void (*CacheSounds)(sfxinfo_t *sounds, int num_sounds);
+<span class="lineNum">     151 </span>            : 
+<span class="lineNum">     152 </span>            : } sound_module_t;
+<span class="lineNum">     153 </span>            : 
+<span class="lineNum">     154 </span>            : void I_InitSound(boolean use_sfx_prefix);
+<span class="lineNum">     155 </span>            : void I_ShutdownSound(void);
+<span class="lineNum">     156 </span>            : int I_GetSfxLumpNum(sfxinfo_t *sfxinfo);
+<span class="lineNum">     157 </span>            : void I_UpdateSound(void);
+<span class="lineNum">     158 </span>            : void I_UpdateSoundParams(int channel, int vol, int sep);
+<span class="lineNum">     159 </span>            : int I_StartSound(sfxinfo_t *sfxinfo, int channel, int vol, int sep, int pitch);
+<span class="lineNum">     160 </span>            : void I_StopSound(int channel);
+<span class="lineNum">     161 </span>            : boolean I_SoundIsPlaying(int channel);
+<span class="lineNum">     162 </span>            : void I_PrecacheSounds(sfxinfo_t *sounds, int num_sounds);
+<span class="lineNum">     163 </span>            : 
+<span class="lineNum">     164 </span>            : // Interface for music modules
+<span class="lineNum">     165 </span>            : 
+<span class="lineNum">     166 </span>            : typedef struct
+<span class="lineNum">     167 </span>            : {
+<span class="lineNum">     168 </span>            :     // List of sound devices that this music module is used for.
+<span class="lineNum">     169 </span>            : 
+<span class="lineNum">     170 </span>            :     snddevice_t *sound_devices;
+<span class="lineNum">     171 </span>            :     int num_sound_devices;
+<span class="lineNum">     172 </span>            : 
+<span class="lineNum">     173 </span>            :     // Initialise the music subsystem
+<span class="lineNum">     174 </span>            : 
+<span class="lineNum">     175 </span>            :     boolean (*Init)(void);
+<span class="lineNum">     176 </span>            : 
+<span class="lineNum">     177 </span>            :     // Shutdown the music subsystem
+<span class="lineNum">     178 </span>            : 
+<span class="lineNum">     179 </span>            :     void (*Shutdown)(void);
+<span class="lineNum">     180 </span>            : 
+<span class="lineNum">     181 </span>            :     // Set music volume - range 0-127
+<span class="lineNum">     182 </span>            : 
+<span class="lineNum">     183 </span>            :     void (*SetMusicVolume)(int volume);
+<span class="lineNum">     184 </span>            : 
+<span class="lineNum">     185 </span>            :     // Pause music
+<span class="lineNum">     186 </span>            : 
+<span class="lineNum">     187 </span>            :     void (*PauseMusic)(void);
+<span class="lineNum">     188 </span>            : 
+<span class="lineNum">     189 </span>            :     // Un-pause music
+<span class="lineNum">     190 </span>            : 
+<span class="lineNum">     191 </span>            :     void (*ResumeMusic)(void);
+<span class="lineNum">     192 </span>            : 
+<span class="lineNum">     193 </span>            :     // Register a song handle from data
+<span class="lineNum">     194 </span>            :     // Returns a handle that can be used to play the song
+<span class="lineNum">     195 </span>            : 
+<span class="lineNum">     196 </span>            :     void *(*RegisterSong)(void *data, int len);
+<span class="lineNum">     197 </span>            : 
+<span class="lineNum">     198 </span>            :     // Un-register (free) song data
+<span class="lineNum">     199 </span>            : 
+<span class="lineNum">     200 </span>            :     void (*UnRegisterSong)(void *handle);
+<span class="lineNum">     201 </span>            : 
+<span class="lineNum">     202 </span>            :     // Play the song
+<span class="lineNum">     203 </span>            : 
+<span class="lineNum">     204 </span>            :     void (*PlaySong)(void *handle, boolean looping);
+<span class="lineNum">     205 </span>            : 
+<span class="lineNum">     206 </span>            :     // Stop playing the current song.
+<span class="lineNum">     207 </span>            : 
+<span class="lineNum">     208 </span>            :     void (*StopSong)(void);
+<span class="lineNum">     209 </span>            : 
+<span class="lineNum">     210 </span>            :     // Query if music is playing.
+<span class="lineNum">     211 </span>            : 
+<span class="lineNum">     212 </span>            :     boolean (*MusicIsPlaying)(void);
+<span class="lineNum">     213 </span>            : 
+<span class="lineNum">     214 </span>            :     // Invoked periodically to poll.
+<span class="lineNum">     215 </span>            : 
+<span class="lineNum">     216 </span>            :     void (*Poll)(void);
+<span class="lineNum">     217 </span>            : } music_module_t;
+<span class="lineNum">     218 </span>            : 
+<span class="lineNum">     219 </span>            : void I_InitMusic(void);
+<span class="lineNum">     220 </span>            : void I_ShutdownMusic(void);
+<span class="lineNum">     221 </span>            : void I_SetMusicVolume(int volume);
+<span class="lineNum">     222 </span>            : void I_PauseSong(void);
+<span class="lineNum">     223 </span>            : void I_ResumeSong(void);
+<span class="lineNum">     224 </span>            : void *I_RegisterSong(void *data, int len);
+<span class="lineNum">     225 </span>            : void I_UnRegisterSong(void *handle);
+<span class="lineNum">     226 </span>            : void I_PlaySong(void *handle, boolean looping);
+<span class="lineNum">     227 </span>            : void I_StopSong(void);
+<span class="lineNum">     228 </span>            : boolean I_MusicIsPlaying(void);
+<span class="lineNum">     229 </span>            : 
+<span class="lineNum">     230 </span>            : extern int snd_sfxdevice;
+<span class="lineNum">     231 </span>            : extern int snd_musicdevice;
+<span class="lineNum">     232 </span>            : extern int snd_samplerate;
+<span class="lineNum">     233 </span>            : extern int snd_cachesize;
+<span class="lineNum">     234 </span>            : extern int snd_maxslicetime_ms;
+<span class="lineNum">     235 </span>            : extern char *snd_musiccmd;
+<span class="lineNum">     236 </span>            : extern int snd_pitchshift;
+<span class="lineNum">     237 </span>            : 
+<span class="lineNum">     238 </span>            : void I_BindSoundVariables(void);
+<span class="lineNum">     239 </span>            : 
+<span class="lineNum">     240 </span>            : // DMX version to emulate for OPL emulation:
+<span class="lineNum">     241 </span>            : typedef enum {
+<span class="lineNum">     242 </span>            :     opl_doom1_1_666,    // Doom 1 v1.666
+<span class="lineNum">     243 </span>            :     opl_doom2_1_666,    // Doom 2 v1.666, Hexen, Heretic
+<span class="lineNum">     244 </span>            :     opl_doom_1_9        // Doom v1.9, Strife
+<span class="lineNum">     245 </span>            : } opl_driver_ver_t;
+<span class="lineNum">     246 </span>            : 
+<span class="lineNum">     247 </span>            : void I_SetOPLDriverVer(opl_driver_ver_t ver);
+<span class="lineNum">     248 </span>            : 
+<span class="lineNum">     249 </span>            : #endif
+<span class="lineNum">     250 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

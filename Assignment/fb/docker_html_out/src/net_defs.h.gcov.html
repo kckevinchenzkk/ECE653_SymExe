@@ -1,0 +1,352 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/net_defs.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - net_defs.h<span style="font-size: 80%;"> (source / <a href="net_defs.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">15</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : // DESCRIPTION:
+<span class="lineNum">      15 </span>            : //     Definitions for use in networking code.
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #ifndef NET_DEFS_H
+<span class="lineNum">      19 </span>            : #define NET_DEFS_H 
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;doomtype.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;d_ticcmd.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;sha1.h&quot;
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : // Absolute maximum number of &quot;nodes&quot; in the game.  This is different to
+<span class="lineNum">      28 </span>            : // NET_MAXPLAYERS, as there may be observers that are not participating
+<span class="lineNum">      29 </span>            : // (eg. left/right monitors)
+<span class="lineNum">      30 </span>            : 
+<span class="lineNum">      31 </span><span class="lineNoCov">          0 : #define MAXNETNODES 16</span>
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : // The maximum number of players, multiplayer/networking.
+<span class="lineNum">      34 </span>            : // This is the maximum supported by the networking code; individual games
+<span class="lineNum">      35 </span>            : // have their own values for MAXPLAYERS that can be smaller.
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span><span class="lineNoCov">          0 : #define NET_MAXPLAYERS 8</span>
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span>            : // Maximum length of a player's name.
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span><span class="lineNoCov">          0 : #define MAXPLAYERNAME 30</span>
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span>            : // Networking and tick handling related.
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span><span class="lineNoCov">          0 : #define BACKUPTICS 128</span>
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span>            : typedef struct _net_module_s net_module_t;
+<span class="lineNum">      48 </span>            : typedef struct _net_packet_s net_packet_t;
+<span class="lineNum">      49 </span>            : typedef struct _net_addr_s net_addr_t;
+<span class="lineNum">      50 </span>            : typedef struct _net_context_s net_context_t;
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span>            : struct _net_packet_s
+<span class="lineNum">      53 </span>            : {
+<span class="lineNum">      54 </span>            :     byte *data;
+<span class="lineNum">      55 </span>            :     size_t len;
+<span class="lineNum">      56 </span>            :     size_t alloced;
+<span class="lineNum">      57 </span>            :     unsigned int pos;
+<span class="lineNum">      58 </span>            : };
+<span class="lineNum">      59 </span>            : 
+<span class="lineNum">      60 </span>            : struct _net_module_s
+<span class="lineNum">      61 </span>            : {
+<span class="lineNum">      62 </span>            :     // Initialize this module for use as a client
+<span class="lineNum">      63 </span>            : 
+<span class="lineNum">      64 </span>            :     boolean (*InitClient)(void);
+<span class="lineNum">      65 </span>            : 
+<span class="lineNum">      66 </span>            :     // Initialize this module for use as a server
+<span class="lineNum">      67 </span>            : 
+<span class="lineNum">      68 </span>            :     boolean (*InitServer)(void);
+<span class="lineNum">      69 </span>            : 
+<span class="lineNum">      70 </span>            :     // Send a packet
+<span class="lineNum">      71 </span>            : 
+<span class="lineNum">      72 </span>            :     void (*SendPacket)(net_addr_t *addr, net_packet_t *packet);
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span>            :     // Check for new packets to receive
+<span class="lineNum">      75 </span>            :     //
+<span class="lineNum">      76 </span>            :     // Returns true if packet received
+<span class="lineNum">      77 </span>            : 
+<span class="lineNum">      78 </span>            :     boolean (*RecvPacket)(net_addr_t **addr, net_packet_t **packet);
+<span class="lineNum">      79 </span>            : 
+<span class="lineNum">      80 </span>            :     // Converts an address to a string
+<span class="lineNum">      81 </span>            : 
+<span class="lineNum">      82 </span>            :     void (*AddrToString)(net_addr_t *addr, char *buffer, int buffer_len);
+<span class="lineNum">      83 </span>            : 
+<span class="lineNum">      84 </span>            :     // Free back an address when no longer in use
+<span class="lineNum">      85 </span>            : 
+<span class="lineNum">      86 </span>            :     void (*FreeAddress)(net_addr_t *addr);
+<span class="lineNum">      87 </span>            : 
+<span class="lineNum">      88 </span>            :     // Try to resolve a name to an address
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            :     net_addr_t *(*ResolveAddress)(const char *addr);
+<span class="lineNum">      91 </span>            : };
+<span class="lineNum">      92 </span>            : 
+<span class="lineNum">      93 </span>            : // net_addr_t
+<span class="lineNum">      94 </span>            : 
+<span class="lineNum">      95 </span>            : struct _net_addr_s
+<span class="lineNum">      96 </span>            : {
+<span class="lineNum">      97 </span>            :     net_module_t *module;
+<span class="lineNum">      98 </span>            :     int refcount;
+<span class="lineNum">      99 </span>            :     void *handle;
+<span class="lineNum">     100 </span>            : };
+<span class="lineNum">     101 </span>            : 
+<span class="lineNum">     102 </span>            : // Magic number sent when connecting to check this is a valid client
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 : #define NET_MAGIC_NUMBER     1454104972U</span>
+<span class="lineNum">     104 </span>            : 
+<span class="lineNum">     105 </span>            : // Old magic number used by Chocolate Doom versions before v3.0:
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 : #define NET_OLD_MAGIC_NUMBER 3436803284U</span>
+<span class="lineNum">     107 </span>            : 
+<span class="lineNum">     108 </span>            : // header field value indicating that the packet is a reliable packet
+<span class="lineNum">     109 </span>            : 
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 : #define NET_RELIABLE_PACKET (1 &lt;&lt; 15)</span>
+<span class="lineNum">     111 </span>            : 
+<span class="lineNum">     112 </span>            : // Supported protocols. If you're developing a fork of Chocolate
+<span class="lineNum">     113 </span>            : // Doom, you can add your own entry to this list while maintaining
+<span class="lineNum">     114 </span>            : // compatibility with Chocolate Doom servers. Higher-numbered enum values
+<span class="lineNum">     115 </span>            : // will be preferred when negotiating a protocol for the client and server
+<span class="lineNum">     116 </span>            : // to use, so the order matters.
+<span class="lineNum">     117 </span>            : // NOTE: The values in this enum do not have any special value outside of
+<span class="lineNum">     118 </span>            : // the program they're compiled in. What matters is the string representation.
+<span class="lineNum">     119 </span>            : typedef enum
+<span class="lineNum">     120 </span>            : {
+<span class="lineNum">     121 </span>            :     // Protocol introduced with Chocolate Doom v3.0. Each compatibility-
+<span class="lineNum">     122 </span>            :     // breaking change to the network protocol will produce a new protocol
+<span class="lineNum">     123 </span>            :     // number in this enum.
+<span class="lineNum">     124 </span>            :     NET_PROTOCOL_CHOCOLATE_DOOM_0,
+<span class="lineNum">     125 </span>            : 
+<span class="lineNum">     126 </span>            :     // Add your own protocol here; be sure to add a name for it to the list
+<span class="lineNum">     127 </span>            :     // in net_common.c too.
+<span class="lineNum">     128 </span>            : 
+<span class="lineNum">     129 </span>            :     NET_NUM_PROTOCOLS,
+<span class="lineNum">     130 </span>            :     NET_PROTOCOL_UNKNOWN,
+<span class="lineNum">     131 </span>            : } net_protocol_t;
+<span class="lineNum">     132 </span>            : 
+<span class="lineNum">     133 </span>            : // packet types
+<span class="lineNum">     134 </span>            : 
+<span class="lineNum">     135 </span>            : typedef enum
+<span class="lineNum">     136 </span>            : {
+<span class="lineNum">     137 </span>            :     NET_PACKET_TYPE_SYN,
+<span class="lineNum">     138 </span>            :     NET_PACKET_TYPE_ACK, // deprecated
+<span class="lineNum">     139 </span>            :     NET_PACKET_TYPE_REJECTED,
+<span class="lineNum">     140 </span>            :     NET_PACKET_TYPE_KEEPALIVE,
+<span class="lineNum">     141 </span>            :     NET_PACKET_TYPE_WAITING_DATA,
+<span class="lineNum">     142 </span>            :     NET_PACKET_TYPE_GAMESTART,
+<span class="lineNum">     143 </span>            :     NET_PACKET_TYPE_GAMEDATA,
+<span class="lineNum">     144 </span>            :     NET_PACKET_TYPE_GAMEDATA_ACK,
+<span class="lineNum">     145 </span>            :     NET_PACKET_TYPE_DISCONNECT,
+<span class="lineNum">     146 </span>            :     NET_PACKET_TYPE_DISCONNECT_ACK,
+<span class="lineNum">     147 </span>            :     NET_PACKET_TYPE_RELIABLE_ACK,
+<span class="lineNum">     148 </span>            :     NET_PACKET_TYPE_GAMEDATA_RESEND,
+<span class="lineNum">     149 </span>            :     NET_PACKET_TYPE_CONSOLE_MESSAGE,
+<span class="lineNum">     150 </span>            :     NET_PACKET_TYPE_QUERY,
+<span class="lineNum">     151 </span>            :     NET_PACKET_TYPE_QUERY_RESPONSE,
+<span class="lineNum">     152 </span>            :     NET_PACKET_TYPE_LAUNCH,
+<span class="lineNum">     153 </span>            :     NET_PACKET_TYPE_NAT_HOLE_PUNCH,
+<span class="lineNum">     154 </span>            : } net_packet_type_t;
+<span class="lineNum">     155 </span>            : 
+<span class="lineNum">     156 </span>            : typedef enum
+<span class="lineNum">     157 </span>            : {
+<span class="lineNum">     158 </span>            :     NET_MASTER_PACKET_TYPE_ADD,
+<span class="lineNum">     159 </span>            :     NET_MASTER_PACKET_TYPE_ADD_RESPONSE,
+<span class="lineNum">     160 </span>            :     NET_MASTER_PACKET_TYPE_QUERY,
+<span class="lineNum">     161 </span>            :     NET_MASTER_PACKET_TYPE_QUERY_RESPONSE,
+<span class="lineNum">     162 </span>            :     NET_MASTER_PACKET_TYPE_GET_METADATA,
+<span class="lineNum">     163 </span>            :     NET_MASTER_PACKET_TYPE_GET_METADATA_RESPONSE,
+<span class="lineNum">     164 </span>            :     NET_MASTER_PACKET_TYPE_SIGN_START,
+<span class="lineNum">     165 </span>            :     NET_MASTER_PACKET_TYPE_SIGN_START_RESPONSE,
+<span class="lineNum">     166 </span>            :     NET_MASTER_PACKET_TYPE_SIGN_END,
+<span class="lineNum">     167 </span>            :     NET_MASTER_PACKET_TYPE_SIGN_END_RESPONSE,
+<span class="lineNum">     168 </span>            :     NET_MASTER_PACKET_TYPE_NAT_HOLE_PUNCH,
+<span class="lineNum">     169 </span>            :     NET_MASTER_PACKET_TYPE_NAT_HOLE_PUNCH_ALL,
+<span class="lineNum">     170 </span>            : } net_master_packet_type_t;
+<span class="lineNum">     171 </span>            : 
+<span class="lineNum">     172 </span>            : // Settings specified when the client connects to the server.
+<span class="lineNum">     173 </span>            : 
+<span class="lineNum">     174 </span>            : typedef struct
+<span class="lineNum">     175 </span>            : {
+<span class="lineNum">     176 </span>            :     int gamemode;
+<span class="lineNum">     177 </span>            :     int gamemission;
+<span class="lineNum">     178 </span>            :     int lowres_turn;
+<span class="lineNum">     179 </span>            :     int drone;
+<span class="lineNum">     180 </span>            :     int max_players;
+<span class="lineNum">     181 </span>            :     int is_freedoom;
+<span class="lineNum">     182 </span>            :     sha1_digest_t wad_sha1sum;
+<span class="lineNum">     183 </span>            :     sha1_digest_t deh_sha1sum;
+<span class="lineNum">     184 </span>            :     int player_class;
+<span class="lineNum">     185 </span>            : } net_connect_data_t;
+<span class="lineNum">     186 </span>            : 
+<span class="lineNum">     187 </span>            : // Game settings sent by client to server when initiating game start,
+<span class="lineNum">     188 </span>            : // and received from the server by clients when the game starts.
+<span class="lineNum">     189 </span>            : 
+<span class="lineNum">     190 </span>            : typedef struct
+<span class="lineNum">     191 </span>            : {
+<span class="lineNum">     192 </span>            :     int ticdup;
+<span class="lineNum">     193 </span>            :     int extratics;
+<span class="lineNum">     194 </span>            :     int deathmatch;
+<span class="lineNum">     195 </span>            :     int episode;
+<span class="lineNum">     196 </span>            :     int nomonsters;
+<span class="lineNum">     197 </span>            :     int fast_monsters;
+<span class="lineNum">     198 </span>            :     int respawn_monsters;
+<span class="lineNum">     199 </span>            :     int map;
+<span class="lineNum">     200 </span>            :     int skill;
+<span class="lineNum">     201 </span>            :     int gameversion;
+<span class="lineNum">     202 </span>            :     int lowres_turn;
+<span class="lineNum">     203 </span>            :     int new_sync;
+<span class="lineNum">     204 </span>            :     int timelimit;
+<span class="lineNum">     205 </span>            :     int loadgame;
+<span class="lineNum">     206 </span>            :     int random;  // [Strife only]
+<span class="lineNum">     207 </span>            : 
+<span class="lineNum">     208 </span>            :     // These fields are only used by the server when sending a game
+<span class="lineNum">     209 </span>            :     // start message:
+<span class="lineNum">     210 </span>            : 
+<span class="lineNum">     211 </span>            :     int num_players;
+<span class="lineNum">     212 </span>            :     int consoleplayer;
+<span class="lineNum">     213 </span>            : 
+<span class="lineNum">     214 </span>            :     // Hexen player classes:
+<span class="lineNum">     215 </span>            : 
+<span class="lineNum">     216 </span>            :     int player_classes[NET_MAXPLAYERS];
+<span class="lineNum">     217 </span>            : 
+<span class="lineNum">     218 </span>            : } net_gamesettings_t;
+<span class="lineNum">     219 </span>            : 
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 : #define NET_TICDIFF_FORWARD      (1 &lt;&lt; 0)</span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 : #define NET_TICDIFF_SIDE         (1 &lt;&lt; 1)</span>
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 : #define NET_TICDIFF_TURN         (1 &lt;&lt; 2)</span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 : #define NET_TICDIFF_BUTTONS      (1 &lt;&lt; 3)</span>
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 : #define NET_TICDIFF_CONSISTANCY  (1 &lt;&lt; 4)</span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 : #define NET_TICDIFF_CHATCHAR     (1 &lt;&lt; 5)</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 : #define NET_TICDIFF_RAVEN        (1 &lt;&lt; 6)</span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 : #define NET_TICDIFF_STRIFE       (1 &lt;&lt; 7)</span>
+<span class="lineNum">     228 </span>            : 
+<span class="lineNum">     229 </span>            : typedef struct
+<span class="lineNum">     230 </span>            : {
+<span class="lineNum">     231 </span>            :     unsigned int diff;
+<span class="lineNum">     232 </span>            :     ticcmd_t cmd;
+<span class="lineNum">     233 </span>            : } net_ticdiff_t;
+<span class="lineNum">     234 </span>            : 
+<span class="lineNum">     235 </span>            : // Complete set of ticcmds from all players
+<span class="lineNum">     236 </span>            : 
+<span class="lineNum">     237 </span>            : typedef struct 
+<span class="lineNum">     238 </span>            : {
+<span class="lineNum">     239 </span>            :     signed int latency;
+<span class="lineNum">     240 </span>            :     unsigned int seq;
+<span class="lineNum">     241 </span>            :     boolean playeringame[NET_MAXPLAYERS];
+<span class="lineNum">     242 </span>            :     net_ticdiff_t cmds[NET_MAXPLAYERS];
+<span class="lineNum">     243 </span>            : } net_full_ticcmd_t;
+<span class="lineNum">     244 </span>            : 
+<span class="lineNum">     245 </span>            : // Data sent in response to server queries
+<span class="lineNum">     246 </span>            : 
+<span class="lineNum">     247 </span>            : typedef struct
+<span class="lineNum">     248 </span>            : {
+<span class="lineNum">     249 </span>            :     const char *version;
+<span class="lineNum">     250 </span>            :     int server_state;
+<span class="lineNum">     251 </span>            :     int num_players;
+<span class="lineNum">     252 </span>            :     int max_players;
+<span class="lineNum">     253 </span>            :     int gamemode;
+<span class="lineNum">     254 </span>            :     int gamemission;
+<span class="lineNum">     255 </span>            :     const char *description;
+<span class="lineNum">     256 </span>            :     net_protocol_t protocol;
+<span class="lineNum">     257 </span>            : } net_querydata_t;
+<span class="lineNum">     258 </span>            : 
+<span class="lineNum">     259 </span>            : // Data sent by the server while waiting for the game to start.
+<span class="lineNum">     260 </span>            : 
+<span class="lineNum">     261 </span>            : typedef struct
+<span class="lineNum">     262 </span>            : {
+<span class="lineNum">     263 </span>            :     int num_players;
+<span class="lineNum">     264 </span>            :     int num_drones;
+<span class="lineNum">     265 </span>            :     int ready_players;
+<span class="lineNum">     266 </span>            :     int max_players;
+<span class="lineNum">     267 </span>            :     int is_controller;
+<span class="lineNum">     268 </span>            :     int consoleplayer;
+<span class="lineNum">     269 </span>            :     char player_names[NET_MAXPLAYERS][MAXPLAYERNAME];
+<span class="lineNum">     270 </span>            :     char player_addrs[NET_MAXPLAYERS][MAXPLAYERNAME];
+<span class="lineNum">     271 </span>            :     sha1_digest_t wad_sha1sum;
+<span class="lineNum">     272 </span>            :     sha1_digest_t deh_sha1sum;
+<span class="lineNum">     273 </span>            :     int is_freedoom;
+<span class="lineNum">     274 </span>            : } net_waitdata_t;
+<span class="lineNum">     275 </span>            : 
+<span class="lineNum">     276 </span>            : #endif /* #ifndef NET_DEFS_H */
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

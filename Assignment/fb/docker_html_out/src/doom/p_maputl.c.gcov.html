@@ -1,0 +1,1077 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/p_maputl.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - p_maputl.c<span style="font-size: 80%;"> (source / <a href="p_maputl.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">49</td>
+            <td class="headerCovTableEntry">655</td>
+            <td class="headerCovTableEntryLo">7.5 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">17</td>
+            <td class="headerCovTableEntryLo">5.9 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : // Copyright(C) 2005, 2006 Andrey Budko
+<span class="lineNum">       5 </span>            : //
+<span class="lineNum">       6 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       7 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       8 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       9 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">      10 </span>            : //
+<span class="lineNum">      11 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      12 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      13 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      14 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      15 </span>            : //
+<span class="lineNum">      16 </span>            : // DESCRIPTION:
+<span class="lineNum">      17 </span>            : //      Movement/collision utility functions,
+<span class="lineNum">      18 </span>            : //      as used by function in p_map.c. 
+<span class="lineNum">      19 </span>            : //      BLOCKMAP Iterator functions,
+<span class="lineNum">      20 </span>            : //      and some PIT_* functions to use for iteration.
+<span class="lineNum">      21 </span>            : //
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span>            : #include &quot;m_bbox.h&quot;
+<span class="lineNum">      29 </span>            : 
+<span class="lineNum">      30 </span>            : #include &quot;doomdef.h&quot;
+<span class="lineNum">      31 </span>            : #include &quot;doomstat.h&quot;
+<span class="lineNum">      32 </span>            : #include &quot;p_local.h&quot;
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span>            : 
+<span class="lineNum">      35 </span>            : // State.
+<span class="lineNum">      36 </span>            : #include &quot;r_state.h&quot;
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            : //
+<span class="lineNum">      39 </span>            : // P_AproxDistance
+<span class="lineNum">      40 </span>            : // Gives an estimation of distance (not exact)
+<span class="lineNum">      41 </span>            : //
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span>            : fixed_t
+<span class="lineNum">      44 </span>            : P_AproxDistance
+<a name="45"><span class="lineNum">      45 </span>            : ( fixed_t       dx,</a>
+<span class="lineNum">      46 </span>            :   fixed_t       dy )
+<span class="lineNum">      47 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      48 </span><span class="lineNoCov">          0 :     dx = abs(dx);</span>
+<span class="lineNum">      49 </span><span class="lineNoCov">          0 :     dy = abs(dy);</span>
+<span class="lineNum">      50 </span><span class="lineNoCov">          0 :     if (dx &lt; dy)</span>
+<span class="lineNum">      51 </span><span class="lineNoCov">          0 :         return dx+dy-(dx&gt;&gt;1);</span>
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 :     return dx+dy-(dy&gt;&gt;1);</span>
+<span class="lineNum">      53 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">      54 </span>            : 
+<span class="lineNum">      55 </span>            : 
+<span class="lineNum">      56 </span>            : //
+<span class="lineNum">      57 </span>            : // P_PointOnLineSide
+<span class="lineNum">      58 </span>            : // Returns 0 or 1
+<span class="lineNum">      59 </span>            : //
+<span class="lineNum">      60 </span>            : int
+<span class="lineNum">      61 </span>            : P_PointOnLineSide
+<span class="lineNum">      62 </span>            : ( fixed_t       x,
+<a name="63"><span class="lineNum">      63 </span>            :   fixed_t       y,</a>
+<span class="lineNum">      64 </span>            :   line_t*       line )
+<span class="lineNum">      65 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      66 </span><span class="lineNoCov">          0 :     fixed_t     dx;</span>
+<span class="lineNum">      67 </span><span class="lineNoCov">          0 :     fixed_t     dy;</span>
+<span class="lineNum">      68 </span><span class="lineNoCov">          0 :     fixed_t     left;</span>
+<span class="lineNum">      69 </span><span class="lineNoCov">          0 :     fixed_t     right;</span>
+<span class="lineNum">      70 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">      71 </span><span class="lineNoCov">          0 :     if (!line-&gt;dx)</span>
+<span class="lineNum">      72 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      73 </span><span class="lineNoCov">          0 :         if (x &lt;= line-&gt;v1-&gt;x)</span>
+<span class="lineNum">      74 </span><span class="lineNoCov">          0 :             return line-&gt;dy &gt; 0;</span>
+<span class="lineNum">      75 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">      76 </span><span class="lineNoCov">          0 :         return line-&gt;dy &lt; 0;</span>
+<span class="lineNum">      77 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      78 </span><span class="lineNoCov">          0 :     if (!line-&gt;dy)</span>
+<span class="lineNum">      79 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      80 </span><span class="lineNoCov">          0 :         if (y &lt;= line-&gt;v1-&gt;y)</span>
+<span class="lineNum">      81 </span><span class="lineNoCov">          0 :             return line-&gt;dx &lt; 0;</span>
+<span class="lineNum">      82 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">      83 </span><span class="lineNoCov">          0 :         return line-&gt;dx &gt; 0;</span>
+<span class="lineNum">      84 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      85 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">      86 </span><span class="lineNoCov">          0 :     dx = (x - line-&gt;v1-&gt;x);</span>
+<span class="lineNum">      87 </span><span class="lineNoCov">          0 :     dy = (y - line-&gt;v1-&gt;y);</span>
+<span class="lineNum">      88 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">      89 </span><span class="lineNoCov">          0 :     left = FixedMul ( line-&gt;dy&gt;&gt;FRACBITS , dx );</span>
+<span class="lineNum">      90 </span><span class="lineNoCov">          0 :     right = FixedMul ( dy , line-&gt;dx&gt;&gt;FRACBITS );</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">      92 </span><span class="lineNoCov">          0 :     if (right &lt; left)</span>
+<span class="lineNum">      93 </span><span class="lineNoCov">          0 :         return 0;               // front side</span>
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 :     return 1;                   // back side</span>
+<span class="lineNum">      95 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">      96 </span>            : 
+<span class="lineNum">      97 </span>            : 
+<span class="lineNum">      98 </span>            : 
+<span class="lineNum">      99 </span>            : //
+<span class="lineNum">     100 </span>            : // P_BoxOnLineSide
+<span class="lineNum">     101 </span>            : // Considers the line to be infinite
+<span class="lineNum">     102 </span>            : // Returns side 0 or 1, -1 if box crosses the line.
+<span class="lineNum">     103 </span>            : //
+<span class="lineNum">     104 </span>            : int
+<span class="lineNum">     105 </span>            : P_BoxOnLineSide
+<a name="106"><span class="lineNum">     106 </span>            : ( fixed_t*      tmbox,</a>
+<span class="lineNum">     107 </span>            :   line_t*       ld )
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     109 </span><span class="lineNoCov">          0 :     int         p1 = 0;</span>
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 :     int         p2 = 0;</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 :     switch (ld-&gt;slopetype)</span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 :       case ST_HORIZONTAL:</span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :         p1 = tmbox[BOXTOP] &gt; ld-&gt;v1-&gt;y;</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 :         p2 = tmbox[BOXBOTTOM] &gt; ld-&gt;v1-&gt;y;</span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 :         if (ld-&gt;dx &lt; 0)</span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 :             p1 ^= 1;</span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 :             p2 ^= 1;</span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 :       case ST_VERTICAL:</span>
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 :         p1 = tmbox[BOXRIGHT] &lt; ld-&gt;v1-&gt;x;</span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 :         p2 = tmbox[BOXLEFT] &lt; ld-&gt;v1-&gt;x;</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 :         if (ld-&gt;dy &lt; 0)</span>
+<span class="lineNum">     128 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     129 </span><span class="lineNoCov">          0 :             p1 ^= 1;</span>
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 :             p2 ^= 1;</span>
+<span class="lineNum">     131 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 :       case ST_POSITIVE:</span>
+<span class="lineNum">     135 </span><span class="lineNoCov">          0 :         p1 = P_PointOnLineSide (tmbox[BOXLEFT], tmbox[BOXTOP], ld);</span>
+<span class="lineNum">     136 </span><span class="lineNoCov">          0 :         p2 = P_PointOnLineSide (tmbox[BOXRIGHT], tmbox[BOXBOTTOM], ld);</span>
+<span class="lineNum">     137 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 :       case ST_NEGATIVE:</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 :         p1 = P_PointOnLineSide (tmbox[BOXRIGHT], tmbox[BOXTOP], ld);</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :         p2 = P_PointOnLineSide (tmbox[BOXLEFT], tmbox[BOXBOTTOM], ld);</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :         break;</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :     if (p1 == p2)</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 :         return p1;</span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :     return -1;</span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     149 </span>            : 
+<span class="lineNum">     150 </span>            : 
+<span class="lineNum">     151 </span>            : //
+<span class="lineNum">     152 </span>            : // P_PointOnDivlineSide
+<span class="lineNum">     153 </span>            : // Returns 0 or 1.
+<span class="lineNum">     154 </span>            : //
+<span class="lineNum">     155 </span>            : int
+<span class="lineNum">     156 </span>            : P_PointOnDivlineSide
+<span class="lineNum">     157 </span>            : ( fixed_t       x,
+<a name="158"><span class="lineNum">     158 </span>            :   fixed_t       y,</a>
+<span class="lineNum">     159 </span>            :   divline_t*    line )
+<span class="lineNum">     160 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     161 </span><span class="lineNoCov">          0 :     fixed_t     dx;</span>
+<span class="lineNum">     162 </span><span class="lineNoCov">          0 :     fixed_t     dy;</span>
+<span class="lineNum">     163 </span><span class="lineNoCov">          0 :     fixed_t     left;</span>
+<span class="lineNum">     164 </span><span class="lineNoCov">          0 :     fixed_t     right;</span>
+<span class="lineNum">     165 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 :     if (!line-&gt;dx)</span>
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 :         if (x &lt;= line-&gt;x)</span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 :             return line-&gt;dy &gt; 0;</span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 :         return line-&gt;dy &lt; 0;</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     173 </span><span class="lineNoCov">          0 :     if (!line-&gt;dy)</span>
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     175 </span><span class="lineNoCov">          0 :         if (y &lt;= line-&gt;y)</span>
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 :             return line-&gt;dx &lt; 0;</span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 :         return line-&gt;dx &gt; 0;</span>
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :     dx = (x - line-&gt;x);</span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 :     dy = (y - line-&gt;y);</span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 :     // try to quickly decide by looking at sign bits</span>
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 :     if ( (line-&gt;dy ^ line-&gt;dx ^ dx ^ dy)&amp;0x80000000 )</span>
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :         if ( (line-&gt;dy ^ dx) &amp; 0x80000000 )</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :             return 1;           // (left is negative)</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     191 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 :     left = FixedMul ( line-&gt;dy&gt;&gt;8, dx&gt;&gt;8 );</span>
+<span class="lineNum">     193 </span><span class="lineNoCov">          0 :     right = FixedMul ( dy&gt;&gt;8 , line-&gt;dx&gt;&gt;8 );</span>
+<span class="lineNum">     194 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     195 </span><span class="lineNoCov">          0 :     if (right &lt; left)</span>
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 :         return 0;               // front side</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 :     return 1;                   // back side</span>
+<span class="lineNum">     198 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     199 </span>            : 
+<span class="lineNum">     200 </span>            : 
+<span class="lineNum">     201 </span>            : 
+<span class="lineNum">     202 </span>            : //
+<span class="lineNum">     203 </span>            : // P_MakeDivline
+<span class="lineNum">     204 </span>            : //
+<span class="lineNum">     205 </span>            : void
+<span class="lineNum">     206 </span>            : P_MakeDivline
+<a name="207"><span class="lineNum">     207 </span>            : ( line_t*       li,</a>
+<span class="lineNum">     208 </span>            :   divline_t*    dl )
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 :     dl-&gt;x = li-&gt;v1-&gt;x;</span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :     dl-&gt;y = li-&gt;v1-&gt;y;</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 :     dl-&gt;dx = li-&gt;dx;</span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 :     dl-&gt;dy = li-&gt;dy;</span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     215 </span>            : 
+<span class="lineNum">     216 </span>            : 
+<span class="lineNum">     217 </span>            : 
+<span class="lineNum">     218 </span>            : //
+<span class="lineNum">     219 </span>            : // P_InterceptVector
+<span class="lineNum">     220 </span>            : // Returns the fractional intercept point
+<span class="lineNum">     221 </span>            : // along the first divline.
+<span class="lineNum">     222 </span>            : // This is only called by the addthings
+<span class="lineNum">     223 </span>            : // and addlines traversers.
+<span class="lineNum">     224 </span>            : //
+<span class="lineNum">     225 </span>            : fixed_t
+<span class="lineNum">     226 </span>            : P_InterceptVector
+<a name="227"><span class="lineNum">     227 </span>            : ( divline_t*    v2,</a>
+<span class="lineNum">     228 </span>            :   divline_t*    v1 )
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 : #if 1</span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :     fixed_t     frac;</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :     fixed_t     num;</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 :     fixed_t     den;</span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 :     den = FixedMul (v1-&gt;dy&gt;&gt;8,v2-&gt;dx) - FixedMul(v1-&gt;dx&gt;&gt;8,v2-&gt;dy);</span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 :     if (den == 0)</span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 :     //  I_Error (&quot;P_InterceptVector: parallel&quot;);</span>
+<span class="lineNum">     240 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     241 </span><span class="lineNoCov">          0 :     num =</span>
+<span class="lineNum">     242 </span><span class="lineNoCov">          0 :         FixedMul ( (v1-&gt;x - v2-&gt;x)&gt;&gt;8 ,v1-&gt;dy )</span>
+<span class="lineNum">     243 </span><span class="lineNoCov">          0 :         +FixedMul ( (v2-&gt;y - v1-&gt;y)&gt;&gt;8, v1-&gt;dx );</span>
+<span class="lineNum">     244 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     245 </span><span class="lineNoCov">          0 :     frac = FixedDiv (num , den);</span>
+<span class="lineNum">     246 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :     return frac;</span>
+<span class="lineNum">     248 </span>            : #else   // UNUSED, float debug.
+<span class="lineNum">     249 </span>            :     float       frac;
+<span class="lineNum">     250 </span>            :     float       num;
+<span class="lineNum">     251 </span>            :     float       den;
+<span class="lineNum">     252 </span>            :     float       v1x;
+<span class="lineNum">     253 </span>            :     float       v1y;
+<span class="lineNum">     254 </span>            :     float       v1dx;
+<span class="lineNum">     255 </span>            :     float       v1dy;
+<span class="lineNum">     256 </span>            :     float       v2x;
+<span class="lineNum">     257 </span>            :     float       v2y;
+<span class="lineNum">     258 </span>            :     float       v2dx;
+<span class="lineNum">     259 </span>            :     float       v2dy;
+<span class="lineNum">     260 </span>            : 
+<span class="lineNum">     261 </span>            :     v1x = (float)v1-&gt;x/FRACUNIT;
+<span class="lineNum">     262 </span>            :     v1y = (float)v1-&gt;y/FRACUNIT;
+<span class="lineNum">     263 </span>            :     v1dx = (float)v1-&gt;dx/FRACUNIT;
+<span class="lineNum">     264 </span>            :     v1dy = (float)v1-&gt;dy/FRACUNIT;
+<span class="lineNum">     265 </span>            :     v2x = (float)v2-&gt;x/FRACUNIT;
+<span class="lineNum">     266 </span>            :     v2y = (float)v2-&gt;y/FRACUNIT;
+<span class="lineNum">     267 </span>            :     v2dx = (float)v2-&gt;dx/FRACUNIT;
+<span class="lineNum">     268 </span>            :     v2dy = (float)v2-&gt;dy/FRACUNIT;
+<span class="lineNum">     269 </span>            :         
+<span class="lineNum">     270 </span>            :     den = v1dy*v2dx - v1dx*v2dy;
+<span class="lineNum">     271 </span>            : 
+<span class="lineNum">     272 </span>            :     if (den == 0)
+<span class="lineNum">     273 </span>            :         return 0;       // parallel
+<span class="lineNum">     274 </span>            :     
+<span class="lineNum">     275 </span>            :     num = (v1x - v2x)*v1dy + (v2y - v1y)*v1dx;
+<span class="lineNum">     276 </span>            :     frac = num / den;
+<span class="lineNum">     277 </span>            : 
+<span class="lineNum">     278 </span>            :     return frac*FRACUNIT;
+<span class="lineNum">     279 </span>            : #endif
+<span class="lineNum">     280 </span>            : }
+<span class="lineNum">     281 </span>            : 
+<span class="lineNum">     282 </span>            : 
+<span class="lineNum">     283 </span>            : //
+<span class="lineNum">     284 </span>            : // P_LineOpening
+<span class="lineNum">     285 </span>            : // Sets opentop and openbottom to the window
+<span class="lineNum">     286 </span>            : // through a two sided line.
+<span class="lineNum">     287 </span>            : // OPTIMIZE: keep this precalculated
+<span class="lineNum">     288 </span>            : //
+<span class="lineNum">     289 </span>            : fixed_t opentop;
+<span class="lineNum">     290 </span>            : fixed_t openbottom;
+<span class="lineNum">     291 </span>            : fixed_t openrange;
+<span class="lineNum">     292 </span>            : fixed_t lowfloor;
+<span class="lineNum">     293 </span>            : 
+<a name="294"><span class="lineNum">     294 </span>            : </a>
+<span class="lineNum">     295 </span>            : void P_LineOpening (line_t* linedef)
+<span class="lineNum">     296 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     297 </span><span class="lineNoCov">          0 :     sector_t*   front;</span>
+<span class="lineNum">     298 </span><span class="lineNoCov">          0 :     sector_t*   back;</span>
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :     if (linedef-&gt;sidenum[1] == -1)</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 :         // single sided line</span>
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 :         openrange = 0;</span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 :          </span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 :     front = linedef-&gt;frontsector;</span>
+<span class="lineNum">     308 </span><span class="lineNoCov">          0 :     back = linedef-&gt;backsector;</span>
+<span class="lineNum">     309 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     310 </span><span class="lineNoCov">          0 :     if (front-&gt;ceilingheight &lt; back-&gt;ceilingheight)</span>
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :         opentop = front-&gt;ceilingheight;</span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :         opentop = back-&gt;ceilingheight;</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :     if (front-&gt;floorheight &gt; back-&gt;floorheight)</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     317 </span><span class="lineNoCov">          0 :         openbottom = front-&gt;floorheight;</span>
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 :         lowfloor = back-&gt;floorheight;</span>
+<span class="lineNum">     319 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     320 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :         openbottom = back-&gt;floorheight;</span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 :         lowfloor = front-&gt;floorheight;</span>
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     325 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 :     openrange = opentop - openbottom;</span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     328 </span>            : 
+<span class="lineNum">     329 </span>            : 
+<span class="lineNum">     330 </span>            : //
+<span class="lineNum">     331 </span>            : // THING POSITION SETTING
+<span class="lineNum">     332 </span>            : //
+<span class="lineNum">     333 </span>            : 
+<span class="lineNum">     334 </span>            : 
+<span class="lineNum">     335 </span>            : //
+<span class="lineNum">     336 </span>            : // P_UnsetThingPosition
+<span class="lineNum">     337 </span>            : // Unlinks a thing from block map and sectors.
+<span class="lineNum">     338 </span>            : // On each position change, BLOCKMAP and other
+<span class="lineNum">     339 </span>            : // lookups maintaining lists ot things inside
+<span class="lineNum">     340 </span>            : // these structures need to be updated.
+<a name="341"><span class="lineNum">     341 </span>            : //</a>
+<span class="lineNum">     342 </span>            : void P_UnsetThingPosition (mobj_t* thing)
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 :     int         blockx;</span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 :     int         blocky;</span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :     if ( ! (thing-&gt;flags &amp; MF_NOSECTOR) )</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :         // inert things don't need to be in blockmap?</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :         // unlink from subsector</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 :         if (thing-&gt;snext)</span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 :             thing-&gt;snext-&gt;sprev = thing-&gt;sprev;</span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :         if (thing-&gt;sprev)</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :             thing-&gt;sprev-&gt;snext = thing-&gt;snext;</span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :             thing-&gt;subsector-&gt;sector-&gt;thinglist = thing-&gt;snext;</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     359 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 :     if ( ! (thing-&gt;flags &amp; MF_NOBLOCKMAP) )</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 :         // inert things don't need to be in blockmap</span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :         // unlink from block map</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 :         if (thing-&gt;bnext)</span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :             thing-&gt;bnext-&gt;bprev = thing-&gt;bprev;</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 :         if (thing-&gt;bprev)</span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 :             thing-&gt;bprev-&gt;bnext = thing-&gt;bnext;</span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     371 </span><span class="lineNoCov">          0 :             blockx = (thing-&gt;x - bmaporgx)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     372 </span><span class="lineNoCov">          0 :             blocky = (thing-&gt;y - bmaporgy)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     373 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     374 </span><span class="lineNoCov">          0 :             if (blockx&gt;=0 &amp;&amp; blockx &lt; bmapwidth</span>
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 :                 &amp;&amp; blocky&gt;=0 &amp;&amp; blocky &lt;bmapheight)</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :                 blocklinks[blocky*bmapwidth+blockx] = thing-&gt;bnext;</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     382 </span>            : 
+<span class="lineNum">     383 </span>            : 
+<span class="lineNum">     384 </span>            : //
+<span class="lineNum">     385 </span>            : // P_SetThingPosition
+<span class="lineNum">     386 </span>            : // Links a thing into both a block and a subsector
+<span class="lineNum">     387 </span>            : // based on it's x y.
+<span class="lineNum">     388 </span>            : // Sets thing-&gt;subsector properly
+<span class="lineNum">     389 </span>            : //
+<a name="390"><span class="lineNum">     390 </span>            : void</a>
+<span class="lineNum">     391 </span>            : P_SetThingPosition (mobj_t* thing)
+<span class="lineNum">     392 </span><span class="lineCov">    2961302 : {</span>
+<span class="lineNum">     393 </span><span class="lineCov">    2961302 :     subsector_t*        ss;</span>
+<span class="lineNum">     394 </span><span class="lineCov">    2961302 :     sector_t*           sec;</span>
+<span class="lineNum">     395 </span><span class="lineCov">    2961302 :     int                 blockx;</span>
+<span class="lineNum">     396 </span><span class="lineCov">    2961302 :     int                 blocky;</span>
+<span class="lineNum">     397 </span><span class="lineCov">    2961302 :     mobj_t**            link;</span>
+<span class="lineNum">     398 </span><span class="lineCov">    2961302 : </span>
+<span class="lineNum">     399 </span><span class="lineCov">    2961302 :     </span>
+<span class="lineNum">     400 </span><span class="lineCov">    2961302 :     // link into subsector</span>
+<span class="lineNum">     401 </span><span class="lineCov">    2961302 :     ss = R_PointInSubsector (thing-&gt;x,thing-&gt;y);</span>
+<span class="lineNum">     402 </span><span class="lineCov">    2961302 :     thing-&gt;subsector = ss;</span>
+<span class="lineNum">     403 </span><span class="lineCov">    2961302 :     </span>
+<span class="lineNum">     404 </span><span class="lineCov">    2961302 :     if ( ! (thing-&gt;flags &amp; MF_NOSECTOR) )</span>
+<span class="lineNum">     405 </span><span class="lineCov">    2914266 :     {</span>
+<span class="lineNum">     406 </span><span class="lineCov">    2914266 :         // invisible things don't go into the sector links</span>
+<span class="lineNum">     407 </span><span class="lineCov">    2914266 :         sec = ss-&gt;sector;</span>
+<span class="lineNum">     408 </span><span class="lineCov">    2914266 :         </span>
+<span class="lineNum">     409 </span><span class="lineCov">    2914266 :         thing-&gt;sprev = NULL;</span>
+<span class="lineNum">     410 </span><span class="lineCov">    2914266 :         thing-&gt;snext = sec-&gt;thinglist;</span>
+<span class="lineNum">     411 </span><span class="lineCov">    2914266 : </span>
+<span class="lineNum">     412 </span><span class="lineCov">    2914266 :         if (sec-&gt;thinglist)</span>
+<span class="lineNum">     413 </span><span class="lineCov">    2120384 :             sec-&gt;thinglist-&gt;sprev = thing;</span>
+<span class="lineNum">     414 </span><span class="lineCov">    2914266 : </span>
+<span class="lineNum">     415 </span><span class="lineCov">    2914266 :         sec-&gt;thinglist = thing;</span>
+<span class="lineNum">     416 </span><span class="lineCov">    2914266 :     }</span>
+<span class="lineNum">     417 </span><span class="lineCov">    2961302 : </span>
+<span class="lineNum">     418 </span><span class="lineCov">    2961302 :     </span>
+<span class="lineNum">     419 </span><span class="lineCov">    2961302 :     // link into blockmap</span>
+<span class="lineNum">     420 </span><span class="lineCov">    2961302 :     if ( ! (thing-&gt;flags &amp; MF_NOBLOCKMAP) )</span>
+<span class="lineNum">     421 </span><span class="lineCov">    2914266 :     {</span>
+<span class="lineNum">     422 </span><span class="lineCov">    2914266 :         // inert things don't need to be in blockmap            </span>
+<span class="lineNum">     423 </span><span class="lineCov">    2914266 :         blockx = (thing-&gt;x - bmaporgx)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     424 </span><span class="lineCov">    2914266 :         blocky = (thing-&gt;y - bmaporgy)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     425 </span><span class="lineCov">    2914266 : </span>
+<span class="lineNum">     426 </span><span class="lineCov">    2914266 :         if (blockx&gt;=0</span>
+<span class="lineNum">     427 </span><span class="lineCov">    2914266 :             &amp;&amp; blockx &lt; bmapwidth</span>
+<span class="lineNum">     428 </span><span class="lineCov">    2914266 :             &amp;&amp; blocky&gt;=0</span>
+<span class="lineNum">     429 </span><span class="lineCov">    2914266 :             &amp;&amp; blocky &lt; bmapheight)</span>
+<span class="lineNum">     430 </span><span class="lineCov">    2914266 :         {</span>
+<span class="lineNum">     431 </span><span class="lineCov">    2914266 :             link = &amp;blocklinks[blocky*bmapwidth+blockx];</span>
+<span class="lineNum">     432 </span><span class="lineCov">    2914266 :             thing-&gt;bprev = NULL;</span>
+<span class="lineNum">     433 </span><span class="lineCov">    2914266 :             thing-&gt;bnext = *link;</span>
+<span class="lineNum">     434 </span><span class="lineCov">    2914266 :             if (*link)</span>
+<span class="lineNum">     435 </span><span class="lineCov">    1175606 :                 (*link)-&gt;bprev = thing;</span>
+<span class="lineNum">     436 </span><span class="lineCov">    2914266 : </span>
+<span class="lineNum">     437 </span><span class="lineCov">    2914266 :             *link = thing;</span>
+<span class="lineNum">     438 </span><span class="lineCov">    2914266 :         }</span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 :             // thing is off the map</span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 :             thing-&gt;bnext = thing-&gt;bprev = NULL;</span>
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     444 </span><span class="lineCov">    2914266 :     }</span>
+<span class="lineNum">     445 </span><span class="lineCov">    2961302 : }</span>
+<span class="lineNum">     446 </span>            : 
+<span class="lineNum">     447 </span>            : 
+<span class="lineNum">     448 </span>            : 
+<span class="lineNum">     449 </span>            : //
+<span class="lineNum">     450 </span>            : // BLOCK MAP ITERATORS
+<span class="lineNum">     451 </span>            : // For each line/thing in the given mapblock,
+<span class="lineNum">     452 </span>            : // call the passed PIT_* function.
+<span class="lineNum">     453 </span>            : // If the function returns false,
+<span class="lineNum">     454 </span>            : // exit with false without checking anything else.
+<span class="lineNum">     455 </span>            : //
+<span class="lineNum">     456 </span>            : 
+<span class="lineNum">     457 </span>            : 
+<span class="lineNum">     458 </span>            : //
+<span class="lineNum">     459 </span>            : // P_BlockLinesIterator
+<span class="lineNum">     460 </span>            : // The validcount flags are used to avoid checking lines
+<span class="lineNum">     461 </span>            : // that are marked in multiple mapblocks,
+<span class="lineNum">     462 </span>            : // so increment validcount before the first call
+<span class="lineNum">     463 </span>            : // to P_BlockLinesIterator, then make one or more calls
+<span class="lineNum">     464 </span>            : // to it.
+<span class="lineNum">     465 </span>            : //
+<span class="lineNum">     466 </span>            : boolean
+<span class="lineNum">     467 </span>            : P_BlockLinesIterator
+<span class="lineNum">     468 </span>            : ( int                   x,
+<a name="469"><span class="lineNum">     469 </span>            :   int                   y,</a>
+<span class="lineNum">     470 </span>            :   boolean(*func)(line_t*) )
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     472 </span><span class="lineNoCov">          0 :     int                 offset;</span>
+<span class="lineNum">     473 </span><span class="lineNoCov">          0 :     short*              list;</span>
+<span class="lineNum">     474 </span><span class="lineNoCov">          0 :     line_t*             ld;</span>
+<span class="lineNum">     475 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     476 </span><span class="lineNoCov">          0 :     if (x&lt;0</span>
+<span class="lineNum">     477 </span><span class="lineNoCov">          0 :         || y&lt;0</span>
+<span class="lineNum">     478 </span><span class="lineNoCov">          0 :         || x&gt;=bmapwidth</span>
+<span class="lineNum">     479 </span><span class="lineNoCov">          0 :         || y&gt;=bmapheight)</span>
+<span class="lineNum">     480 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     481 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     482 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 :     offset = y*bmapwidth+x;</span>
+<span class="lineNum">     485 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     486 </span><span class="lineNoCov">          0 :     offset = *(blockmap+offset);</span>
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     488 </span><span class="lineNoCov">          0 :     for ( list = blockmaplump+offset ; *list != -1 ; list++)</span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     490 </span><span class="lineNoCov">          0 :         ld = &amp;lines[*list];</span>
+<span class="lineNum">     491 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     492 </span><span class="lineNoCov">          0 :         if (ld-&gt;validcount == validcount)</span>
+<span class="lineNum">     493 </span><span class="lineNoCov">          0 :             continue;   // line has already been checked</span>
+<span class="lineNum">     494 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     495 </span><span class="lineNoCov">          0 :         ld-&gt;validcount = validcount;</span>
+<span class="lineNum">     496 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     497 </span><span class="lineNoCov">          0 :         if ( !func(ld) )</span>
+<span class="lineNum">     498 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     499 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     500 </span><span class="lineNoCov">          0 :     return true;        // everything was checked</span>
+<span class="lineNum">     501 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     502 </span>            : 
+<span class="lineNum">     503 </span>            : 
+<span class="lineNum">     504 </span>            : //
+<span class="lineNum">     505 </span>            : // P_BlockThingsIterator
+<span class="lineNum">     506 </span>            : //
+<span class="lineNum">     507 </span>            : boolean
+<span class="lineNum">     508 </span>            : P_BlockThingsIterator
+<span class="lineNum">     509 </span>            : ( int                   x,
+<a name="510"><span class="lineNum">     510 </span>            :   int                   y,</a>
+<span class="lineNum">     511 </span>            :   boolean(*func)(mobj_t*) )
+<span class="lineNum">     512 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     513 </span><span class="lineNoCov">          0 :     mobj_t*             mobj;</span>
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     515 </span><span class="lineNoCov">          0 :     if ( x&lt;0</span>
+<span class="lineNum">     516 </span><span class="lineNoCov">          0 :          || y&lt;0</span>
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 :          || x&gt;=bmapwidth</span>
+<span class="lineNum">     518 </span><span class="lineNoCov">          0 :          || y&gt;=bmapheight)</span>
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     520 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     522 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     524 </span><span class="lineNoCov">          0 :     for (mobj = blocklinks[y*bmapwidth+x] ;</span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :          mobj ;</span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 :          mobj = mobj-&gt;bnext)</span>
+<span class="lineNum">     527 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 :         if (!func( mobj ) )</span>
+<span class="lineNum">     529 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     530 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     532 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     533 </span>            : 
+<span class="lineNum">     534 </span>            : 
+<span class="lineNum">     535 </span>            : 
+<span class="lineNum">     536 </span>            : //
+<span class="lineNum">     537 </span>            : // INTERCEPT ROUTINES
+<span class="lineNum">     538 </span>            : //
+<span class="lineNum">     539 </span>            : intercept_t     intercepts[MAXINTERCEPTS];
+<span class="lineNum">     540 </span>            : intercept_t*    intercept_p;
+<span class="lineNum">     541 </span>            : 
+<span class="lineNum">     542 </span>            : divline_t       trace;
+<span class="lineNum">     543 </span>            : boolean         earlyout;
+<span class="lineNum">     544 </span>            : int             ptflags;
+<span class="lineNum">     545 </span>            : 
+<span class="lineNum">     546 </span>            : static void InterceptsOverrun(int num_intercepts, intercept_t *intercept);
+<span class="lineNum">     547 </span>            : 
+<span class="lineNum">     548 </span>            : //
+<span class="lineNum">     549 </span>            : // PIT_AddLineIntercepts.
+<span class="lineNum">     550 </span>            : // Looks for lines in the given block
+<span class="lineNum">     551 </span>            : // that intercept the given trace
+<span class="lineNum">     552 </span>            : // to add to the intercepts list.
+<span class="lineNum">     553 </span>            : //
+<span class="lineNum">     554 </span>            : // A line is crossed if its endpoints
+<span class="lineNum">     555 </span>            : // are on opposite sides of the trace.
+<span class="lineNum">     556 </span>            : // Returns true if earlyout and a solid line hit.
+<span class="lineNum">     557 </span>            : //
+<a name="558"><span class="lineNum">     558 </span>            : boolean</a>
+<span class="lineNum">     559 </span>            : PIT_AddLineIntercepts (line_t* ld)
+<span class="lineNum">     560 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 :     int                 s1;</span>
+<span class="lineNum">     562 </span><span class="lineNoCov">          0 :     int                 s2;</span>
+<span class="lineNum">     563 </span><span class="lineNoCov">          0 :     fixed_t             frac;</span>
+<span class="lineNum">     564 </span><span class="lineNoCov">          0 :     divline_t           dl;</span>
+<span class="lineNum">     565 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     566 </span><span class="lineNoCov">          0 :     // avoid precision problems with two routines</span>
+<span class="lineNum">     567 </span><span class="lineNoCov">          0 :     if ( trace.dx &gt; FRACUNIT*16</span>
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 :          || trace.dy &gt; FRACUNIT*16</span>
+<span class="lineNum">     569 </span><span class="lineNoCov">          0 :          || trace.dx &lt; -FRACUNIT*16</span>
+<span class="lineNum">     570 </span><span class="lineNoCov">          0 :          || trace.dy &lt; -FRACUNIT*16)</span>
+<span class="lineNum">     571 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     572 </span><span class="lineNoCov">          0 :         s1 = P_PointOnDivlineSide (ld-&gt;v1-&gt;x, ld-&gt;v1-&gt;y, &amp;trace);</span>
+<span class="lineNum">     573 </span><span class="lineNoCov">          0 :         s2 = P_PointOnDivlineSide (ld-&gt;v2-&gt;x, ld-&gt;v2-&gt;y, &amp;trace);</span>
+<span class="lineNum">     574 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     577 </span><span class="lineNoCov">          0 :         s1 = P_PointOnLineSide (trace.x, trace.y, ld);</span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :         s2 = P_PointOnLineSide (trace.x+trace.dx, trace.y+trace.dy, ld);</span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     581 </span><span class="lineNoCov">          0 :     if (s1 == s2)</span>
+<span class="lineNum">     582 </span><span class="lineNoCov">          0 :         return true;    // line isn't crossed</span>
+<span class="lineNum">     583 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     584 </span><span class="lineNoCov">          0 :     // hit the line</span>
+<span class="lineNum">     585 </span><span class="lineNoCov">          0 :     P_MakeDivline (ld, &amp;dl);</span>
+<span class="lineNum">     586 </span><span class="lineNoCov">          0 :     frac = P_InterceptVector (&amp;trace, &amp;dl);</span>
+<span class="lineNum">     587 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     588 </span><span class="lineNoCov">          0 :     if (frac &lt; 0)</span>
+<span class="lineNum">     589 </span><span class="lineNoCov">          0 :         return true;    // behind source</span>
+<span class="lineNum">     590 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     591 </span><span class="lineNoCov">          0 :     // try to early out the check</span>
+<span class="lineNum">     592 </span><span class="lineNoCov">          0 :     if (earlyout</span>
+<span class="lineNum">     593 </span><span class="lineNoCov">          0 :         &amp;&amp; frac &lt; FRACUNIT</span>
+<span class="lineNum">     594 </span><span class="lineNoCov">          0 :         &amp;&amp; !ld-&gt;backsector)</span>
+<span class="lineNum">     595 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :         return false;   // stop checking</span>
+<span class="lineNum">     597 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     598 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     599 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 :     intercept_p-&gt;frac = frac;</span>
+<span class="lineNum">     601 </span><span class="lineNoCov">          0 :     intercept_p-&gt;isaline = true;</span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 :     intercept_p-&gt;d.line = ld;</span>
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 :     InterceptsOverrun(intercept_p - intercepts, intercept_p);</span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 :     intercept_p++;</span>
+<span class="lineNum">     605 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 :     return true;        // continue</span>
+<span class="lineNum">     607 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     608 </span>            : 
+<span class="lineNum">     609 </span>            : 
+<span class="lineNum">     610 </span>            : 
+<span class="lineNum">     611 </span>            : //
+<span class="lineNum">     612 </span>            : // PIT_AddThingIntercepts
+<a name="613"><span class="lineNum">     613 </span>            : //</a>
+<span class="lineNum">     614 </span>            : boolean PIT_AddThingIntercepts (mobj_t* thing)
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :     fixed_t             x1;</span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 :     fixed_t             y1;</span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 :     fixed_t             x2;</span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 :     fixed_t             y2;</span>
+<span class="lineNum">     620 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     621 </span><span class="lineNoCov">          0 :     int                 s1;</span>
+<span class="lineNum">     622 </span><span class="lineNoCov">          0 :     int                 s2;</span>
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     624 </span><span class="lineNoCov">          0 :     boolean             tracepositive;</span>
+<span class="lineNum">     625 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 :     divline_t           dl;</span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 :     fixed_t             frac;</span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 :     tracepositive = (trace.dx ^ trace.dy)&gt;0;</span>
+<span class="lineNum">     631 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     632 </span><span class="lineNoCov">          0 :     // check a corner to corner crossection for hit</span>
+<span class="lineNum">     633 </span><span class="lineNoCov">          0 :     if (tracepositive)</span>
+<span class="lineNum">     634 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     635 </span><span class="lineNoCov">          0 :         x1 = thing-&gt;x - thing-&gt;radius;</span>
+<span class="lineNum">     636 </span><span class="lineNoCov">          0 :         y1 = thing-&gt;y + thing-&gt;radius;</span>
+<span class="lineNum">     637 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     638 </span><span class="lineNoCov">          0 :         x2 = thing-&gt;x + thing-&gt;radius;</span>
+<span class="lineNum">     639 </span><span class="lineNoCov">          0 :         y2 = thing-&gt;y - thing-&gt;radius;                    </span>
+<span class="lineNum">     640 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     641 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     642 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     643 </span><span class="lineNoCov">          0 :         x1 = thing-&gt;x - thing-&gt;radius;</span>
+<span class="lineNum">     644 </span><span class="lineNoCov">          0 :         y1 = thing-&gt;y - thing-&gt;radius;</span>
+<span class="lineNum">     645 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     646 </span><span class="lineNoCov">          0 :         x2 = thing-&gt;x + thing-&gt;radius;</span>
+<span class="lineNum">     647 </span><span class="lineNoCov">          0 :         y2 = thing-&gt;y + thing-&gt;radius;                    </span>
+<span class="lineNum">     648 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     649 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     650 </span><span class="lineNoCov">          0 :     s1 = P_PointOnDivlineSide (x1, y1, &amp;trace);</span>
+<span class="lineNum">     651 </span><span class="lineNoCov">          0 :     s2 = P_PointOnDivlineSide (x2, y2, &amp;trace);</span>
+<span class="lineNum">     652 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     653 </span><span class="lineNoCov">          0 :     if (s1 == s2)</span>
+<span class="lineNum">     654 </span><span class="lineNoCov">          0 :         return true;            // line isn't crossed</span>
+<span class="lineNum">     655 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 :     dl.x = x1;</span>
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 :     dl.y = y1;</span>
+<span class="lineNum">     658 </span><span class="lineNoCov">          0 :     dl.dx = x2-x1;</span>
+<span class="lineNum">     659 </span><span class="lineNoCov">          0 :     dl.dy = y2-y1;</span>
+<span class="lineNum">     660 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     661 </span><span class="lineNoCov">          0 :     frac = P_InterceptVector (&amp;trace, &amp;dl);</span>
+<span class="lineNum">     662 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     663 </span><span class="lineNoCov">          0 :     if (frac &lt; 0)</span>
+<span class="lineNum">     664 </span><span class="lineNoCov">          0 :         return true;            // behind source</span>
+<span class="lineNum">     665 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     666 </span><span class="lineNoCov">          0 :     intercept_p-&gt;frac = frac;</span>
+<span class="lineNum">     667 </span><span class="lineNoCov">          0 :     intercept_p-&gt;isaline = false;</span>
+<span class="lineNum">     668 </span><span class="lineNoCov">          0 :     intercept_p-&gt;d.thing = thing;</span>
+<span class="lineNum">     669 </span><span class="lineNoCov">          0 :     InterceptsOverrun(intercept_p - intercepts, intercept_p);</span>
+<span class="lineNum">     670 </span><span class="lineNoCov">          0 :     intercept_p++;</span>
+<span class="lineNum">     671 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     672 </span><span class="lineNoCov">          0 :     return true;                // keep going</span>
+<span class="lineNum">     673 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     674 </span>            : 
+<span class="lineNum">     675 </span>            : 
+<span class="lineNum">     676 </span>            : //
+<span class="lineNum">     677 </span>            : // P_TraverseIntercepts
+<span class="lineNum">     678 </span>            : // Returns true if the traverser function returns true
+<span class="lineNum">     679 </span>            : // for all lines.
+<span class="lineNum">     680 </span>            : // 
+<span class="lineNum">     681 </span>            : boolean
+<span class="lineNum">     682 </span>            : P_TraverseIntercepts
+<a name="683"><span class="lineNum">     683 </span>            : ( traverser_t   func,</a>
+<span class="lineNum">     684 </span>            :   fixed_t       maxfrac )
+<span class="lineNum">     685 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     686 </span><span class="lineNoCov">          0 :     int                 count;</span>
+<span class="lineNum">     687 </span><span class="lineNoCov">          0 :     fixed_t             dist;</span>
+<span class="lineNum">     688 </span><span class="lineNoCov">          0 :     intercept_t*        scan;</span>
+<span class="lineNum">     689 </span><span class="lineNoCov">          0 :     intercept_t*        in;</span>
+<span class="lineNum">     690 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     691 </span><span class="lineNoCov">          0 :     count = intercept_p - intercepts;</span>
+<span class="lineNum">     692 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     693 </span><span class="lineNoCov">          0 :     in = 0;                     // shut up compiler warning</span>
+<span class="lineNum">     694 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     695 </span><span class="lineNoCov">          0 :     while (count--)</span>
+<span class="lineNum">     696 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     697 </span><span class="lineNoCov">          0 :         dist = INT_MAX;</span>
+<span class="lineNum">     698 </span><span class="lineNoCov">          0 :         for (scan = intercepts ; scan&lt;intercept_p ; scan++)</span>
+<span class="lineNum">     699 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     700 </span><span class="lineNoCov">          0 :             if (scan-&gt;frac &lt; dist)</span>
+<span class="lineNum">     701 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     702 </span><span class="lineNoCov">          0 :                 dist = scan-&gt;frac;</span>
+<span class="lineNum">     703 </span><span class="lineNoCov">          0 :                 in = scan;</span>
+<span class="lineNum">     704 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     705 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     707 </span><span class="lineNoCov">          0 :         if (dist &gt; maxfrac)</span>
+<span class="lineNum">     708 </span><span class="lineNoCov">          0 :             return true;        // checked everything in range          </span>
+<span class="lineNum">     709 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     710 </span>            : #if 0  // UNUSED
+<span class="lineNum">     711 </span>            :     {
+<span class="lineNum">     712 </span>            :         // don't check these yet, there may be others inserted
+<span class="lineNum">     713 </span>            :         in = scan = intercepts;
+<span class="lineNum">     714 </span>            :         for ( scan = intercepts ; scan&lt;intercept_p ; scan++)
+<span class="lineNum">     715 </span>            :             if (scan-&gt;frac &gt; maxfrac)
+<span class="lineNum">     716 </span>            :                 *in++ = *scan;
+<span class="lineNum">     717 </span>            :         intercept_p = in;
+<span class="lineNum">     718 </span>            :         return false;
+<span class="lineNum">     719 </span>            :     }
+<span class="lineNum">     720 </span>            : #endif
+<span class="lineNum">     721 </span>            : 
+<span class="lineNum">     722 </span><span class="lineNoCov">          0 :         if ( !func (in) )</span>
+<span class="lineNum">     723 </span><span class="lineNoCov">          0 :             return false;       // don't bother going farther</span>
+<span class="lineNum">     724 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     725 </span><span class="lineNoCov">          0 :         in-&gt;frac = INT_MAX;</span>
+<span class="lineNum">     726 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     727 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     728 </span><span class="lineNoCov">          0 :     return true;                // everything was traversed</span>
+<span class="lineNum">     729 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     730 </span>            : 
+<span class="lineNum">     731 </span>            : extern fixed_t bulletslope;
+<span class="lineNum">     732 </span>            : 
+<span class="lineNum">     733 </span>            : // Intercepts Overrun emulation, from PrBoom-plus.
+<span class="lineNum">     734 </span>            : // Thanks to Andrey Budko (entryway) for researching this and his 
+<span class="lineNum">     735 </span>            : // implementation of Intercepts Overrun emulation in PrBoom-plus
+<span class="lineNum">     736 </span>            : // which this is based on.
+<span class="lineNum">     737 </span>            : 
+<span class="lineNum">     738 </span>            : typedef struct
+<span class="lineNum">     739 </span>            : {
+<span class="lineNum">     740 </span>            :     int len;
+<span class="lineNum">     741 </span>            :     void *addr;
+<span class="lineNum">     742 </span>            :     boolean int16_array;
+<span class="lineNum">     743 </span>            : } intercepts_overrun_t;
+<span class="lineNum">     744 </span>            : 
+<span class="lineNum">     745 </span>            : // Intercepts memory table.  This is where various variables are located
+<span class="lineNum">     746 </span>            : // in memory in Vanilla Doom.  When the intercepts table overflows, we
+<span class="lineNum">     747 </span>            : // need to write to them.
+<span class="lineNum">     748 </span>            : //
+<span class="lineNum">     749 </span>            : // Almost all of the values to overwrite are 32-bit integers, except for
+<span class="lineNum">     750 </span>            : // playerstarts, which is effectively an array of 16-bit integers and
+<span class="lineNum">     751 </span>            : // must be treated differently.
+<span class="lineNum">     752 </span>            : 
+<span class="lineNum">     753 </span>            : static intercepts_overrun_t intercepts_overrun[] =
+<span class="lineNum">     754 </span>            : {
+<span class="lineNum">     755 </span>            :     {4,   NULL,                          false},
+<span class="lineNum">     756 </span>            :     {4,   NULL, /* &amp;earlyout, */         false},
+<span class="lineNum">     757 </span>            :     {4,   NULL, /* &amp;intercept_p, */      false},
+<span class="lineNum">     758 </span>            :     {4,   &amp;lowfloor,                     false},
+<span class="lineNum">     759 </span>            :     {4,   &amp;openbottom,                   false},
+<span class="lineNum">     760 </span>            :     {4,   &amp;opentop,                      false},
+<span class="lineNum">     761 </span>            :     {4,   &amp;openrange,                    false},
+<span class="lineNum">     762 </span>            :     {4,   NULL,                          false},
+<span class="lineNum">     763 </span>            :     {120, NULL, /* &amp;activeplats, */      false},
+<span class="lineNum">     764 </span>            :     {8,   NULL,                          false},
+<span class="lineNum">     765 </span>            :     {4,   &amp;bulletslope,                  false},
+<span class="lineNum">     766 </span>            :     {4,   NULL, /* &amp;swingx, */           false},
+<span class="lineNum">     767 </span>            :     {4,   NULL, /* &amp;swingy, */           false},
+<span class="lineNum">     768 </span>            :     {4,   NULL,                          false},
+<span class="lineNum">     769 </span>            :     {40,  &amp;playerstarts,                 true},
+<span class="lineNum">     770 </span>            :     {4,   NULL, /* &amp;blocklinks, */       false},
+<span class="lineNum">     771 </span>            :     {4,   &amp;bmapwidth,                    false},
+<span class="lineNum">     772 </span>            :     {4,   NULL, /* &amp;blockmap, */         false},
+<span class="lineNum">     773 </span>            :     {4,   &amp;bmaporgx,                     false},
+<span class="lineNum">     774 </span>            :     {4,   &amp;bmaporgy,                     false},
+<span class="lineNum">     775 </span>            :     {4,   NULL, /* &amp;blockmaplump, */     false},
+<span class="lineNum">     776 </span>            :     {4,   &amp;bmapheight,                   false},
+<span class="lineNum">     777 </span>            :     {0,   NULL,                          false},
+<span class="lineNum">     778 </span>            : };
+<span class="lineNum">     779 </span>            : 
+<span class="lineNum">     780 </span>            : // Overwrite a specific memory location with a value.
+<a name="781"><span class="lineNum">     781 </span>            : </a>
+<span class="lineNum">     782 </span>            : static void InterceptsMemoryOverrun(int location, int value)
+<span class="lineNum">     783 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     784 </span><span class="lineNoCov">          0 :     int i, offset;</span>
+<span class="lineNum">     785 </span><span class="lineNoCov">          0 :     int index;</span>
+<span class="lineNum">     786 </span><span class="lineNoCov">          0 :     void *addr;</span>
+<span class="lineNum">     787 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     788 </span><span class="lineNoCov">          0 :     i = 0;</span>
+<span class="lineNum">     789 </span><span class="lineNoCov">          0 :     offset = 0;</span>
+<span class="lineNum">     790 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     791 </span><span class="lineNoCov">          0 :     // Search down the array until we find the right entry</span>
+<span class="lineNum">     792 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     793 </span><span class="lineNoCov">          0 :     while (intercepts_overrun[i].len != 0)</span>
+<span class="lineNum">     794 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     795 </span><span class="lineNoCov">          0 :         if (offset + intercepts_overrun[i].len &gt; location)</span>
+<span class="lineNum">     796 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     797 </span><span class="lineNoCov">          0 :             addr = intercepts_overrun[i].addr;</span>
+<span class="lineNum">     798 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     799 </span><span class="lineNoCov">          0 :             // Write the value to the memory location.</span>
+<span class="lineNum">     800 </span><span class="lineNoCov">          0 :             // 16-bit and 32-bit values are written differently.</span>
+<span class="lineNum">     801 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     802 </span><span class="lineNoCov">          0 :             if (addr != NULL)</span>
+<span class="lineNum">     803 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     804 </span><span class="lineNoCov">          0 :                 if (intercepts_overrun[i].int16_array)</span>
+<span class="lineNum">     805 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     806 </span><span class="lineNoCov">          0 :                     index = (location - offset) / 2;</span>
+<span class="lineNum">     807 </span><span class="lineNoCov">          0 :                     ((short *) addr)[index] = value &amp; 0xffff;</span>
+<span class="lineNum">     808 </span><span class="lineNoCov">          0 :                     ((short *) addr)[index + 1] = (value &gt;&gt; 16) &amp; 0xffff;</span>
+<span class="lineNum">     809 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     810 </span><span class="lineNoCov">          0 :                 else</span>
+<span class="lineNum">     811 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     812 </span><span class="lineNoCov">          0 :                     index = (location - offset) / 4;</span>
+<span class="lineNum">     813 </span><span class="lineNoCov">          0 :                     ((int *) addr)[index] = value;</span>
+<span class="lineNum">     814 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     815 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     816 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     817 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     818 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     819 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     820 </span><span class="lineNoCov">          0 :         offset += intercepts_overrun[i].len;</span>
+<span class="lineNum">     821 </span><span class="lineNoCov">          0 :         ++i;</span>
+<span class="lineNum">     822 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     823 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     824 </span>            : 
+<span class="lineNum">     825 </span>            : // Emulate overruns of the intercepts[] array.
+<a name="826"><span class="lineNum">     826 </span>            : </a>
+<span class="lineNum">     827 </span>            : static void InterceptsOverrun(int num_intercepts, intercept_t *intercept)
+<span class="lineNum">     828 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     829 </span><span class="lineNoCov">          0 :     int location;</span>
+<span class="lineNum">     830 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     831 </span><span class="lineNoCov">          0 :     if (num_intercepts &lt;= MAXINTERCEPTS_ORIGINAL)</span>
+<span class="lineNum">     832 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     833 </span><span class="lineNoCov">          0 :         // No overrun</span>
+<span class="lineNum">     834 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     835 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     836 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     837 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     838 </span><span class="lineNoCov">          0 :     location = (num_intercepts - MAXINTERCEPTS_ORIGINAL - 1) * 12;</span>
+<span class="lineNum">     839 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     840 </span><span class="lineNoCov">          0 :     // Overwrite memory that is overwritten in Vanilla Doom, using</span>
+<span class="lineNum">     841 </span><span class="lineNoCov">          0 :     // the values from the intercept structure.</span>
+<span class="lineNum">     842 </span><span class="lineNoCov">          0 :     //</span>
+<span class="lineNum">     843 </span><span class="lineNoCov">          0 :     // Note: the -&gt;d.{thing,line} member should really have its</span>
+<span class="lineNum">     844 </span><span class="lineNoCov">          0 :     // address translated into the correct address value for </span>
+<span class="lineNum">     845 </span><span class="lineNoCov">          0 :     // Vanilla Doom.</span>
+<span class="lineNum">     846 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     847 </span><span class="lineNoCov">          0 :     InterceptsMemoryOverrun(location, intercept-&gt;frac);</span>
+<span class="lineNum">     848 </span><span class="lineNoCov">          0 :     InterceptsMemoryOverrun(location + 4, intercept-&gt;isaline);</span>
+<span class="lineNum">     849 </span><span class="lineNoCov">          0 :     InterceptsMemoryOverrun(location + 8, (intptr_t) intercept-&gt;d.thing);</span>
+<span class="lineNum">     850 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     851 </span>            : 
+<span class="lineNum">     852 </span>            : 
+<span class="lineNum">     853 </span>            : //
+<span class="lineNum">     854 </span>            : // P_PathTraverse
+<span class="lineNum">     855 </span>            : // Traces a line from x1,y1 to x2,y2,
+<span class="lineNum">     856 </span>            : // calling the traverser function for each.
+<span class="lineNum">     857 </span>            : // Returns true if the traverser function returns true
+<span class="lineNum">     858 </span>            : // for all lines.
+<span class="lineNum">     859 </span>            : //
+<span class="lineNum">     860 </span>            : boolean
+<span class="lineNum">     861 </span>            : P_PathTraverse
+<span class="lineNum">     862 </span>            : ( fixed_t               x1,
+<span class="lineNum">     863 </span>            :   fixed_t               y1,
+<span class="lineNum">     864 </span>            :   fixed_t               x2,
+<span class="lineNum">     865 </span>            :   fixed_t               y2,
+<a name="866"><span class="lineNum">     866 </span>            :   int                   flags,</a>
+<span class="lineNum">     867 </span>            :   boolean (*trav) (intercept_t *))
+<span class="lineNum">     868 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     869 </span><span class="lineNoCov">          0 :     fixed_t     xt1;</span>
+<span class="lineNum">     870 </span><span class="lineNoCov">          0 :     fixed_t     yt1;</span>
+<span class="lineNum">     871 </span><span class="lineNoCov">          0 :     fixed_t     xt2;</span>
+<span class="lineNum">     872 </span><span class="lineNoCov">          0 :     fixed_t     yt2;</span>
+<span class="lineNum">     873 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     874 </span><span class="lineNoCov">          0 :     fixed_t     xstep;</span>
+<span class="lineNum">     875 </span><span class="lineNoCov">          0 :     fixed_t     ystep;</span>
+<span class="lineNum">     876 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     877 </span><span class="lineNoCov">          0 :     fixed_t     partial;</span>
+<span class="lineNum">     878 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     879 </span><span class="lineNoCov">          0 :     fixed_t     xintercept;</span>
+<span class="lineNum">     880 </span><span class="lineNoCov">          0 :     fixed_t     yintercept;</span>
+<span class="lineNum">     881 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     882 </span><span class="lineNoCov">          0 :     int         mapx;</span>
+<span class="lineNum">     883 </span><span class="lineNoCov">          0 :     int         mapy;</span>
+<span class="lineNum">     884 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     885 </span><span class="lineNoCov">          0 :     int         mapxstep;</span>
+<span class="lineNum">     886 </span><span class="lineNoCov">          0 :     int         mapystep;</span>
+<span class="lineNum">     887 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     888 </span><span class="lineNoCov">          0 :     int         count;</span>
+<span class="lineNum">     889 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     890 </span><span class="lineNoCov">          0 :     earlyout = (flags &amp; PT_EARLYOUT) != 0;</span>
+<span class="lineNum">     891 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     892 </span><span class="lineNoCov">          0 :     validcount++;</span>
+<span class="lineNum">     893 </span><span class="lineNoCov">          0 :     intercept_p = intercepts;</span>
+<span class="lineNum">     894 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     895 </span><span class="lineNoCov">          0 :     if ( ((x1-bmaporgx)&amp;(MAPBLOCKSIZE-1)) == 0)</span>
+<span class="lineNum">     896 </span><span class="lineNoCov">          0 :         x1 += FRACUNIT; // don't side exactly on a line</span>
+<span class="lineNum">     897 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     898 </span><span class="lineNoCov">          0 :     if ( ((y1-bmaporgy)&amp;(MAPBLOCKSIZE-1)) == 0)</span>
+<span class="lineNum">     899 </span><span class="lineNoCov">          0 :         y1 += FRACUNIT; // don't side exactly on a line</span>
+<span class="lineNum">     900 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     901 </span><span class="lineNoCov">          0 :     trace.x = x1;</span>
+<span class="lineNum">     902 </span><span class="lineNoCov">          0 :     trace.y = y1;</span>
+<span class="lineNum">     903 </span><span class="lineNoCov">          0 :     trace.dx = x2 - x1;</span>
+<span class="lineNum">     904 </span><span class="lineNoCov">          0 :     trace.dy = y2 - y1;</span>
+<span class="lineNum">     905 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     906 </span><span class="lineNoCov">          0 :     x1 -= bmaporgx;</span>
+<span class="lineNum">     907 </span><span class="lineNoCov">          0 :     y1 -= bmaporgy;</span>
+<span class="lineNum">     908 </span><span class="lineNoCov">          0 :     xt1 = x1&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     909 </span><span class="lineNoCov">          0 :     yt1 = y1&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     910 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     911 </span><span class="lineNoCov">          0 :     x2 -= bmaporgx;</span>
+<span class="lineNum">     912 </span><span class="lineNoCov">          0 :     y2 -= bmaporgy;</span>
+<span class="lineNum">     913 </span><span class="lineNoCov">          0 :     xt2 = x2&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     914 </span><span class="lineNoCov">          0 :     yt2 = y2&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     915 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     916 </span><span class="lineNoCov">          0 :     if (xt2 &gt; xt1)</span>
+<span class="lineNum">     917 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     918 </span><span class="lineNoCov">          0 :         mapxstep = 1;</span>
+<span class="lineNum">     919 </span><span class="lineNoCov">          0 :         partial = FRACUNIT - ((x1&gt;&gt;MAPBTOFRAC)&amp;(FRACUNIT-1));</span>
+<span class="lineNum">     920 </span><span class="lineNoCov">          0 :         ystep = FixedDiv (y2-y1,abs(x2-x1));</span>
+<span class="lineNum">     921 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     922 </span><span class="lineNoCov">          0 :     else if (xt2 &lt; xt1)</span>
+<span class="lineNum">     923 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     924 </span><span class="lineNoCov">          0 :         mapxstep = -1;</span>
+<span class="lineNum">     925 </span><span class="lineNoCov">          0 :         partial = (x1&gt;&gt;MAPBTOFRAC)&amp;(FRACUNIT-1);</span>
+<span class="lineNum">     926 </span><span class="lineNoCov">          0 :         ystep = FixedDiv (y2-y1,abs(x2-x1));</span>
+<span class="lineNum">     927 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     928 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     929 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     930 </span><span class="lineNoCov">          0 :         mapxstep = 0;</span>
+<span class="lineNum">     931 </span><span class="lineNoCov">          0 :         partial = FRACUNIT;</span>
+<span class="lineNum">     932 </span><span class="lineNoCov">          0 :         ystep = 256*FRACUNIT;</span>
+<span class="lineNum">     933 </span><span class="lineNoCov">          0 :     }   </span>
+<span class="lineNum">     934 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     935 </span><span class="lineNoCov">          0 :     yintercept = (y1&gt;&gt;MAPBTOFRAC) + FixedMul (partial, ystep);</span>
+<span class="lineNum">     936 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     937 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     938 </span><span class="lineNoCov">          0 :     if (yt2 &gt; yt1)</span>
+<span class="lineNum">     939 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     940 </span><span class="lineNoCov">          0 :         mapystep = 1;</span>
+<span class="lineNum">     941 </span><span class="lineNoCov">          0 :         partial = FRACUNIT - ((y1&gt;&gt;MAPBTOFRAC)&amp;(FRACUNIT-1));</span>
+<span class="lineNum">     942 </span><span class="lineNoCov">          0 :         xstep = FixedDiv (x2-x1,abs(y2-y1));</span>
+<span class="lineNum">     943 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     944 </span><span class="lineNoCov">          0 :     else if (yt2 &lt; yt1)</span>
+<span class="lineNum">     945 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     946 </span><span class="lineNoCov">          0 :         mapystep = -1;</span>
+<span class="lineNum">     947 </span><span class="lineNoCov">          0 :         partial = (y1&gt;&gt;MAPBTOFRAC)&amp;(FRACUNIT-1);</span>
+<span class="lineNum">     948 </span><span class="lineNoCov">          0 :         xstep = FixedDiv (x2-x1,abs(y2-y1));</span>
+<span class="lineNum">     949 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     950 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     951 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     952 </span><span class="lineNoCov">          0 :         mapystep = 0;</span>
+<span class="lineNum">     953 </span><span class="lineNoCov">          0 :         partial = FRACUNIT;</span>
+<span class="lineNum">     954 </span><span class="lineNoCov">          0 :         xstep = 256*FRACUNIT;</span>
+<span class="lineNum">     955 </span><span class="lineNoCov">          0 :     }   </span>
+<span class="lineNum">     956 </span><span class="lineNoCov">          0 :     xintercept = (x1&gt;&gt;MAPBTOFRAC) + FixedMul (partial, xstep);</span>
+<span class="lineNum">     957 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     958 </span><span class="lineNoCov">          0 :     // Step through map blocks.</span>
+<span class="lineNum">     959 </span><span class="lineNoCov">          0 :     // Count is present to prevent a round off error</span>
+<span class="lineNum">     960 </span><span class="lineNoCov">          0 :     // from skipping the break.</span>
+<span class="lineNum">     961 </span><span class="lineNoCov">          0 :     mapx = xt1;</span>
+<span class="lineNum">     962 </span><span class="lineNoCov">          0 :     mapy = yt1;</span>
+<span class="lineNum">     963 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     964 </span><span class="lineNoCov">          0 :     for (count = 0 ; count &lt; 64 ; count++)</span>
+<span class="lineNum">     965 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     966 </span><span class="lineNoCov">          0 :         if (flags &amp; PT_ADDLINES)</span>
+<span class="lineNum">     967 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     968 </span><span class="lineNoCov">          0 :             if (!P_BlockLinesIterator (mapx, mapy,PIT_AddLineIntercepts))</span>
+<span class="lineNum">     969 </span><span class="lineNoCov">          0 :                 return false;   // early out</span>
+<span class="lineNum">     970 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     971 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     972 </span><span class="lineNoCov">          0 :         if (flags &amp; PT_ADDTHINGS)</span>
+<span class="lineNum">     973 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     974 </span><span class="lineNoCov">          0 :             if (!P_BlockThingsIterator (mapx, mapy,PIT_AddThingIntercepts))</span>
+<span class="lineNum">     975 </span><span class="lineNoCov">          0 :                 return false;   // early out</span>
+<span class="lineNum">     976 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     977 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     978 </span><span class="lineNoCov">          0 :         if (mapx == xt2</span>
+<span class="lineNum">     979 </span><span class="lineNoCov">          0 :             &amp;&amp; mapy == yt2)</span>
+<span class="lineNum">     980 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     981 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     982 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     983 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     984 </span><span class="lineNoCov">          0 :         if ( (yintercept &gt;&gt; FRACBITS) == mapy)</span>
+<span class="lineNum">     985 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     986 </span><span class="lineNoCov">          0 :             yintercept += ystep;</span>
+<span class="lineNum">     987 </span><span class="lineNoCov">          0 :             mapx += mapxstep;</span>
+<span class="lineNum">     988 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     989 </span><span class="lineNoCov">          0 :         else if ( (xintercept &gt;&gt; FRACBITS) == mapx)</span>
+<span class="lineNum">     990 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     991 </span><span class="lineNoCov">          0 :             xintercept += xstep;</span>
+<span class="lineNum">     992 </span><span class="lineNoCov">          0 :             mapy += mapystep;</span>
+<span class="lineNum">     993 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     994 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     995 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     996 </span><span class="lineNoCov">          0 :     // go through the sorted list</span>
+<span class="lineNum">     997 </span><span class="lineNoCov">          0 :     return P_TraverseIntercepts ( trav, FRACUNIT );</span>
+<span class="lineNum">     998 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     999 </span>            : 
+<span class="lineNum">    1000 </span>            : 
+<span class="lineNum">    1001 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

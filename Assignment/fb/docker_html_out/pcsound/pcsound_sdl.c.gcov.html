@@ -1,0 +1,326 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - pcsound/pcsound_sdl.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">pcsound</a> - pcsound_sdl.c<span style="font-size: 80%;"> (source / <a href="pcsound_sdl.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">177</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : // DESCRIPTION:
+<span class="lineNum">      15 </span>            : //    PC speaker interface.
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      19 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : #include &quot;SDL.h&quot;
+<span class="lineNum">      22 </span>            : #include &quot;SDL_mixer.h&quot;
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #include &quot;pcsound.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;pcsound_internal.h&quot;
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span><span class="lineNoCov">          0 : #define MAX_SOUND_SLICE_TIME 70 /* ms */</span>
+<span class="lineNum">      28 </span><span class="lineNoCov">          0 : #define SQUARE_WAVE_AMP 0x2000</span>
+<span class="lineNum">      29 </span>            : 
+<span class="lineNum">      30 </span>            : // If true, we initialized SDL and have the responsibility to shut it 
+<span class="lineNum">      31 </span>            : // down
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : static int sdl_was_initialized = 0;
+<span class="lineNum">      34 </span>            : 
+<span class="lineNum">      35 </span>            : // Callback function to invoke when we want new sound data
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span>            : static pcsound_callback_func callback;
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span>            : // Output sound format
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            : static int mixing_freq;
+<span class="lineNum">      42 </span>            : static Uint16 mixing_format;
+<span class="lineNum">      43 </span>            : static int mixing_channels;
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span>            : // Currently playing sound
+<span class="lineNum">      46 </span>            : // current_remaining is the number of remaining samples that must be played
+<span class="lineNum">      47 </span>            : // before we invoke the callback to get the next frequency.
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            : static int current_remaining;
+<span class="lineNum">      50 </span>            : static int current_freq;
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span>            : static int phase_offset = 0;
+<span class="lineNum">      53 </span>            : 
+<span class="lineNum">      54 </span>            : // Mixer function that does the PC speaker emulation
+<a name="55"><span class="lineNum">      55 </span>            : </a>
+<span class="lineNum">      56 </span>            : static void PCSound_Mix_Callback(void *udata, Uint8 *stream, int len)
+<span class="lineNum">      57 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      58 </span><span class="lineNoCov">          0 :     Sint16 *leftptr;</span>
+<span class="lineNum">      59 </span><span class="lineNoCov">          0 :     Sint16 *rightptr;</span>
+<span class="lineNum">      60 </span><span class="lineNoCov">          0 :     Sint16 this_value;</span>
+<span class="lineNum">      61 </span><span class="lineNoCov">          0 :     int oldfreq;</span>
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">      63 </span><span class="lineNoCov">          0 :     int nsamples;</span>
+<span class="lineNum">      64 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      65 </span><span class="lineNoCov">          0 :     // Number of samples is quadrupled, because of 16-bit and stereo</span>
+<span class="lineNum">      66 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      67 </span><span class="lineNoCov">          0 :     nsamples = len / 4;</span>
+<span class="lineNum">      68 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      69 </span><span class="lineNoCov">          0 :     leftptr = (Sint16 *) stream;</span>
+<span class="lineNum">      70 </span><span class="lineNoCov">          0 :     rightptr = ((Sint16 *) stream) + 1;</span>
+<span class="lineNum">      71 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">      72 </span><span class="lineNoCov">          0 :     // Fill the output buffer</span>
+<span class="lineNum">      73 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      74 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;nsamples; ++i)</span>
+<span class="lineNum">      75 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      76 </span><span class="lineNoCov">          0 :         // Has this sound expired? If so, invoke the callback to get </span>
+<span class="lineNum">      77 </span><span class="lineNoCov">          0 :         // the next frequency.</span>
+<span class="lineNum">      78 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      79 </span><span class="lineNoCov">          0 :         while (current_remaining == 0) </span>
+<span class="lineNum">      80 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">      81 </span><span class="lineNoCov">          0 :             oldfreq = current_freq;</span>
+<span class="lineNum">      82 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      83 </span><span class="lineNoCov">          0 :             // Get the next frequency to play</span>
+<span class="lineNum">      84 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      85 </span><span class="lineNoCov">          0 :             callback(&amp;current_remaining, &amp;current_freq);</span>
+<span class="lineNum">      86 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      87 </span><span class="lineNoCov">          0 :             if (current_freq != 0)</span>
+<span class="lineNum">      88 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">      89 </span><span class="lineNoCov">          0 :                 // Adjust phase to match to the new frequency.</span>
+<span class="lineNum">      90 </span><span class="lineNoCov">          0 :                 // This gives us a smooth transition between different tones,</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 :                 // with no impulse changes.</span>
+<span class="lineNum">      92 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      93 </span><span class="lineNoCov">          0 :                 phase_offset = (phase_offset * oldfreq) / current_freq;</span>
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">      95 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 :             current_remaining = (current_remaining * mixing_freq) / 1000;</span>
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 :         // Set the value for this sample.</span>
+<span class="lineNum">     100 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 :         if (current_freq == 0)</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 :             // Silence</span>
+<span class="lineNum">     104 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 :             this_value = 0;</span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 :         else </span>
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     109 </span><span class="lineNoCov">          0 :             int frac;</span>
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :             // Determine whether we are at a peak or trough in the current</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 :             // sound.  Multiply by 2 so that frac % 2 will give 0 or 1 </span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 :             // depending on whether we are at a peak or trough.</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :             frac = (phase_offset * current_freq * 2) / mixing_freq;</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 :             if ((frac % 2) == 0) </span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 :                 this_value = SQUARE_WAVE_AMP;</span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 :                 this_value = -SQUARE_WAVE_AMP;</span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 :             ++phase_offset;</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     128 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     129 </span><span class="lineNoCov">          0 :         --current_remaining;</span>
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     131 </span><span class="lineNoCov">          0 :         // Use the same value for the left and right channels.</span>
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :         *leftptr += this_value;</span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 :         *rightptr += this_value;</span>
+<span class="lineNum">     135 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     136 </span><span class="lineNoCov">          0 :         leftptr += 2;</span>
+<span class="lineNum">     137 </span><span class="lineNoCov">          0 :         rightptr += 2;</span>
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 : }</span>
+<a name="140"><span class="lineNum">     140 </span>            : </a>
+<span class="lineNum">     141 </span>            : static int SDLIsInitialized(void)
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :     int freq, channels;</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 :     Uint16 format;</span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 :     return Mix_QuerySpec(&amp;freq, &amp;format, &amp;channels);</span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 : }</span>
+<a name="148"><span class="lineNum">     148 </span>            : </a>
+<span class="lineNum">     149 </span>            : static void PCSound_SDL_Shutdown(void)
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 :     if (sdl_was_initialized)</span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :         Mix_CloseAudio();</span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :         SDL_QuitSubSystem(SDL_INIT_AUDIO);</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 :         sdl_was_initialized = 0;</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     158 </span>            : 
+<span class="lineNum">     159 </span>            : // Calculate slice size, based on MAX_SOUND_SLICE_TIME.
+<span class="lineNum">     160 </span>            : // The result must be a power of two.
+<a name="161"><span class="lineNum">     161 </span>            : </a>
+<span class="lineNum">     162 </span>            : static int GetSliceSize(void)
+<span class="lineNum">     163 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     164 </span><span class="lineNoCov">          0 :     int limit;</span>
+<span class="lineNum">     165 </span><span class="lineNoCov">          0 :     int n;</span>
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :     limit = (pcsound_sample_rate * MAX_SOUND_SLICE_TIME) / 1000;</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 :     // Try all powers of two, not exceeding the limit.</span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 :     for (n=0;; ++n)</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     173 </span><span class="lineNoCov">          0 :         // 2^n &lt;= limit &lt; 2^n+1 ?</span>
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     175 </span><span class="lineNoCov">          0 :         if ((1 &lt;&lt; (n + 1)) &gt; limit)</span>
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 :             return (1 &lt;&lt; n);</span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :     // Should never happen?</span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :     return 1024;</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 : }</span>
+<a name="185"><span class="lineNum">     185 </span>            : </a>
+<span class="lineNum">     186 </span>            : static int PCSound_SDL_Init(pcsound_callback_func callback_func)
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :     int slicesize;</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 :     // Check if SDL_mixer has been opened already</span>
+<span class="lineNum">     191 </span><span class="lineNoCov">          0 :     // If not, we must initialize it now</span>
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     193 </span><span class="lineNoCov">          0 :     if (!SDLIsInitialized())</span>
+<span class="lineNum">     194 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     195 </span><span class="lineNoCov">          0 :         if (SDL_Init(SDL_INIT_AUDIO) &lt; 0)</span>
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;Unable to set up sound.\n&quot;);</span>
+<span class="lineNum">     198 </span><span class="lineNoCov">          0 :             return 0;</span>
+<span class="lineNum">     199 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     200 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     201 </span><span class="lineNoCov">          0 :         slicesize = GetSliceSize();</span>
+<span class="lineNum">     202 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     203 </span><span class="lineNoCov">          0 :         if (Mix_OpenAudioDevice(pcsound_sample_rate, AUDIO_S16SYS, 2, slicesize, NULL, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) &lt; 0)</span>
+<span class="lineNum">     204 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     205 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;Error initializing SDL_mixer: %s\n&quot;, Mix_GetError());</span>
+<span class="lineNum">     206 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     207 </span><span class="lineNoCov">          0 :             SDL_QuitSubSystem(SDL_INIT_AUDIO);</span>
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 :             return 0;</span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :         SDL_PauseAudio(0);</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 :         // When this module shuts down, it has the responsibility to </span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 :         // shut down SDL.</span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :         sdl_was_initialized = 1;</span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :     // Get the mixer frequency, format and number of channels.</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 :     Mix_QuerySpec(&amp;mixing_freq, &amp;mixing_format, &amp;mixing_channels);</span>
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 :     // Only supports AUDIO_S16SYS</span>
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 :     if (mixing_format != AUDIO_S16SYS || mixing_channels != 2)</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 :         fprintf(stderr, </span>
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 :                 &quot;PCSound_SDL only supports native signed 16-bit LSB, &quot;</span>
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 :                 &quot;stereo format!\n&quot;);</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :         PCSound_SDL_Shutdown();</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 :     callback = callback_func;</span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 :     current_freq = 0;</span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 :     current_remaining = 0;</span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 :     Mix_SetPostMix(PCSound_Mix_Callback, NULL);</span>
+<span class="lineNum">     240 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     241 </span><span class="lineNoCov">          0 :     return 1;</span>
+<span class="lineNum">     242 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     243 </span>            : 
+<span class="lineNum">     244 </span>            : pcsound_driver_t pcsound_sdl_driver = 
+<span class="lineNum">     245 </span>            : {
+<span class="lineNum">     246 </span>            :     &quot;SDL&quot;,
+<span class="lineNum">     247 </span>            :     PCSound_SDL_Init,
+<span class="lineNum">     248 </span>            :     PCSound_SDL_Shutdown,
+<span class="lineNum">     249 </span>            : };
+<span class="lineNum">     250 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

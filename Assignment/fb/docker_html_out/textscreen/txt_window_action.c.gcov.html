@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - textscreen/txt_window_action.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">textscreen</a> - txt_window_action.c<span style="font-size: 80%;"> (source / <a href="txt_window_action.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">104</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : 
+<span class="lineNum">      15 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      16 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      17 </span>            : #include &lt;ctype.h&gt;
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : #include &quot;doomkeys.h&quot;
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : #include &quot;txt_window_action.h&quot;
+<span class="lineNum">      22 </span>            : #include &quot;txt_gui.h&quot;
+<span class="lineNum">      23 </span>            : #include &quot;txt_io.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;txt_main.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;txt_utf8.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;txt_window.h&quot;
+<a name="27"><span class="lineNum">      27 </span>            : </a>
+<span class="lineNum">      28 </span>            : static void TXT_WindowActionSizeCalc(TXT_UNCAST_ARG(action))
+<span class="lineNum">      29 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      30 </span><span class="lineNoCov">          0 :     TXT_CAST_ARG(txt_window_action_t, action);</span>
+<span class="lineNum">      31 </span><span class="lineNoCov">          0 :     char buf[10];</span>
+<span class="lineNum">      32 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      33 </span><span class="lineNoCov">          0 :     TXT_GetKeyDescription(action-&gt;key, buf, sizeof(buf));</span>
+<span class="lineNum">      34 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      35 </span><span class="lineNoCov">          0 :     // Width is label length, plus key description length, plus '='</span>
+<span class="lineNum">      36 </span><span class="lineNoCov">          0 :     // and two surrounding spaces.</span>
+<span class="lineNum">      37 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      38 </span><span class="lineNoCov">          0 :     action-&gt;widget.w = TXT_UTF8_Strlen(action-&gt;label)</span>
+<span class="lineNum">      39 </span><span class="lineNoCov">          0 :                      + TXT_UTF8_Strlen(buf) + 3;</span>
+<span class="lineNum">      40 </span><span class="lineNoCov">          0 :     action-&gt;widget.h = 1;</span>
+<span class="lineNum">      41 </span><span class="lineNoCov">          0 : }</span>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<span class="lineNum">      43 </span>            : static void TXT_WindowActionDrawer(TXT_UNCAST_ARG(action))
+<span class="lineNum">      44 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      45 </span><span class="lineNoCov">          0 :     TXT_CAST_ARG(txt_window_action_t, action);</span>
+<span class="lineNum">      46 </span><span class="lineNoCov">          0 :     int hovering;</span>
+<span class="lineNum">      47 </span><span class="lineNoCov">          0 :     char buf[10];</span>
+<span class="lineNum">      48 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      49 </span><span class="lineNoCov">          0 :     TXT_GetKeyDescription(action-&gt;key, buf, sizeof(buf));</span>
+<span class="lineNum">      50 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      51 </span><span class="lineNoCov">          0 :     hovering = TXT_HoveringOverWidget(action);</span>
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 :     TXT_SetWidgetBG(action);</span>
+<span class="lineNum">      53 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      54 </span><span class="lineNoCov">          0 :     TXT_DrawString(&quot; &quot;);</span>
+<span class="lineNum">      55 </span><span class="lineNoCov">          0 :     TXT_FGColor(hovering ? TXT_COLOR_BRIGHT_WHITE : TXT_COLOR_BRIGHT_GREEN);</span>
+<span class="lineNum">      56 </span><span class="lineNoCov">          0 :     TXT_DrawString(buf);</span>
+<span class="lineNum">      57 </span><span class="lineNoCov">          0 :     TXT_FGColor(TXT_COLOR_BRIGHT_CYAN);</span>
+<span class="lineNum">      58 </span><span class="lineNoCov">          0 :     TXT_DrawString(&quot;=&quot;);</span>
+<span class="lineNum">      59 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      60 </span><span class="lineNoCov">          0 :     TXT_FGColor(TXT_COLOR_BRIGHT_WHITE);</span>
+<span class="lineNum">      61 </span><span class="lineNoCov">          0 :     TXT_DrawString(action-&gt;label);</span>
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 :     TXT_DrawString(&quot; &quot;);</span>
+<span class="lineNum">      63 </span><span class="lineNoCov">          0 : }</span>
+<a name="64"><span class="lineNum">      64 </span>            : </a>
+<span class="lineNum">      65 </span>            : static void TXT_WindowActionDestructor(TXT_UNCAST_ARG(action))
+<span class="lineNum">      66 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      67 </span><span class="lineNoCov">          0 :     TXT_CAST_ARG(txt_window_action_t, action);</span>
+<span class="lineNum">      68 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      69 </span><span class="lineNoCov">          0 :     free(action-&gt;label);</span>
+<span class="lineNum">      70 </span><span class="lineNoCov">          0 : }</span>
+<a name="71"><span class="lineNum">      71 </span>            : </a>
+<span class="lineNum">      72 </span>            : static int TXT_WindowActionKeyPress(TXT_UNCAST_ARG(action), int key)
+<span class="lineNum">      73 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      74 </span><span class="lineNoCov">          0 :     TXT_CAST_ARG(txt_window_action_t, action);</span>
+<span class="lineNum">      75 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      76 </span><span class="lineNoCov">          0 :     if (tolower(key) == tolower(action-&gt;key))</span>
+<span class="lineNum">      77 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      78 </span><span class="lineNoCov">          0 :         TXT_EmitSignal(action, &quot;pressed&quot;);</span>
+<span class="lineNum">      79 </span><span class="lineNoCov">          0 :         return 1;</span>
+<span class="lineNum">      80 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      81 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">      82 </span><span class="lineNoCov">          0 :     return 0;</span>
+<span class="lineNum">      83 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">      84 </span>            : 
+<a name="85"><span class="lineNum">      85 </span>            : static void TXT_WindowActionMousePress(TXT_UNCAST_ARG(action), </a>
+<span class="lineNum">      86 </span>            :                                        int x, int y, int b)
+<span class="lineNum">      87 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      88 </span><span class="lineNoCov">          0 :     TXT_CAST_ARG(txt_window_action_t, action);</span>
+<span class="lineNum">      89 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      90 </span><span class="lineNoCov">          0 :     // Simulate a press of the key</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      92 </span><span class="lineNoCov">          0 :     if (b == TXT_MOUSE_LEFT)</span>
+<span class="lineNum">      93 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 :         TXT_WindowActionKeyPress(action, action-&gt;key);</span>
+<span class="lineNum">      95 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">      97 </span>            : 
+<span class="lineNum">      98 </span>            : txt_widget_class_t txt_window_action_class =
+<span class="lineNum">      99 </span>            : {
+<span class="lineNum">     100 </span>            :     TXT_AlwaysSelectable,
+<span class="lineNum">     101 </span>            :     TXT_WindowActionSizeCalc,
+<span class="lineNum">     102 </span>            :     TXT_WindowActionDrawer,
+<span class="lineNum">     103 </span>            :     TXT_WindowActionKeyPress,
+<span class="lineNum">     104 </span>            :     TXT_WindowActionDestructor,
+<span class="lineNum">     105 </span>            :     TXT_WindowActionMousePress,
+<span class="lineNum">     106 </span>            :     NULL,
+<span class="lineNum">     107 </span>            : };
+<a name="108"><span class="lineNum">     108 </span>            : </a>
+<span class="lineNum">     109 </span>            : txt_window_action_t *TXT_NewWindowAction(int key, const char *label)
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :     txt_window_action_t *action;</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 :     action = malloc(sizeof(txt_window_action_t));</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :     TXT_InitWidget(action, &amp;txt_window_action_class);</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 :     action-&gt;key = key;</span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 :     action-&gt;label = strdup(label);</span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 :     return action;</span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 : }</span>
+<a name="121"><span class="lineNum">     121 </span>            : </a>
+<span class="lineNum">     122 </span>            : static void WindowCloseCallback(TXT_UNCAST_ARG(widget), TXT_UNCAST_ARG(window))
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 :     TXT_CAST_ARG(txt_window_t, window);</span>
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 :     TXT_CloseWindow(window);</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 : }</span>
+<a name="128"><span class="lineNum">     128 </span>            : </a>
+<span class="lineNum">     129 </span>            : static void WindowSelectCallback(TXT_UNCAST_ARG(widget), TXT_UNCAST_ARG(window))
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     131 </span><span class="lineNoCov">          0 :     TXT_CAST_ARG(txt_window_t, window);</span>
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :     TXT_WidgetKeyPress(window, KEY_ENTER);</span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     135 </span>            : 
+<span class="lineNum">     136 </span>            : // An action with the name &quot;close&quot; the closes the window
+<a name="137"><span class="lineNum">     137 </span>            : </a>
+<span class="lineNum">     138 </span>            : txt_window_action_t *TXT_NewWindowEscapeAction(txt_window_t *window)
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 :     txt_window_action_t *action;</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :     action = TXT_NewWindowAction(KEY_ESCAPE, &quot;Close&quot;);</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :     TXT_SignalConnect(action, &quot;pressed&quot;, WindowCloseCallback, window);</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :     return action;</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     147 </span>            : 
+<span class="lineNum">     148 </span>            : // Exactly the same as the above, but the button is named &quot;abort&quot;
+<a name="149"><span class="lineNum">     149 </span>            : </a>
+<span class="lineNum">     150 </span>            : txt_window_action_t *TXT_NewWindowAbortAction(txt_window_t *window)
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :     txt_window_action_t *action;</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :     action = TXT_NewWindowAction(KEY_ESCAPE, &quot;Abort&quot;);</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 :     TXT_SignalConnect(action, &quot;pressed&quot;, WindowCloseCallback, window);</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 :     return action;</span>
+<span class="lineNum">     158 </span><span class="lineNoCov">          0 : }</span>
+<a name="159"><span class="lineNum">     159 </span>            : </a>
+<span class="lineNum">     160 </span>            : txt_window_action_t *TXT_NewWindowSelectAction(txt_window_t *window)
+<span class="lineNum">     161 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     162 </span><span class="lineNoCov">          0 :     txt_window_action_t *action;</span>
+<span class="lineNum">     163 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     164 </span><span class="lineNoCov">          0 :     action = TXT_NewWindowAction(KEY_ENTER, &quot;Select&quot;);</span>
+<span class="lineNum">     165 </span><span class="lineNoCov">          0 :     TXT_SignalConnect(action, &quot;pressed&quot;, WindowSelectCallback, window);</span>
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :     return action;</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     169 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

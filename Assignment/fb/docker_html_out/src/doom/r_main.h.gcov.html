@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/r_main.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - r_main.h<span style="font-size: 80%;"> (source / <a href="r_main.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntryLo">71.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      System specific interface stuff.
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #ifndef __R_MAIN__
+<span class="lineNum">      21 </span>            : #define __R_MAIN__
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;d_player.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;r_data.h&quot;
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : //
+<span class="lineNum">      30 </span>            : // POV related.
+<span class="lineNum">      31 </span>            : //
+<span class="lineNum">      32 </span>            : extern fixed_t          viewcos;
+<span class="lineNum">      33 </span>            : extern fixed_t          viewsin;
+<span class="lineNum">      34 </span>            : 
+<span class="lineNum">      35 </span>            : extern int              viewwindowx;
+<span class="lineNum">      36 </span>            : extern int              viewwindowy;
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span>            : 
+<span class="lineNum">      40 </span>            : extern int              centerx;
+<span class="lineNum">      41 </span>            : extern int              centery;
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span>            : extern fixed_t          centerxfrac;
+<span class="lineNum">      44 </span>            : extern fixed_t          centeryfrac;
+<span class="lineNum">      45 </span>            : extern fixed_t          projection;
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span>            : extern int              validcount;
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            : extern int              linecount;
+<span class="lineNum">      50 </span>            : extern int              loopcount;
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span>            : //
+<span class="lineNum">      54 </span>            : // Lighting LUT.
+<span class="lineNum">      55 </span>            : // Used for z-depth cuing per column/row,
+<span class="lineNum">      56 </span>            : //  and other lighting effects (sector ambient, flash).
+<span class="lineNum">      57 </span>            : //
+<span class="lineNum">      58 </span>            : 
+<span class="lineNum">      59 </span>            : // Lighting constants.
+<span class="lineNum">      60 </span>            : // Now why not 32 levels here?
+<span class="lineNum">      61 </span><span class="lineCov">     720202 : #define LIGHTLEVELS             16</span>
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 : #define LIGHTSEGSHIFT            4</span>
+<span class="lineNum">      63 </span>            : 
+<span class="lineNum">      64 </span><span class="lineNoCov">          0 : #define MAXLIGHTSCALE           48</span>
+<span class="lineNum">      65 </span><span class="lineCov">   30101504 : #define LIGHTSCALESHIFT         12</span>
+<span class="lineNum">      66 </span><span class="lineCov">   30336672 : #define MAXLIGHTZ              128</span>
+<span class="lineNum">      67 </span><span class="lineCov">   30101504 : #define LIGHTZSHIFT             20</span>
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : extern lighttable_t*    scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
+<span class="lineNum">      70 </span>            : extern lighttable_t*    scalelightfixed[MAXLIGHTSCALE];
+<span class="lineNum">      71 </span>            : extern lighttable_t*    zlight[LIGHTLEVELS][MAXLIGHTZ];
+<span class="lineNum">      72 </span>            : 
+<span class="lineNum">      73 </span>            : extern int              extralight;
+<span class="lineNum">      74 </span>            : extern lighttable_t*    fixedcolormap;
+<span class="lineNum">      75 </span>            : 
+<span class="lineNum">      76 </span>            : 
+<span class="lineNum">      77 </span>            : // Number of diminishing brightness levels.
+<span class="lineNum">      78 </span>            : // There a 0-31, i.e. 32 LUT in the COLORMAP lump.
+<span class="lineNum">      79 </span><span class="lineCov">   43594268 : #define NUMCOLORMAPS            32</span>
+<span class="lineNum">      80 </span>            : 
+<span class="lineNum">      81 </span>            : 
+<span class="lineNum">      82 </span>            : // Blocky/low detail mode.
+<span class="lineNum">      83 </span>            : //B remove this?
+<span class="lineNum">      84 </span>            : //  0 = high, 1 = low
+<span class="lineNum">      85 </span>            : extern  int             detailshift;    
+<span class="lineNum">      86 </span>            : 
+<span class="lineNum">      87 </span>            : 
+<span class="lineNum">      88 </span>            : //
+<span class="lineNum">      89 </span>            : // Function pointers to switch refresh/drawing functions.
+<span class="lineNum">      90 </span>            : // Used to select shadow mode etc.
+<span class="lineNum">      91 </span>            : //
+<span class="lineNum">      92 </span>            : extern void             (*colfunc) (void);
+<span class="lineNum">      93 </span>            : extern void             (*transcolfunc) (void);
+<span class="lineNum">      94 </span>            : extern void             (*basecolfunc) (void);
+<span class="lineNum">      95 </span>            : extern void             (*fuzzcolfunc) (void);
+<span class="lineNum">      96 </span>            : // No shadow effects on floors.
+<span class="lineNum">      97 </span>            : extern void             (*spanfunc) (void);
+<span class="lineNum">      98 </span>            : 
+<span class="lineNum">      99 </span>            : 
+<span class="lineNum">     100 </span>            : //
+<span class="lineNum">     101 </span>            : // Utility functions.
+<span class="lineNum">     102 </span>            : int
+<span class="lineNum">     103 </span>            : R_PointOnSide
+<span class="lineNum">     104 </span>            : ( fixed_t       x,
+<span class="lineNum">     105 </span>            :   fixed_t       y,
+<span class="lineNum">     106 </span>            :   node_t*       node );
+<span class="lineNum">     107 </span>            : 
+<span class="lineNum">     108 </span>            : int
+<span class="lineNum">     109 </span>            : R_PointOnSegSide
+<span class="lineNum">     110 </span>            : ( fixed_t       x,
+<span class="lineNum">     111 </span>            :   fixed_t       y,
+<span class="lineNum">     112 </span>            :   seg_t*        line );
+<span class="lineNum">     113 </span>            : 
+<span class="lineNum">     114 </span>            : angle_t
+<span class="lineNum">     115 </span>            : R_PointToAngle
+<span class="lineNum">     116 </span>            : ( fixed_t       x,
+<span class="lineNum">     117 </span>            :   fixed_t       y );
+<span class="lineNum">     118 </span>            : 
+<span class="lineNum">     119 </span>            : angle_t
+<span class="lineNum">     120 </span>            : R_PointToAngle2
+<span class="lineNum">     121 </span>            : ( fixed_t       x1,
+<span class="lineNum">     122 </span>            :   fixed_t       y1,
+<span class="lineNum">     123 </span>            :   fixed_t       x2,
+<span class="lineNum">     124 </span>            :   fixed_t       y2 );
+<span class="lineNum">     125 </span>            : 
+<span class="lineNum">     126 </span>            : fixed_t
+<span class="lineNum">     127 </span>            : R_PointToDist
+<span class="lineNum">     128 </span>            : ( fixed_t       x,
+<span class="lineNum">     129 </span>            :   fixed_t       y );
+<span class="lineNum">     130 </span>            : 
+<span class="lineNum">     131 </span>            : 
+<span class="lineNum">     132 </span>            : fixed_t R_ScaleFromGlobalAngle (angle_t visangle);
+<span class="lineNum">     133 </span>            : 
+<span class="lineNum">     134 </span>            : subsector_t*
+<span class="lineNum">     135 </span>            : R_PointInSubsector
+<span class="lineNum">     136 </span>            : ( fixed_t       x,
+<span class="lineNum">     137 </span>            :   fixed_t       y );
+<span class="lineNum">     138 </span>            : 
+<span class="lineNum">     139 </span>            : void
+<span class="lineNum">     140 </span>            : R_AddPointToBox
+<span class="lineNum">     141 </span>            : ( int           x,
+<span class="lineNum">     142 </span>            :   int           y,
+<span class="lineNum">     143 </span>            :   fixed_t*      box );
+<span class="lineNum">     144 </span>            : 
+<span class="lineNum">     145 </span>            : 
+<span class="lineNum">     146 </span>            : 
+<span class="lineNum">     147 </span>            : //
+<span class="lineNum">     148 </span>            : // REFRESH - the actual rendering functions.
+<span class="lineNum">     149 </span>            : //
+<span class="lineNum">     150 </span>            : 
+<span class="lineNum">     151 </span>            : // Called by G_Drawer.
+<span class="lineNum">     152 </span>            : void R_RenderPlayerView (player_t *player);
+<span class="lineNum">     153 </span>            : 
+<span class="lineNum">     154 </span>            : // Called by startup code.
+<span class="lineNum">     155 </span>            : void R_Init (void);
+<span class="lineNum">     156 </span>            : 
+<span class="lineNum">     157 </span>            : // Called by M_Responder.
+<span class="lineNum">     158 </span>            : void R_SetViewSize (int blocks, int detail);
+<span class="lineNum">     159 </span>            : 
+<span class="lineNum">     160 </span>            : #endif
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

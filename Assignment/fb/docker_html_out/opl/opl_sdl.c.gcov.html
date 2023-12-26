@@ -1,0 +1,588 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - opl/opl_sdl.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">opl</a> - opl_sdl.c<span style="font-size: 80%;"> (source / <a href="opl_sdl.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">349</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">16</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : // DESCRIPTION:
+<span class="lineNum">      15 </span>            : //     OPL SDL interface.
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #include &quot;config.h&quot;
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      22 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      23 </span>            : #include &lt;errno.h&gt;
+<span class="lineNum">      24 </span>            : #include &lt;assert.h&gt;
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span>            : #include &quot;SDL.h&quot;
+<span class="lineNum">      27 </span>            : #include &quot;SDL_mixer.h&quot;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : #include &quot;opl3.h&quot;
+<span class="lineNum">      30 </span>            : 
+<span class="lineNum">      31 </span>            : #include &quot;opl.h&quot;
+<span class="lineNum">      32 </span>            : #include &quot;opl_internal.h&quot;
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span>            : #include &quot;opl_queue.h&quot;
+<span class="lineNum">      35 </span>            : 
+<span class="lineNum">      36 </span><span class="lineNoCov">          0 : #define MAX_SOUND_SLICE_TIME 100 /* ms */</span>
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            : typedef struct
+<span class="lineNum">      39 </span>            : {
+<span class="lineNum">      40 </span>            :     unsigned int rate;        // Number of times the timer is advanced per sec.
+<span class="lineNum">      41 </span>            :     unsigned int enabled;     // Non-zero if timer is enabled.
+<span class="lineNum">      42 </span>            :     unsigned int value;       // Last value that was set.
+<span class="lineNum">      43 </span>            :     uint64_t expire_time;     // Calculated time that timer will expire.
+<span class="lineNum">      44 </span>            : } opl_timer_t;
+<span class="lineNum">      45 </span>            : 
+<span class="lineNum">      46 </span>            : // When the callback mutex is locked using OPL_Lock, callback functions
+<span class="lineNum">      47 </span>            : // are not invoked.
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            : static SDL_mutex *callback_mutex = NULL;
+<span class="lineNum">      50 </span>            : 
+<span class="lineNum">      51 </span>            : // Queue of callbacks waiting to be invoked.
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span>            : static opl_callback_queue_t *callback_queue;
+<span class="lineNum">      54 </span>            : 
+<span class="lineNum">      55 </span>            : // Mutex used to control access to the callback queue.
+<span class="lineNum">      56 </span>            : 
+<span class="lineNum">      57 </span>            : static SDL_mutex *callback_queue_mutex = NULL;
+<span class="lineNum">      58 </span>            : 
+<span class="lineNum">      59 </span>            : // Current time, in us since startup:
+<span class="lineNum">      60 </span>            : 
+<span class="lineNum">      61 </span>            : static uint64_t current_time;
+<span class="lineNum">      62 </span>            : 
+<span class="lineNum">      63 </span>            : // If non-zero, playback is currently paused.
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span>            : static int opl_sdl_paused;
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span>            : // Time offset (in us) due to the fact that callbacks
+<span class="lineNum">      68 </span>            : // were previously paused.
+<span class="lineNum">      69 </span>            : 
+<span class="lineNum">      70 </span>            : static uint64_t pause_offset;
+<span class="lineNum">      71 </span>            : 
+<span class="lineNum">      72 </span>            : // OPL software emulator structure.
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span>            : static opl3_chip opl_chip;
+<span class="lineNum">      75 </span>            : static int opl_opl3mode;
+<span class="lineNum">      76 </span>            : 
+<span class="lineNum">      77 </span>            : // Temporary mixing buffer used by the mixing callback.
+<span class="lineNum">      78 </span>            : 
+<span class="lineNum">      79 </span>            : static uint8_t *mix_buffer = NULL;
+<span class="lineNum">      80 </span>            : 
+<span class="lineNum">      81 </span>            : // Register number that was written.
+<span class="lineNum">      82 </span>            : 
+<span class="lineNum">      83 </span>            : static int register_num = 0;
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            : // Timers; DBOPL does not do timer stuff itself.
+<span class="lineNum">      86 </span>            : 
+<span class="lineNum">      87 </span>            : static opl_timer_t timer1 = { 12500, 0, 0, 0 };
+<span class="lineNum">      88 </span>            : static opl_timer_t timer2 = { 3125, 0, 0, 0 };
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            : // SDL parameters.
+<span class="lineNum">      91 </span>            : 
+<span class="lineNum">      92 </span>            : static int sdl_was_initialized = 0;
+<span class="lineNum">      93 </span>            : static int mixing_freq, mixing_channels;
+<span class="lineNum">      94 </span>            : static Uint16 mixing_format;
+<a name="95"><span class="lineNum">      95 </span>            : </a>
+<span class="lineNum">      96 </span>            : static int SDLIsInitialized(void)
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 :     int freq, channels;</span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 :     Uint16 format;</span>
+<span class="lineNum">     100 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 :     return Mix_QuerySpec(&amp;freq, &amp;format, &amp;channels);</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     103 </span>            : 
+<span class="lineNum">     104 </span>            : // Advance time by the specified number of samples, invoking any
+<span class="lineNum">     105 </span>            : // callback functions as appropriate.
+<a name="106"><span class="lineNum">     106 </span>            : </a>
+<span class="lineNum">     107 </span>            : static void AdvanceTime(unsigned int nsamples)
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     109 </span><span class="lineNoCov">          0 :     opl_callback_t callback;</span>
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 :     void *callback_data;</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :     uint64_t us;</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 :     SDL_LockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :     // Advance time.</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 :     us = ((uint64_t) nsamples * OPL_SECOND) / mixing_freq;</span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 :     current_time += us;</span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 :     if (opl_sdl_paused)</span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 :         pause_offset += us;</span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 :     // Are there callbacks to invoke now?  Keep invoking them</span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 :     // until there are no more left.</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     128 </span><span class="lineNoCov">          0 :     while (!OPL_Queue_IsEmpty(callback_queue)</span>
+<span class="lineNum">     129 </span><span class="lineNoCov">          0 :         &amp;&amp; current_time &gt;= OPL_Queue_Peek(callback_queue) + pause_offset)</span>
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     131 </span><span class="lineNoCov">          0 :         // Pop the callback from the queue to invoke it.</span>
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :         if (!OPL_Queue_Pop(callback_queue, &amp;callback, &amp;callback_data))</span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     135 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     136 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     137 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 :         // The mutex stuff here is a bit complicated.  We must</span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 :         // hold callback_mutex when we invoke the callback (so that</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 :         // the control thread can use OPL_Lock() to prevent callbacks</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :         // from being invoked), but we must not be holding</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :         // callback_queue_mutex, as the callback must be able to</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :         // call OPL_SetCallback to schedule new callbacks.</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :         SDL_UnlockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :         SDL_LockMutex(callback_mutex);</span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 :         callback(callback_data);</span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :         SDL_UnlockMutex(callback_mutex);</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 :         SDL_LockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :     SDL_UnlockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     156 </span>            : 
+<span class="lineNum">     157 </span>            : // Call the OPL emulator code to fill the specified buffer.
+<span class="lineNum">     158 </span>            : 
+<span class="lineNum">     159 </span>            : static void FillBuffer(uint8_t *buffer, unsigned int nsamples)
+<span class="lineNum">     160 </span>            : {
+<span class="lineNum">     161 </span>            :     // This seems like a reasonable assumption.  mix_buffer is
+<span class="lineNum">     162 </span>            :     // 1 second long, which should always be much longer than the
+<span class="lineNum">     163 </span>            :     // SDL mix buffer.
+<span class="lineNum">     164 </span>            :     assert(nsamples &lt; mixing_freq);
+<span class="lineNum">     165 </span>            : 
+<span class="lineNum">     166 </span>            :     // OPL output is generated into temporary buffer and then mixed
+<span class="lineNum">     167 </span>            :     // (to avoid overflows etc.)
+<span class="lineNum">     168 </span>            :     OPL3_GenerateStream(&amp;opl_chip, (Bit16s *) mix_buffer, nsamples);
+<span class="lineNum">     169 </span>            :     SDL_MixAudioFormat(buffer, mix_buffer, AUDIO_S16SYS, nsamples * 4,
+<span class="lineNum">     170 </span>            :                        SDL_MIX_MAXVOLUME);
+<span class="lineNum">     171 </span>            : }
+<span class="lineNum">     172 </span>            : 
+<span class="lineNum">     173 </span>            : // Callback function to fill a new sound buffer:
+<a name="174"><span class="lineNum">     174 </span>            : </a>
+<span class="lineNum">     175 </span>            : static void OPL_Mix_Callback(void *udata, Uint8 *buffer, int len)
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 :     unsigned int filled, buffer_samples;</span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 :     // Repeatedly call the OPL emulator update function until the buffer is</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :     // full.</span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :     filled = 0;</span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 :     buffer_samples = len / 4;</span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 :     while (filled &lt; buffer_samples)</span>
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :         uint64_t next_callback_time;</span>
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :         uint64_t nsamples;</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 :         SDL_LockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     191 </span><span class="lineNoCov">          0 :         // Work out the time until the next callback waiting in</span>
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 :         // the callback queue must be invoked.  We can then fill the</span>
+<span class="lineNum">     193 </span><span class="lineNoCov">          0 :         // buffer with this many samples.</span>
+<span class="lineNum">     194 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     195 </span><span class="lineNoCov">          0 :         if (opl_sdl_paused || OPL_Queue_IsEmpty(callback_queue))</span>
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 :             nsamples = buffer_samples - filled;</span>
+<span class="lineNum">     198 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     199 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     200 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     201 </span><span class="lineNoCov">          0 :             next_callback_time = OPL_Queue_Peek(callback_queue) + pause_offset;</span>
+<span class="lineNum">     202 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     203 </span><span class="lineNoCov">          0 :             nsamples = (next_callback_time - current_time) * mixing_freq;</span>
+<span class="lineNum">     204 </span><span class="lineNoCov">          0 :             nsamples = (nsamples + OPL_SECOND - 1) / OPL_SECOND;</span>
+<span class="lineNum">     205 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     206 </span><span class="lineNoCov">          0 :             if (nsamples &gt; buffer_samples - filled)</span>
+<span class="lineNum">     207 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 :                 nsamples = buffer_samples - filled;</span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 :         SDL_UnlockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 :         // Add emulator output to buffer.</span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :         FillBuffer(buffer + filled * 4, nsamples);</span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :         filled += nsamples;</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :         // Invoke callbacks for this point in time.</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 :         AdvanceTime(nsamples);</span>
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 : }</span>
+<a name="224"><span class="lineNum">     224 </span>            : </a>
+<span class="lineNum">     225 </span>            : static void OPL_SDL_Shutdown(void)
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 :     Mix_HookMusic(NULL, NULL);</span>
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 :     if (sdl_was_initialized)</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :         Mix_CloseAudio();</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :         SDL_QuitSubSystem(SDL_INIT_AUDIO);</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 :         OPL_Queue_Destroy(callback_queue);</span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :         free(mix_buffer);</span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 :         sdl_was_initialized = 0;</span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 : /*</span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 :     if (opl_chip != NULL)</span>
+<span class="lineNum">     240 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     241 </span><span class="lineNoCov">          0 :         OPLDestroy(opl_chip);</span>
+<span class="lineNum">     242 </span><span class="lineNoCov">          0 :         opl_chip = NULL;</span>
+<span class="lineNum">     243 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     244 </span><span class="lineNoCov">          0 :     */</span>
+<span class="lineNum">     245 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     246 </span><span class="lineNoCov">          0 :     if (callback_mutex != NULL)</span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     248 </span><span class="lineNoCov">          0 :         SDL_DestroyMutex(callback_mutex);</span>
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 :         callback_mutex = NULL;</span>
+<span class="lineNum">     250 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     251 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     252 </span><span class="lineNoCov">          0 :     if (callback_queue_mutex != NULL)</span>
+<span class="lineNum">     253 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     254 </span><span class="lineNoCov">          0 :         SDL_DestroyMutex(callback_queue_mutex);</span>
+<span class="lineNum">     255 </span><span class="lineNoCov">          0 :         callback_queue_mutex = NULL;</span>
+<span class="lineNum">     256 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     257 </span><span class="lineNoCov">          0 : }</span>
+<a name="258"><span class="lineNum">     258 </span>            : </a>
+<span class="lineNum">     259 </span>            : static unsigned int GetSliceSize(void)
+<span class="lineNum">     260 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     261 </span><span class="lineNoCov">          0 :     int limit;</span>
+<span class="lineNum">     262 </span><span class="lineNoCov">          0 :     int n;</span>
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 :     limit = (opl_sample_rate * MAX_SOUND_SLICE_TIME) / 1000;</span>
+<span class="lineNum">     265 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     266 </span><span class="lineNoCov">          0 :     // Try all powers of two, not exceeding the limit.</span>
+<span class="lineNum">     267 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     268 </span><span class="lineNoCov">          0 :     for (n=0;; ++n)</span>
+<span class="lineNum">     269 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     270 </span><span class="lineNoCov">          0 :         // 2^n &lt;= limit &lt; 2^n+1 ?</span>
+<span class="lineNum">     271 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 :         if ((1 &lt;&lt; (n + 1)) &gt; limit)</span>
+<span class="lineNum">     273 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     274 </span><span class="lineNoCov">          0 :             return (1 &lt;&lt; n);</span>
+<span class="lineNum">     275 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     276 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 :     // Should never happen?</span>
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     280 </span><span class="lineNoCov">          0 :     return 1024;</span>
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 : }</span>
+<a name="282"><span class="lineNum">     282 </span>            : </a>
+<span class="lineNum">     283 </span>            : static int OPL_SDL_Init(unsigned int port_base)
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 :     // Check if SDL_mixer has been opened already</span>
+<span class="lineNum">     286 </span><span class="lineNoCov">          0 :     // If not, we must initialize it now</span>
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     288 </span><span class="lineNoCov">          0 :     if (!SDLIsInitialized())</span>
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 :         if (SDL_Init(SDL_INIT_AUDIO) &lt; 0)</span>
+<span class="lineNum">     291 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     292 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;Unable to set up sound.\n&quot;);</span>
+<span class="lineNum">     293 </span><span class="lineNoCov">          0 :             return 0;</span>
+<span class="lineNum">     294 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     295 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     296 </span><span class="lineNoCov">          0 :         if (Mix_OpenAudioDevice(opl_sample_rate, AUDIO_S16SYS, 2, GetSliceSize(), NULL, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) &lt; 0)</span>
+<span class="lineNum">     297 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     298 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;Error initialising SDL_mixer: %s\n&quot;, Mix_GetError());</span>
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :             SDL_QuitSubSystem(SDL_INIT_AUDIO);</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 :             return 0;</span>
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :         SDL_PauseAudio(0);</span>
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 :         // When this module shuts down, it has the responsibility to </span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 :         // shut down SDL.</span>
+<span class="lineNum">     308 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     309 </span><span class="lineNoCov">          0 :         sdl_was_initialized = 1;</span>
+<span class="lineNum">     310 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :         sdl_was_initialized = 0;</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 :     opl_sdl_paused = 0;</span>
+<span class="lineNum">     317 </span><span class="lineNoCov">          0 :     pause_offset = 0;</span>
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     319 </span><span class="lineNoCov">          0 :     // Queue structure of callbacks to invoke.</span>
+<span class="lineNum">     320 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 :     callback_queue = OPL_Queue_Create();</span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :     current_time = 0;</span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 :     // Get the mixer frequency, format and number of channels.</span>
+<span class="lineNum">     325 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 :     Mix_QuerySpec(&amp;mixing_freq, &amp;mixing_format, &amp;mixing_channels);</span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     328 </span><span class="lineNoCov">          0 :     // Only supports AUDIO_S16SYS</span>
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 :     if (mixing_format != AUDIO_S16SYS || mixing_channels != 2)</span>
+<span class="lineNum">     331 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     332 </span><span class="lineNoCov">          0 :         fprintf(stderr, </span>
+<span class="lineNum">     333 </span><span class="lineNoCov">          0 :                 &quot;OPL_SDL only supports native signed 16-bit LSB, &quot;</span>
+<span class="lineNum">     334 </span><span class="lineNoCov">          0 :                 &quot;stereo format!\n&quot;);</span>
+<span class="lineNum">     335 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     336 </span><span class="lineNoCov">          0 :         OPL_SDL_Shutdown();</span>
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 :         return 0;</span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     340 </span><span class="lineNoCov">          0 :     // Mix buffer: four bytes per sample (16 bits * 2 channels):</span>
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 :     mix_buffer = malloc(mixing_freq * 4);</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 :     // Create the emulator structure:</span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 :     OPL3_Reset(&amp;opl_chip, mixing_freq);</span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 :     opl_opl3mode = 0;</span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :     callback_mutex = SDL_CreateMutex();</span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :     callback_queue_mutex = SDL_CreateMutex();</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 :     // Set postmix that adds the OPL music. This is deliberately done</span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 :     // as a postmix and not using Mix_HookMusic() as the latter disables</span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 :     // normal SDL_mixer music mixing.</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :     Mix_SetPostMix(OPL_Mix_Callback, NULL);</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :     return 1;</span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 : }</span>
+<a name="358"><span class="lineNum">     358 </span>            : </a>
+<span class="lineNum">     359 </span>            : static unsigned int OPL_SDL_PortRead(opl_port_t port)
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 :     unsigned int result = 0;</span>
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :     if (port == OPL_REGISTER_PORT_OPL3)</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :         return 0xff;</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 :     if (timer1.enabled &amp;&amp; current_time &gt; timer1.expire_time)</span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 :         result |= 0x80;   // Either have expired</span>
+<span class="lineNum">     371 </span><span class="lineNoCov">          0 :         result |= 0x40;   // Timer 1 has expired</span>
+<span class="lineNum">     372 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     373 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     374 </span><span class="lineNoCov">          0 :     if (timer2.enabled &amp;&amp; current_time &gt; timer2.expire_time)</span>
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 :         result |= 0x80;   // Either have expired</span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :         result |= 0x20;   // Timer 2 has expired</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 : }</span>
+<a name="382"><span class="lineNum">     382 </span>            : </a>
+<span class="lineNum">     383 </span>            : static void OPLTimer_CalculateEndTime(opl_timer_t *timer)
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 :     int tics;</span>
+<span class="lineNum">     386 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     387 </span><span class="lineNoCov">          0 :     // If the timer is enabled, calculate the time when the timer</span>
+<span class="lineNum">     388 </span><span class="lineNoCov">          0 :     // will expire.</span>
+<span class="lineNum">     389 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     390 </span><span class="lineNoCov">          0 :     if (timer-&gt;enabled)</span>
+<span class="lineNum">     391 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     392 </span><span class="lineNoCov">          0 :         tics = 0x100 - timer-&gt;value;</span>
+<span class="lineNum">     393 </span><span class="lineNoCov">          0 :         timer-&gt;expire_time = current_time</span>
+<span class="lineNum">     394 </span><span class="lineNoCov">          0 :                            + ((uint64_t) tics * OPL_SECOND) / timer-&gt;rate;</span>
+<span class="lineNum">     395 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     396 </span><span class="lineNoCov">          0 : }</span>
+<a name="397"><span class="lineNum">     397 </span>            : </a>
+<span class="lineNum">     398 </span>            : static void WriteRegister(unsigned int reg_num, unsigned int value)
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     400 </span><span class="lineNoCov">          0 :     switch (reg_num)</span>
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     402 </span><span class="lineNoCov">          0 :         case OPL_REG_TIMER1:</span>
+<span class="lineNum">     403 </span><span class="lineNoCov">          0 :             timer1.value = value;</span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 :             OPLTimer_CalculateEndTime(&amp;timer1);</span>
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 :         case OPL_REG_TIMER2:</span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 :             timer2.value = value;</span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :             OPLTimer_CalculateEndTime(&amp;timer2);</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 :         case OPL_REG_TIMER_CTRL:</span>
+<span class="lineNum">     413 </span><span class="lineNoCov">          0 :             if (value &amp; 0x80)</span>
+<span class="lineNum">     414 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 :                 timer1.enabled = 0;</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 :                 timer2.enabled = 0;</span>
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 :                 if ((value &amp; 0x40) == 0)</span>
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :                     timer1.enabled = (value &amp; 0x01) != 0;</span>
+<span class="lineNum">     423 </span><span class="lineNoCov">          0 :                     OPLTimer_CalculateEndTime(&amp;timer1);</span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     425 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 :                 if ((value &amp; 0x20) == 0)</span>
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     428 </span><span class="lineNoCov">          0 :                     timer1.enabled = (value &amp; 0x02) != 0;</span>
+<span class="lineNum">     429 </span><span class="lineNoCov">          0 :                     OPLTimer_CalculateEndTime(&amp;timer2);</span>
+<span class="lineNum">     430 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     431 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     432 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     433 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     435 </span><span class="lineNoCov">          0 :         case OPL_REG_NEW:</span>
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 :             opl_opl3mode = value &amp; 0x01;</span>
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 :             OPL3_WriteRegBuffered(&amp;opl_chip, reg_num, value);</span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 : }</span>
+<a name="443"><span class="lineNum">     443 </span>            : </a>
+<span class="lineNum">     444 </span>            : static void OPL_SDL_PortWrite(opl_port_t port, unsigned int value)
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 :     if (port == OPL_REGISTER_PORT)</span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 :         register_num = value;</span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 :     else if (port == OPL_REGISTER_PORT_OPL3)</span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 :         register_num = value | 0x100;</span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 :     else if (port == OPL_DATA_PORT)</span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :         WriteRegister(register_num, value);</span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     458 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     459 </span>            : 
+<a name="460"><span class="lineNum">     460 </span>            : static void OPL_SDL_SetCallback(uint64_t us, opl_callback_t callback,</a>
+<span class="lineNum">     461 </span>            :                                 void *data)
+<span class="lineNum">     462 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     463 </span><span class="lineNoCov">          0 :     SDL_LockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     464 </span><span class="lineNoCov">          0 :     OPL_Queue_Push(callback_queue, callback, data,</span>
+<span class="lineNum">     465 </span><span class="lineNoCov">          0 :                    current_time - pause_offset + us);</span>
+<span class="lineNum">     466 </span><span class="lineNoCov">          0 :     SDL_UnlockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     467 </span><span class="lineNoCov">          0 : }</span>
+<a name="468"><span class="lineNum">     468 </span>            : </a>
+<span class="lineNum">     469 </span>            : static void OPL_SDL_ClearCallbacks(void)
+<span class="lineNum">     470 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 :     SDL_LockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     472 </span><span class="lineNoCov">          0 :     OPL_Queue_Clear(callback_queue);</span>
+<span class="lineNum">     473 </span><span class="lineNoCov">          0 :     SDL_UnlockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     474 </span><span class="lineNoCov">          0 : }</span>
+<a name="475"><span class="lineNum">     475 </span>            : </a>
+<span class="lineNum">     476 </span>            : static void OPL_SDL_Lock(void)
+<span class="lineNum">     477 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     478 </span><span class="lineNoCov">          0 :     SDL_LockMutex(callback_mutex);</span>
+<span class="lineNum">     479 </span><span class="lineNoCov">          0 : }</span>
+<a name="480"><span class="lineNum">     480 </span>            : </a>
+<span class="lineNum">     481 </span>            : static void OPL_SDL_Unlock(void)
+<span class="lineNum">     482 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 :     SDL_UnlockMutex(callback_mutex);</span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 : }</span>
+<a name="485"><span class="lineNum">     485 </span>            : </a>
+<span class="lineNum">     486 </span>            : static void OPL_SDL_SetPaused(int paused)
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     488 </span><span class="lineNoCov">          0 :     opl_sdl_paused = paused;</span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 : }</span>
+<a name="490"><span class="lineNum">     490 </span>            : </a>
+<span class="lineNum">     491 </span>            : static void OPL_SDL_AdjustCallbacks(float factor)
+<span class="lineNum">     492 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     493 </span><span class="lineNoCov">          0 :     SDL_LockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     494 </span><span class="lineNoCov">          0 :     OPL_Queue_AdjustCallbacks(callback_queue, current_time, factor);</span>
+<span class="lineNum">     495 </span><span class="lineNoCov">          0 :     SDL_UnlockMutex(callback_queue_mutex);</span>
+<span class="lineNum">     496 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     497 </span>            : 
+<span class="lineNum">     498 </span>            : opl_driver_t opl_sdl_driver =
+<span class="lineNum">     499 </span>            : {
+<span class="lineNum">     500 </span>            :     &quot;SDL&quot;,
+<span class="lineNum">     501 </span>            :     OPL_SDL_Init,
+<span class="lineNum">     502 </span>            :     OPL_SDL_Shutdown,
+<span class="lineNum">     503 </span>            :     OPL_SDL_PortRead,
+<span class="lineNum">     504 </span>            :     OPL_SDL_PortWrite,
+<span class="lineNum">     505 </span>            :     OPL_SDL_SetCallback,
+<span class="lineNum">     506 </span>            :     OPL_SDL_ClearCallbacks,
+<span class="lineNum">     507 </span>            :     OPL_SDL_Lock,
+<span class="lineNum">     508 </span>            :     OPL_SDL_Unlock,
+<span class="lineNum">     509 </span>            :     OPL_SDL_SetPaused,
+<span class="lineNum">     510 </span>            :     OPL_SDL_AdjustCallbacks,
+<span class="lineNum">     511 </span>            : };
+<span class="lineNum">     512 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

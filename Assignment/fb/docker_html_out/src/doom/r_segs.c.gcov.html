@@ -1,0 +1,819 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/r_segs.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - r_segs.c<span style="font-size: 80%;"> (source / <a href="r_segs.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">601</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      All the clipping: columns, horizontal spans, sky columns.
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      25 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : #include &quot;i_system.h&quot;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : #include &quot;doomdef.h&quot;
+<span class="lineNum">      30 </span>            : #include &quot;doomstat.h&quot;
+<span class="lineNum">      31 </span>            : 
+<span class="lineNum">      32 </span>            : #include &quot;r_local.h&quot;
+<span class="lineNum">      33 </span>            : #include &quot;r_sky.h&quot;
+<span class="lineNum">      34 </span>            : 
+<span class="lineNum">      35 </span>            : 
+<span class="lineNum">      36 </span>            : // OPTIMIZE: closed two sided lines as single sided
+<span class="lineNum">      37 </span>            : 
+<span class="lineNum">      38 </span>            : // True if any of the segs textures might be visible.
+<span class="lineNum">      39 </span>            : boolean         segtextured;    
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            : // False if the back side is the same plane.
+<span class="lineNum">      42 </span>            : boolean         markfloor;      
+<span class="lineNum">      43 </span>            : boolean         markceiling;
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span>            : boolean         maskedtexture;
+<span class="lineNum">      46 </span>            : int             toptexture;
+<span class="lineNum">      47 </span>            : int             bottomtexture;
+<span class="lineNum">      48 </span>            : int             midtexture;
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span>            : 
+<span class="lineNum">      51 </span>            : angle_t         rw_normalangle;
+<span class="lineNum">      52 </span>            : // angle to line origin
+<span class="lineNum">      53 </span>            : int             rw_angle1;      
+<span class="lineNum">      54 </span>            : 
+<span class="lineNum">      55 </span>            : //
+<span class="lineNum">      56 </span>            : // regular wall
+<span class="lineNum">      57 </span>            : //
+<span class="lineNum">      58 </span>            : int             rw_x;
+<span class="lineNum">      59 </span>            : int             rw_stopx;
+<span class="lineNum">      60 </span>            : angle_t         rw_centerangle;
+<span class="lineNum">      61 </span>            : fixed_t         rw_offset;
+<span class="lineNum">      62 </span>            : fixed_t         rw_distance;
+<span class="lineNum">      63 </span>            : fixed_t         rw_scale;
+<span class="lineNum">      64 </span>            : fixed_t         rw_scalestep;
+<span class="lineNum">      65 </span>            : fixed_t         rw_midtexturemid;
+<span class="lineNum">      66 </span>            : fixed_t         rw_toptexturemid;
+<span class="lineNum">      67 </span>            : fixed_t         rw_bottomtexturemid;
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : int             worldtop;
+<span class="lineNum">      70 </span>            : int             worldbottom;
+<span class="lineNum">      71 </span>            : int             worldhigh;
+<span class="lineNum">      72 </span>            : int             worldlow;
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span>            : fixed_t         pixhigh;
+<span class="lineNum">      75 </span>            : fixed_t         pixlow;
+<span class="lineNum">      76 </span>            : fixed_t         pixhighstep;
+<span class="lineNum">      77 </span>            : fixed_t         pixlowstep;
+<span class="lineNum">      78 </span>            : 
+<span class="lineNum">      79 </span>            : fixed_t         topfrac;
+<span class="lineNum">      80 </span>            : fixed_t         topstep;
+<span class="lineNum">      81 </span>            : 
+<span class="lineNum">      82 </span>            : fixed_t         bottomfrac;
+<span class="lineNum">      83 </span>            : fixed_t         bottomstep;
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            : 
+<span class="lineNum">      86 </span>            : lighttable_t**  walllights;
+<span class="lineNum">      87 </span>            : 
+<span class="lineNum">      88 </span>            : short*          maskedtexturecol;
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            : 
+<span class="lineNum">      91 </span>            : 
+<span class="lineNum">      92 </span>            : //
+<span class="lineNum">      93 </span>            : // R_RenderMaskedSegRange
+<span class="lineNum">      94 </span>            : //
+<span class="lineNum">      95 </span>            : void
+<span class="lineNum">      96 </span>            : R_RenderMaskedSegRange
+<span class="lineNum">      97 </span>            : ( drawseg_t*    ds,
+<a name="98"><span class="lineNum">      98 </span>            :   int           x1,</a>
+<span class="lineNum">      99 </span>            :   int           x2 )
+<span class="lineNum">     100 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 :     unsigned    index;</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 :     column_t*   col;</span>
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 :     int         lightnum;</span>
+<span class="lineNum">     104 </span><span class="lineNoCov">          0 :     int         texnum;</span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 :     // Calculate light table.</span>
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 :     // Use different light tables</span>
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 :     //   for horizontal / vertical / diagonal. Diagonal?</span>
+<span class="lineNum">     109 </span><span class="lineNoCov">          0 :     // OPTIMIZE: get rid of LIGHTSEGSHIFT globally</span>
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 :     curline = ds-&gt;curline;</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :     frontsector = curline-&gt;frontsector;</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 :     backsector = curline-&gt;backsector;</span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 :     texnum = texturetranslation[curline-&gt;sidedef-&gt;midtexture];</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :     lightnum = (frontsector-&gt;lightlevel &gt;&gt; LIGHTSEGSHIFT)+extralight;</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 :     if (curline-&gt;v1-&gt;y == curline-&gt;v2-&gt;y)</span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 :         lightnum--;</span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 :     else if (curline-&gt;v1-&gt;x == curline-&gt;v2-&gt;x)</span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 :         lightnum++;</span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 :     if (lightnum &lt; 0)                </span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 :         walllights = scalelight[0];</span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 :     else if (lightnum &gt;= LIGHTLEVELS)</span>
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 :         walllights = scalelight[LIGHTLEVELS-1];</span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 :         walllights = scalelight[lightnum];</span>
+<span class="lineNum">     128 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     129 </span><span class="lineNoCov">          0 :     maskedtexturecol = ds-&gt;maskedtexturecol;</span>
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     131 </span><span class="lineNoCov">          0 :     rw_scalestep = ds-&gt;scalestep;            </span>
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 :     spryscale = ds-&gt;scale1 + (x1 - ds-&gt;x1)*rw_scalestep;</span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 :     mfloorclip = ds-&gt;sprbottomclip;</span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 :     mceilingclip = ds-&gt;sprtopclip;</span>
+<span class="lineNum">     135 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     136 </span><span class="lineNoCov">          0 :     // find positioning</span>
+<span class="lineNum">     137 </span><span class="lineNoCov">          0 :     if (curline-&gt;linedef-&gt;flags &amp; ML_DONTPEGBOTTOM)</span>
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 :         dc_texturemid = frontsector-&gt;floorheight &gt; backsector-&gt;floorheight</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 :             ? frontsector-&gt;floorheight : backsector-&gt;floorheight;</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :         dc_texturemid = dc_texturemid + textureheight[texnum] - viewz;</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :         dc_texturemid =frontsector-&gt;ceilingheight&lt;backsector-&gt;ceilingheight</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 :             ? frontsector-&gt;ceilingheight : backsector-&gt;ceilingheight;</span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :         dc_texturemid = dc_texturemid - viewz;</span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :     dc_texturemid += curline-&gt;sidedef-&gt;rowoffset;</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 :     if (fixedcolormap)</span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :         dc_colormap = fixedcolormap;</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :     // draw the columns</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 :     for (dc_x = x1 ; dc_x &lt;= x2 ; dc_x++)</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 :         // calculate lighting</span>
+<span class="lineNum">     158 </span><span class="lineNoCov">          0 :         if (maskedtexturecol[dc_x] != SHRT_MAX)</span>
+<span class="lineNum">     159 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     160 </span><span class="lineNoCov">          0 :             if (!fixedcolormap)</span>
+<span class="lineNum">     161 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     162 </span><span class="lineNoCov">          0 :                 index = spryscale&gt;&gt;LIGHTSCALESHIFT;</span>
+<span class="lineNum">     163 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     164 </span><span class="lineNoCov">          0 :                 if (index &gt;=  MAXLIGHTSCALE )</span>
+<span class="lineNum">     165 </span><span class="lineNoCov">          0 :                     index = MAXLIGHTSCALE-1;</span>
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :                 dc_colormap = walllights[index];</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 :             sprtopscreen = centeryfrac - FixedMul(dc_texturemid, spryscale);</span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 :             dc_iscale = 0xffffffffu / (unsigned)spryscale;</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :             </span>
+<span class="lineNum">     173 </span><span class="lineNoCov">          0 :             // draw the texture</span>
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 :             col = (column_t *)( </span>
+<span class="lineNum">     175 </span><span class="lineNoCov">          0 :                 (byte *)R_GetColumn(texnum,maskedtexturecol[dc_x]) -3);</span>
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 :             R_DrawMaskedColumn (col);</span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 :             maskedtexturecol[dc_x] = SHRT_MAX;</span>
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :         spryscale += rw_scalestep;</span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     184 </span>            : 
+<span class="lineNum">     185 </span>            : 
+<span class="lineNum">     186 </span>            : 
+<span class="lineNum">     187 </span>            : 
+<span class="lineNum">     188 </span>            : //
+<span class="lineNum">     189 </span>            : // R_RenderSegLoop
+<span class="lineNum">     190 </span>            : // Draws zero, one, or two textures (and possibly a masked
+<span class="lineNum">     191 </span>            : //  texture) for walls.
+<span class="lineNum">     192 </span>            : // Can draw or mark the starting pixel of floor and ceiling
+<span class="lineNum">     193 </span>            : //  textures.
+<span class="lineNum">     194 </span>            : // CALLED: CORE LOOPING ROUTINE.
+<span class="lineNum">     195 </span>            : //
+<span class="lineNum">     196 </span><span class="lineNoCov">          0 : #define HEIGHTBITS              12</span>
+<span class="lineNum">     197 </span><span class="lineNoCov">          0 : #define HEIGHTUNIT              (1&lt;&lt;HEIGHTBITS)</span>
+<a name="198"><span class="lineNum">     198 </span>            : </a>
+<span class="lineNum">     199 </span>            : void R_RenderSegLoop (void)
+<span class="lineNum">     200 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     201 </span><span class="lineNoCov">          0 :     angle_t             angle;</span>
+<span class="lineNum">     202 </span><span class="lineNoCov">          0 :     unsigned            index;</span>
+<span class="lineNum">     203 </span><span class="lineNoCov">          0 :     int                 yl;</span>
+<span class="lineNum">     204 </span><span class="lineNoCov">          0 :     int                 yh;</span>
+<span class="lineNum">     205 </span><span class="lineNoCov">          0 :     int                 mid;</span>
+<span class="lineNum">     206 </span><span class="lineNoCov">          0 :     fixed_t             texturecolumn;</span>
+<span class="lineNum">     207 </span><span class="lineNoCov">          0 :     int                 top;</span>
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 :     int                 bottom;</span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 :     for ( ; rw_x &lt; rw_stopx ; rw_x++)</span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 :         // mark floor / ceiling areas</span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 :         yl = (topfrac+HEIGHTUNIT-1)&gt;&gt;HEIGHTBITS;</span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 :         // no space above wall?</span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :         if (yl &lt; ceilingclip[rw_x]+1)</span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :             yl = ceilingclip[rw_x]+1;</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :         if (markceiling)</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 :             top = ceilingclip[rw_x]+1;</span>
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 :             bottom = yl-1;</span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 :             if (bottom &gt;= floorclip[rw_x])</span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 :                 bottom = floorclip[rw_x]-1;</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 :             if (top &lt;= bottom)</span>
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 :                 ceilingplane-&gt;top[rw_x] = top;</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 :                 ceilingplane-&gt;bottom[rw_x] = bottom;</span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :         yh = bottomfrac&gt;&gt;HEIGHTBITS;</span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 :         if (yh &gt;= floorclip[rw_x])</span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 :             yh = floorclip[rw_x]-1;</span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 :         if (markfloor)</span>
+<span class="lineNum">     240 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     241 </span><span class="lineNoCov">          0 :             top = yh+1;</span>
+<span class="lineNum">     242 </span><span class="lineNoCov">          0 :             bottom = floorclip[rw_x]-1;</span>
+<span class="lineNum">     243 </span><span class="lineNoCov">          0 :             if (top &lt;= ceilingclip[rw_x])</span>
+<span class="lineNum">     244 </span><span class="lineNoCov">          0 :                 top = ceilingclip[rw_x]+1;</span>
+<span class="lineNum">     245 </span><span class="lineNoCov">          0 :             if (top &lt;= bottom)</span>
+<span class="lineNum">     246 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :                 floorplane-&gt;top[rw_x] = top;</span>
+<span class="lineNum">     248 </span><span class="lineNoCov">          0 :                 floorplane-&gt;bottom[rw_x] = bottom;</span>
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     250 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     251 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     252 </span><span class="lineNoCov">          0 :         // texturecolumn and lighting are independent of wall tiers</span>
+<span class="lineNum">     253 </span><span class="lineNoCov">          0 :         if (segtextured)</span>
+<span class="lineNum">     254 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     255 </span><span class="lineNoCov">          0 :             // calculate texture offset</span>
+<span class="lineNum">     256 </span><span class="lineNoCov">          0 :             angle = (rw_centerangle + xtoviewangle[rw_x])&gt;&gt;ANGLETOFINESHIFT;</span>
+<span class="lineNum">     257 </span><span class="lineNoCov">          0 :             texturecolumn = rw_offset-FixedMul(finetangent[angle],rw_distance);</span>
+<span class="lineNum">     258 </span><span class="lineNoCov">          0 :             texturecolumn &gt;&gt;= FRACBITS;</span>
+<span class="lineNum">     259 </span><span class="lineNoCov">          0 :             // calculate lighting</span>
+<span class="lineNum">     260 </span><span class="lineNoCov">          0 :             index = rw_scale&gt;&gt;LIGHTSCALESHIFT;</span>
+<span class="lineNum">     261 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     262 </span><span class="lineNoCov">          0 :             if (index &gt;=  MAXLIGHTSCALE )</span>
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 :                 index = MAXLIGHTSCALE-1;</span>
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     265 </span><span class="lineNoCov">          0 :             dc_colormap = walllights[index];</span>
+<span class="lineNum">     266 </span><span class="lineNoCov">          0 :             dc_x = rw_x;</span>
+<span class="lineNum">     267 </span><span class="lineNoCov">          0 :             dc_iscale = 0xffffffffu / (unsigned)rw_scale;</span>
+<span class="lineNum">     268 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     269 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     270 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     271 </span><span class="lineNoCov">          0 :             // purely to shut up the compiler</span>
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     273 </span><span class="lineNoCov">          0 :             texturecolumn = 0;</span>
+<span class="lineNum">     274 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     275 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     276 </span><span class="lineNoCov">          0 :         // draw the wall tiers</span>
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 :         if (midtexture)</span>
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 :             // single sided line</span>
+<span class="lineNum">     280 </span><span class="lineNoCov">          0 :             dc_yl = yl;</span>
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 :             dc_yh = yh;</span>
+<span class="lineNum">     282 </span><span class="lineNoCov">          0 :             dc_texturemid = rw_midtexturemid;</span>
+<span class="lineNum">     283 </span><span class="lineNoCov">          0 :             dc_source = R_GetColumn(midtexture,texturecolumn);</span>
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 :             colfunc ();</span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 :             ceilingclip[rw_x] = viewheight;</span>
+<span class="lineNum">     286 </span><span class="lineNoCov">          0 :             floorclip[rw_x] = -1;</span>
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     288 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 :             // two sided line</span>
+<span class="lineNum">     291 </span><span class="lineNoCov">          0 :             if (toptexture)</span>
+<span class="lineNum">     292 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     293 </span><span class="lineNoCov">          0 :                 // top wall</span>
+<span class="lineNum">     294 </span><span class="lineNoCov">          0 :                 mid = pixhigh&gt;&gt;HEIGHTBITS;</span>
+<span class="lineNum">     295 </span><span class="lineNoCov">          0 :                 pixhigh += pixhighstep;</span>
+<span class="lineNum">     296 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     297 </span><span class="lineNoCov">          0 :                 if (mid &gt;= floorclip[rw_x])</span>
+<span class="lineNum">     298 </span><span class="lineNoCov">          0 :                     mid = floorclip[rw_x]-1;</span>
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :                 if (mid &gt;= yl)</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 :                     dc_yl = yl;</span>
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 :                     dc_yh = mid;</span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :                     dc_texturemid = rw_toptexturemid;</span>
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 :                     dc_source = R_GetColumn(toptexture,texturecolumn);</span>
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 :                     colfunc ();</span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 :                     ceilingclip[rw_x] = mid;</span>
+<span class="lineNum">     308 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     309 </span><span class="lineNoCov">          0 :                 else</span>
+<span class="lineNum">     310 </span><span class="lineNoCov">          0 :                     ceilingclip[rw_x] = yl-1;</span>
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :                 // no top wall</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :                 if (markceiling)</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 :                     ceilingclip[rw_x] = yl-1;</span>
+<span class="lineNum">     317 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     319 </span><span class="lineNoCov">          0 :             if (bottomtexture)</span>
+<span class="lineNum">     320 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 :                 // bottom wall</span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :                 mid = (pixlow+HEIGHTUNIT-1)&gt;&gt;HEIGHTBITS;</span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 :                 pixlow += pixlowstep;</span>
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     325 </span><span class="lineNoCov">          0 :                 // no space above wall?</span>
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 :                 if (mid &lt;= ceilingclip[rw_x])</span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 :                     mid = ceilingclip[rw_x]+1;</span>
+<span class="lineNum">     328 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 :                 if (mid &lt;= yh)</span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 :                 {</span>
+<span class="lineNum">     331 </span><span class="lineNoCov">          0 :                     dc_yl = mid;</span>
+<span class="lineNum">     332 </span><span class="lineNoCov">          0 :                     dc_yh = yh;</span>
+<span class="lineNum">     333 </span><span class="lineNoCov">          0 :                     dc_texturemid = rw_bottomtexturemid;</span>
+<span class="lineNum">     334 </span><span class="lineNoCov">          0 :                     dc_source = R_GetColumn(bottomtexture,</span>
+<span class="lineNum">     335 </span><span class="lineNoCov">          0 :                                             texturecolumn);</span>
+<span class="lineNum">     336 </span><span class="lineNoCov">          0 :                     colfunc ();</span>
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 :                     floorclip[rw_x] = mid;</span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :                 }</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 :                 else</span>
+<span class="lineNum">     340 </span><span class="lineNoCov">          0 :                     floorclip[rw_x] = yh+1;</span>
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 :                 // no bottom wall</span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 :                 if (markfloor)</span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 :                     floorclip[rw_x] = yh+1;</span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :             if (maskedtexture)</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 :                 // save texturecol</span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 :                 //  for backdrawing of masked mid texture</span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 :                 maskedtexturecol[rw_x] = texturecolumn;</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :         rw_scale += rw_scalestep;</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 :         topfrac += topstep;</span>
+<span class="lineNum">     359 </span><span class="lineNoCov">          0 :         bottomfrac += bottomstep;</span>
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     362 </span>            : 
+<span class="lineNum">     363 </span>            : 
+<span class="lineNum">     364 </span>            : 
+<span class="lineNum">     365 </span>            : 
+<span class="lineNum">     366 </span>            : //
+<span class="lineNum">     367 </span>            : // R_StoreWallRange
+<span class="lineNum">     368 </span>            : // A wall segment will be drawn
+<span class="lineNum">     369 </span>            : //  between start and stop pixels (inclusive).
+<span class="lineNum">     370 </span>            : //
+<span class="lineNum">     371 </span>            : void
+<span class="lineNum">     372 </span>            : R_StoreWallRange
+<a name="373"><span class="lineNum">     373 </span>            : ( int   start,</a>
+<span class="lineNum">     374 </span>            :   int   stop )
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 :     fixed_t             hyp;</span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :     fixed_t             sineval;</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :     angle_t             distangle, offsetangle;</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 :     fixed_t             vtop;</span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :     int                 lightnum;</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     382 </span><span class="lineNoCov">          0 :     // don't overflow and crash</span>
+<span class="lineNum">     383 </span><span class="lineNoCov">          0 :     if (ds_p == &amp;drawsegs[MAXDRAWSEGS])</span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 :         return;         </span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     386 </span><span class="lineNoCov">          0 : #ifdef RANGECHECK</span>
+<span class="lineNum">     387 </span><span class="lineNoCov">          0 :     if (start &gt;=viewwidth || start &gt; stop)</span>
+<span class="lineNum">     388 </span><span class="lineNoCov">          0 :         I_Error (&quot;Bad R_RenderWallRange: %i to %i&quot;, start , stop);</span>
+<span class="lineNum">     389 </span><span class="lineNoCov">          0 : #endif</span>
+<span class="lineNum">     390 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     391 </span><span class="lineNoCov">          0 :     sidedef = curline-&gt;sidedef;</span>
+<span class="lineNum">     392 </span><span class="lineNoCov">          0 :     linedef = curline-&gt;linedef;</span>
+<span class="lineNum">     393 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     394 </span><span class="lineNoCov">          0 :     // mark the segment as visible for auto map</span>
+<span class="lineNum">     395 </span><span class="lineNoCov">          0 :     linedef-&gt;flags |= ML_MAPPED;</span>
+<span class="lineNum">     396 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     397 </span><span class="lineNoCov">          0 :     // calculate rw_distance for scale calculation</span>
+<span class="lineNum">     398 </span><span class="lineNoCov">          0 :     rw_normalangle = curline-&gt;angle + ANG90;</span>
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 :     offsetangle = abs((int)rw_normalangle-(int)rw_angle1);</span>
+<span class="lineNum">     400 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 :     if (offsetangle &gt; ANG90)</span>
+<span class="lineNum">     402 </span><span class="lineNoCov">          0 :         offsetangle = ANG90;</span>
+<span class="lineNum">     403 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 :     distangle = ANG90 - offsetangle;</span>
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 :     hyp = R_PointToDist (curline-&gt;v1-&gt;x, curline-&gt;v1-&gt;y);</span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 :     sineval = finesine[distangle&gt;&gt;ANGLETOFINESHIFT];</span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 :     rw_distance = FixedMul (hyp, sineval);</span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 :     ds_p-&gt;x1 = rw_x = start;</span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 :     ds_p-&gt;x2 = stop;</span>
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 :     ds_p-&gt;curline = curline;</span>
+<span class="lineNum">     413 </span><span class="lineNoCov">          0 :     rw_stopx = stop+1;</span>
+<span class="lineNum">     414 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 :     // calculate scale at both ends and step</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 :     ds_p-&gt;scale1 = rw_scale = </span>
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 :         R_ScaleFromGlobalAngle (viewangle + xtoviewangle[start]);</span>
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :     if (stop &gt; start )</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 :         ds_p-&gt;scale2 = R_ScaleFromGlobalAngle (viewangle + xtoviewangle[stop]);</span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :         ds_p-&gt;scalestep = rw_scalestep = </span>
+<span class="lineNum">     423 </span><span class="lineNoCov">          0 :             (ds_p-&gt;scale2 - rw_scale) / (stop-start);</span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     425 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 :         // UNUSED: try to fix the stretched line bug</span>
+<span class="lineNum">     428 </span>            : #if 0
+<span class="lineNum">     429 </span>            :         if (rw_distance &lt; FRACUNIT/2)
+<span class="lineNum">     430 </span>            :         {
+<span class="lineNum">     431 </span>            :             fixed_t             trx,try;
+<span class="lineNum">     432 </span>            :             fixed_t             gxt,gyt;
+<span class="lineNum">     433 </span>            : 
+<span class="lineNum">     434 </span>            :             trx = curline-&gt;v1-&gt;x - viewx;
+<span class="lineNum">     435 </span>            :             try = curline-&gt;v1-&gt;y - viewy;
+<span class="lineNum">     436 </span>            :                         
+<span class="lineNum">     437 </span>            :             gxt = FixedMul(trx,viewcos); 
+<span class="lineNum">     438 </span>            :             gyt = -FixedMul(try,viewsin); 
+<span class="lineNum">     439 </span>            :             ds_p-&gt;scale1 = FixedDiv(projection, gxt-gyt)&lt;&lt;detailshift;
+<span class="lineNum">     440 </span>            :         }
+<span class="lineNum">     441 </span>            : #endif
+<span class="lineNum">     442 </span>            :         ds_p-&gt;scale2 = ds_p-&gt;scale1;
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :     // calculate texture boundaries</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 :     //  and decide if floor / ceiling marks are needed</span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :     worldtop = frontsector-&gt;ceilingheight - viewz;</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 :     worldbottom = frontsector-&gt;floorheight - viewz;</span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 :     midtexture = toptexture = bottomtexture = maskedtexture = 0;</span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 :     ds_p-&gt;maskedtexturecol = NULL;</span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 :     if (!backsector)</span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 :         // single sided line</span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :         midtexture = texturetranslation[sidedef-&gt;midtexture];</span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 :         // a single sided line is terminal, so it must mark ends</span>
+<span class="lineNum">     458 </span><span class="lineNoCov">          0 :         markfloor = markceiling = true;</span>
+<span class="lineNum">     459 </span><span class="lineNoCov">          0 :         if (linedef-&gt;flags &amp; ML_DONTPEGBOTTOM)</span>
+<span class="lineNum">     460 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     461 </span><span class="lineNoCov">          0 :             vtop = frontsector-&gt;floorheight +</span>
+<span class="lineNum">     462 </span><span class="lineNoCov">          0 :                 textureheight[sidedef-&gt;midtexture];</span>
+<span class="lineNum">     463 </span><span class="lineNoCov">          0 :             // bottom of texture at bottom</span>
+<span class="lineNum">     464 </span><span class="lineNoCov">          0 :             rw_midtexturemid = vtop - viewz;    </span>
+<span class="lineNum">     465 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     466 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     467 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     468 </span><span class="lineNoCov">          0 :             // top of texture at top</span>
+<span class="lineNum">     469 </span><span class="lineNoCov">          0 :             rw_midtexturemid = worldtop;</span>
+<span class="lineNum">     470 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 :         rw_midtexturemid += sidedef-&gt;rowoffset;</span>
+<span class="lineNum">     472 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     473 </span><span class="lineNoCov">          0 :         ds_p-&gt;silhouette = SIL_BOTH;</span>
+<span class="lineNum">     474 </span><span class="lineNoCov">          0 :         ds_p-&gt;sprtopclip = screenheightarray;</span>
+<span class="lineNum">     475 </span><span class="lineNoCov">          0 :         ds_p-&gt;sprbottomclip = negonearray;</span>
+<span class="lineNum">     476 </span><span class="lineNoCov">          0 :         ds_p-&gt;bsilheight = INT_MAX;</span>
+<span class="lineNum">     477 </span><span class="lineNoCov">          0 :         ds_p-&gt;tsilheight = INT_MIN;</span>
+<span class="lineNum">     478 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     479 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     480 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     481 </span><span class="lineNoCov">          0 :         // two sided line</span>
+<span class="lineNum">     482 </span><span class="lineNoCov">          0 :         ds_p-&gt;sprtopclip = ds_p-&gt;sprbottomclip = NULL;</span>
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 :         ds_p-&gt;silhouette = 0;</span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     485 </span><span class="lineNoCov">          0 :         if (frontsector-&gt;floorheight &gt; backsector-&gt;floorheight)</span>
+<span class="lineNum">     486 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 :             ds_p-&gt;silhouette = SIL_BOTTOM;</span>
+<span class="lineNum">     488 </span><span class="lineNoCov">          0 :             ds_p-&gt;bsilheight = frontsector-&gt;floorheight;</span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     490 </span><span class="lineNoCov">          0 :         else if (backsector-&gt;floorheight &gt; viewz)</span>
+<span class="lineNum">     491 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     492 </span><span class="lineNoCov">          0 :             ds_p-&gt;silhouette = SIL_BOTTOM;</span>
+<span class="lineNum">     493 </span><span class="lineNoCov">          0 :             ds_p-&gt;bsilheight = INT_MAX;</span>
+<span class="lineNum">     494 </span><span class="lineNoCov">          0 :             // ds_p-&gt;sprbottomclip = negonearray;</span>
+<span class="lineNum">     495 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     496 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     497 </span><span class="lineNoCov">          0 :         if (frontsector-&gt;ceilingheight &lt; backsector-&gt;ceilingheight)</span>
+<span class="lineNum">     498 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     499 </span><span class="lineNoCov">          0 :             ds_p-&gt;silhouette |= SIL_TOP;</span>
+<span class="lineNum">     500 </span><span class="lineNoCov">          0 :             ds_p-&gt;tsilheight = frontsector-&gt;ceilingheight;</span>
+<span class="lineNum">     501 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     502 </span><span class="lineNoCov">          0 :         else if (backsector-&gt;ceilingheight &lt; viewz)</span>
+<span class="lineNum">     503 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     504 </span><span class="lineNoCov">          0 :             ds_p-&gt;silhouette |= SIL_TOP;</span>
+<span class="lineNum">     505 </span><span class="lineNoCov">          0 :             ds_p-&gt;tsilheight = INT_MIN;</span>
+<span class="lineNum">     506 </span><span class="lineNoCov">          0 :             // ds_p-&gt;sprtopclip = screenheightarray;</span>
+<span class="lineNum">     507 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     509 </span><span class="lineNoCov">          0 :         if (backsector-&gt;ceilingheight &lt;= frontsector-&gt;floorheight)</span>
+<span class="lineNum">     510 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 :             ds_p-&gt;sprbottomclip = negonearray;</span>
+<span class="lineNum">     512 </span><span class="lineNoCov">          0 :             ds_p-&gt;bsilheight = INT_MAX;</span>
+<span class="lineNum">     513 </span><span class="lineNoCov">          0 :             ds_p-&gt;silhouette |= SIL_BOTTOM;</span>
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     515 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     516 </span><span class="lineNoCov">          0 :         if (backsector-&gt;floorheight &gt;= frontsector-&gt;ceilingheight)</span>
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     518 </span><span class="lineNoCov">          0 :             ds_p-&gt;sprtopclip = screenheightarray;</span>
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 :             ds_p-&gt;tsilheight = INT_MIN;</span>
+<span class="lineNum">     520 </span><span class="lineNoCov">          0 :             ds_p-&gt;silhouette |= SIL_TOP;</span>
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     522 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 :         worldhigh = backsector-&gt;ceilingheight - viewz;</span>
+<span class="lineNum">     524 </span><span class="lineNoCov">          0 :         worldlow = backsector-&gt;floorheight - viewz;</span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 :         // hack to allow height changes in outdoor areas</span>
+<span class="lineNum">     527 </span><span class="lineNoCov">          0 :         if (frontsector-&gt;ceilingpic == skyflatnum </span>
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 :             &amp;&amp; backsector-&gt;ceilingpic == skyflatnum)</span>
+<span class="lineNum">     529 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     530 </span><span class="lineNoCov">          0 :             worldtop = worldhigh;</span>
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     532 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     533 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     534 </span><span class="lineNoCov">          0 :         if (worldlow != worldbottom </span>
+<span class="lineNum">     535 </span><span class="lineNoCov">          0 :             || backsector-&gt;floorpic != frontsector-&gt;floorpic</span>
+<span class="lineNum">     536 </span><span class="lineNoCov">          0 :             || backsector-&gt;lightlevel != frontsector-&gt;lightlevel)</span>
+<span class="lineNum">     537 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     538 </span><span class="lineNoCov">          0 :             markfloor = true;</span>
+<span class="lineNum">     539 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     540 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     541 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     542 </span><span class="lineNoCov">          0 :             // same plane on both sides</span>
+<span class="lineNum">     543 </span><span class="lineNoCov">          0 :             markfloor = false;</span>
+<span class="lineNum">     544 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     545 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     546 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     547 </span><span class="lineNoCov">          0 :         if (worldhigh != worldtop </span>
+<span class="lineNum">     548 </span><span class="lineNoCov">          0 :             || backsector-&gt;ceilingpic != frontsector-&gt;ceilingpic</span>
+<span class="lineNum">     549 </span><span class="lineNoCov">          0 :             || backsector-&gt;lightlevel != frontsector-&gt;lightlevel)</span>
+<span class="lineNum">     550 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     551 </span><span class="lineNoCov">          0 :             markceiling = true;</span>
+<span class="lineNum">     552 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     553 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     554 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     555 </span><span class="lineNoCov">          0 :             // same plane on both sides</span>
+<span class="lineNum">     556 </span><span class="lineNoCov">          0 :             markceiling = false;</span>
+<span class="lineNum">     557 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     558 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     559 </span><span class="lineNoCov">          0 :         if (backsector-&gt;ceilingheight &lt;= frontsector-&gt;floorheight</span>
+<span class="lineNum">     560 </span><span class="lineNoCov">          0 :             || backsector-&gt;floorheight &gt;= frontsector-&gt;ceilingheight)</span>
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     562 </span><span class="lineNoCov">          0 :             // closed door</span>
+<span class="lineNum">     563 </span><span class="lineNoCov">          0 :             markceiling = markfloor = true;</span>
+<span class="lineNum">     564 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     565 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     566 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     567 </span><span class="lineNoCov">          0 :         if (worldhigh &lt; worldtop)</span>
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     569 </span><span class="lineNoCov">          0 :             // top texture</span>
+<span class="lineNum">     570 </span><span class="lineNoCov">          0 :             toptexture = texturetranslation[sidedef-&gt;toptexture];</span>
+<span class="lineNum">     571 </span><span class="lineNoCov">          0 :             if (linedef-&gt;flags &amp; ML_DONTPEGTOP)</span>
+<span class="lineNum">     572 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     573 </span><span class="lineNoCov">          0 :                 // top of texture at top</span>
+<span class="lineNum">     574 </span><span class="lineNoCov">          0 :                 rw_toptexturemid = worldtop;</span>
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     577 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :                 vtop =</span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :                     backsector-&gt;ceilingheight</span>
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 :                     + textureheight[sidedef-&gt;toptexture];</span>
+<span class="lineNum">     581 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     582 </span><span class="lineNoCov">          0 :                 // bottom of texture</span>
+<span class="lineNum">     583 </span><span class="lineNoCov">          0 :                 rw_toptexturemid = vtop - viewz;        </span>
+<span class="lineNum">     584 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     585 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     586 </span><span class="lineNoCov">          0 :         if (worldlow &gt; worldbottom)</span>
+<span class="lineNum">     587 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     588 </span><span class="lineNoCov">          0 :             // bottom texture</span>
+<span class="lineNum">     589 </span><span class="lineNoCov">          0 :             bottomtexture = texturetranslation[sidedef-&gt;bottomtexture];</span>
+<span class="lineNum">     590 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     591 </span><span class="lineNoCov">          0 :             if (linedef-&gt;flags &amp; ML_DONTPEGBOTTOM )</span>
+<span class="lineNum">     592 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     593 </span><span class="lineNoCov">          0 :                 // bottom of texture at bottom</span>
+<span class="lineNum">     594 </span><span class="lineNoCov">          0 :                 // top of texture at top</span>
+<span class="lineNum">     595 </span><span class="lineNoCov">          0 :                 rw_bottomtexturemid = worldtop;</span>
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     597 </span><span class="lineNoCov">          0 :             else        // top of texture at top</span>
+<span class="lineNum">     598 </span><span class="lineNoCov">          0 :                 rw_bottomtexturemid = worldlow;</span>
+<span class="lineNum">     599 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 :         rw_toptexturemid += sidedef-&gt;rowoffset;</span>
+<span class="lineNum">     601 </span><span class="lineNoCov">          0 :         rw_bottomtexturemid += sidedef-&gt;rowoffset;</span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 :         // allocate space for masked texture tables</span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 :         if (sidedef-&gt;midtexture)</span>
+<span class="lineNum">     605 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 :             // masked midtexture</span>
+<span class="lineNum">     607 </span><span class="lineNoCov">          0 :             maskedtexture = true;</span>
+<span class="lineNum">     608 </span><span class="lineNoCov">          0 :             ds_p-&gt;maskedtexturecol = maskedtexturecol = lastopening - rw_x;</span>
+<span class="lineNum">     609 </span><span class="lineNoCov">          0 :             lastopening += rw_stopx - rw_x;</span>
+<span class="lineNum">     610 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     611 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     612 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 :     // calculate rw_offset (only needed for textured lines)</span>
+<span class="lineNum">     614 </span><span class="lineNoCov">          0 :     segtextured = midtexture | toptexture | bottomtexture | maskedtexture;</span>
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :     if (segtextured)</span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 :         offsetangle = rw_normalangle-rw_angle1;</span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     620 </span><span class="lineNoCov">          0 :         if (offsetangle &gt; ANG180)</span>
+<span class="lineNum">     621 </span><span class="lineNoCov">          0 :             offsetangle = -offsetangle;</span>
+<span class="lineNum">     622 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 :         if (offsetangle &gt; ANG90)</span>
+<span class="lineNum">     624 </span><span class="lineNoCov">          0 :             offsetangle = ANG90;</span>
+<span class="lineNum">     625 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 :         sineval = finesine[offsetangle &gt;&gt;ANGLETOFINESHIFT];</span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 :         rw_offset = FixedMul (hyp, sineval);</span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 :         if (rw_normalangle-rw_angle1 &lt; ANG180)</span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 :             rw_offset = -rw_offset;</span>
+<span class="lineNum">     631 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     632 </span><span class="lineNoCov">          0 :         rw_offset += sidedef-&gt;textureoffset + curline-&gt;offset;</span>
+<span class="lineNum">     633 </span><span class="lineNoCov">          0 :         rw_centerangle = ANG90 + viewangle - rw_normalangle;</span>
+<span class="lineNum">     634 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     635 </span><span class="lineNoCov">          0 :         // calculate light table</span>
+<span class="lineNum">     636 </span><span class="lineNoCov">          0 :         //  use different light tables</span>
+<span class="lineNum">     637 </span><span class="lineNoCov">          0 :         //  for horizontal / vertical / diagonal</span>
+<span class="lineNum">     638 </span><span class="lineNoCov">          0 :         // OPTIMIZE: get rid of LIGHTSEGSHIFT globally</span>
+<span class="lineNum">     639 </span><span class="lineNoCov">          0 :         if (!fixedcolormap)</span>
+<span class="lineNum">     640 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     641 </span><span class="lineNoCov">          0 :             lightnum = (frontsector-&gt;lightlevel &gt;&gt; LIGHTSEGSHIFT)+extralight;</span>
+<span class="lineNum">     642 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     643 </span><span class="lineNoCov">          0 :             if (curline-&gt;v1-&gt;y == curline-&gt;v2-&gt;y)</span>
+<span class="lineNum">     644 </span><span class="lineNoCov">          0 :                 lightnum--;</span>
+<span class="lineNum">     645 </span><span class="lineNoCov">          0 :             else if (curline-&gt;v1-&gt;x == curline-&gt;v2-&gt;x)</span>
+<span class="lineNum">     646 </span><span class="lineNoCov">          0 :                 lightnum++;</span>
+<span class="lineNum">     647 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     648 </span><span class="lineNoCov">          0 :             if (lightnum &lt; 0)                </span>
+<span class="lineNum">     649 </span><span class="lineNoCov">          0 :                 walllights = scalelight[0];</span>
+<span class="lineNum">     650 </span><span class="lineNoCov">          0 :             else if (lightnum &gt;= LIGHTLEVELS)</span>
+<span class="lineNum">     651 </span><span class="lineNoCov">          0 :                 walllights = scalelight[LIGHTLEVELS-1];</span>
+<span class="lineNum">     652 </span><span class="lineNoCov">          0 :             else</span>
+<span class="lineNum">     653 </span><span class="lineNoCov">          0 :                 walllights = scalelight[lightnum];</span>
+<span class="lineNum">     654 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     655 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 :     // if a floor / ceiling plane is on the wrong side</span>
+<span class="lineNum">     658 </span><span class="lineNoCov">          0 :     //  of the view plane, it is definitely invisible</span>
+<span class="lineNum">     659 </span><span class="lineNoCov">          0 :     //  and doesn't need to be marked.</span>
+<span class="lineNum">     660 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     661 </span><span class="lineNoCov">          0 :   </span>
+<span class="lineNum">     662 </span><span class="lineNoCov">          0 :     if (frontsector-&gt;floorheight &gt;= viewz)</span>
+<span class="lineNum">     663 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     664 </span><span class="lineNoCov">          0 :         // above view plane</span>
+<span class="lineNum">     665 </span><span class="lineNoCov">          0 :         markfloor = false;</span>
+<span class="lineNum">     666 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     667 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     668 </span><span class="lineNoCov">          0 :     if (frontsector-&gt;ceilingheight &lt;= viewz </span>
+<span class="lineNum">     669 </span><span class="lineNoCov">          0 :         &amp;&amp; frontsector-&gt;ceilingpic != skyflatnum)</span>
+<span class="lineNum">     670 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     671 </span><span class="lineNoCov">          0 :         // below view plane</span>
+<span class="lineNum">     672 </span><span class="lineNoCov">          0 :         markceiling = false;</span>
+<span class="lineNum">     673 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     674 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     675 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     676 </span><span class="lineNoCov">          0 :     // calculate incremental stepping values for texture edges</span>
+<span class="lineNum">     677 </span><span class="lineNoCov">          0 :     worldtop &gt;&gt;= 4;</span>
+<span class="lineNum">     678 </span><span class="lineNoCov">          0 :     worldbottom &gt;&gt;= 4;</span>
+<span class="lineNum">     679 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     680 </span><span class="lineNoCov">          0 :     topstep = -FixedMul (rw_scalestep, worldtop);</span>
+<span class="lineNum">     681 </span><span class="lineNoCov">          0 :     topfrac = (centeryfrac&gt;&gt;4) - FixedMul (worldtop, rw_scale);</span>
+<span class="lineNum">     682 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     683 </span><span class="lineNoCov">          0 :     bottomstep = -FixedMul (rw_scalestep,worldbottom);</span>
+<span class="lineNum">     684 </span><span class="lineNoCov">          0 :     bottomfrac = (centeryfrac&gt;&gt;4) - FixedMul (worldbottom, rw_scale);</span>
+<span class="lineNum">     685 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     686 </span><span class="lineNoCov">          0 :     if (backsector)</span>
+<span class="lineNum">     687 </span><span class="lineNoCov">          0 :     {   </span>
+<span class="lineNum">     688 </span><span class="lineNoCov">          0 :         worldhigh &gt;&gt;= 4;</span>
+<span class="lineNum">     689 </span><span class="lineNoCov">          0 :         worldlow &gt;&gt;= 4;</span>
+<span class="lineNum">     690 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     691 </span><span class="lineNoCov">          0 :         if (worldhigh &lt; worldtop)</span>
+<span class="lineNum">     692 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     693 </span><span class="lineNoCov">          0 :             pixhigh = (centeryfrac&gt;&gt;4) - FixedMul (worldhigh, rw_scale);</span>
+<span class="lineNum">     694 </span><span class="lineNoCov">          0 :             pixhighstep = -FixedMul (rw_scalestep,worldhigh);</span>
+<span class="lineNum">     695 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     696 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     697 </span><span class="lineNoCov">          0 :         if (worldlow &gt; worldbottom)</span>
+<span class="lineNum">     698 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     699 </span><span class="lineNoCov">          0 :             pixlow = (centeryfrac&gt;&gt;4) - FixedMul (worldlow, rw_scale);</span>
+<span class="lineNum">     700 </span><span class="lineNoCov">          0 :             pixlowstep = -FixedMul (rw_scalestep,worldlow);</span>
+<span class="lineNum">     701 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     702 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     703 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     704 </span><span class="lineNoCov">          0 :     // render it</span>
+<span class="lineNum">     705 </span><span class="lineNoCov">          0 :     if (markceiling)</span>
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 :         ceilingplane = R_CheckPlane (ceilingplane, rw_x, rw_stopx-1);</span>
+<span class="lineNum">     707 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     708 </span><span class="lineNoCov">          0 :     if (markfloor)</span>
+<span class="lineNum">     709 </span><span class="lineNoCov">          0 :         floorplane = R_CheckPlane (floorplane, rw_x, rw_stopx-1);</span>
+<span class="lineNum">     710 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     711 </span><span class="lineNoCov">          0 :     R_RenderSegLoop ();</span>
+<span class="lineNum">     712 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     713 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     714 </span><span class="lineNoCov">          0 :     // save sprite clipping info</span>
+<span class="lineNum">     715 </span><span class="lineNoCov">          0 :     if ( ((ds_p-&gt;silhouette &amp; SIL_TOP) || maskedtexture)</span>
+<span class="lineNum">     716 </span><span class="lineNoCov">          0 :          &amp;&amp; !ds_p-&gt;sprtopclip)</span>
+<span class="lineNum">     717 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     718 </span><span class="lineNoCov">          0 :         memcpy (lastopening, ceilingclip+start, sizeof(*lastopening)*(rw_stopx-start));</span>
+<span class="lineNum">     719 </span><span class="lineNoCov">          0 :         ds_p-&gt;sprtopclip = lastopening - start;</span>
+<span class="lineNum">     720 </span><span class="lineNoCov">          0 :         lastopening += rw_stopx - start;</span>
+<span class="lineNum">     721 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     722 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     723 </span><span class="lineNoCov">          0 :     if ( ((ds_p-&gt;silhouette &amp; SIL_BOTTOM) || maskedtexture)</span>
+<span class="lineNum">     724 </span><span class="lineNoCov">          0 :          &amp;&amp; !ds_p-&gt;sprbottomclip)</span>
+<span class="lineNum">     725 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     726 </span><span class="lineNoCov">          0 :         memcpy (lastopening, floorclip+start, sizeof(*lastopening)*(rw_stopx-start));</span>
+<span class="lineNum">     727 </span><span class="lineNoCov">          0 :         ds_p-&gt;sprbottomclip = lastopening - start;</span>
+<span class="lineNum">     728 </span><span class="lineNoCov">          0 :         lastopening += rw_stopx - start;        </span>
+<span class="lineNum">     729 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     730 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     731 </span><span class="lineNoCov">          0 :     if (maskedtexture &amp;&amp; !(ds_p-&gt;silhouette&amp;SIL_TOP))</span>
+<span class="lineNum">     732 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     733 </span><span class="lineNoCov">          0 :         ds_p-&gt;silhouette |= SIL_TOP;</span>
+<span class="lineNum">     734 </span><span class="lineNoCov">          0 :         ds_p-&gt;tsilheight = INT_MIN;</span>
+<span class="lineNum">     735 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     736 </span><span class="lineNoCov">          0 :     if (maskedtexture &amp;&amp; !(ds_p-&gt;silhouette&amp;SIL_BOTTOM))</span>
+<span class="lineNum">     737 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     738 </span><span class="lineNoCov">          0 :         ds_p-&gt;silhouette |= SIL_BOTTOM;</span>
+<span class="lineNum">     739 </span><span class="lineNoCov">          0 :         ds_p-&gt;bsilheight = INT_MAX;</span>
+<span class="lineNum">     740 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     741 </span><span class="lineNoCov">          0 :     ds_p++;</span>
+<span class="lineNum">     742 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     743 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

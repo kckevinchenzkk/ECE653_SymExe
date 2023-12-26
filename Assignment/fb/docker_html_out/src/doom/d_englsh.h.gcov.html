@@ -1,0 +1,769 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/d_englsh.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - d_englsh.h<span style="font-size: 80%;"> (source / <a href="d_englsh.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntry">102</td>
+            <td class="headerCovTableEntryLo">3.9 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      Printed strings for translation.
+<span class="lineNum">      17 </span>            : //      English language support (default).
+<span class="lineNum">      18 </span>            : //
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #ifndef __D_ENGLSH__
+<span class="lineNum">      21 </span>            : #define __D_ENGLSH__
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : //
+<span class="lineNum">      24 </span>            : //      Printed strings for translation
+<span class="lineNum">      25 </span>            : //
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : //
+<span class="lineNum">      28 </span>            : // D_Main.C
+<span class="lineNum">      29 </span>            : //
+<span class="lineNum">      30 </span><span class="lineNoCov">          0 : #define D_DEVSTR        &quot;Development mode ON.\n&quot;</span>
+<span class="lineNum">      31 </span>            : #define D_CDROM &quot;CD-ROM Version: default.cfg from c:\\doomdata\n&quot;
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : //
+<span class="lineNum">      34 </span>            : //      M_Menu.C
+<span class="lineNum">      35 </span>            : //
+<span class="lineNum">      36 </span><span class="lineNoCov">          0 : #define PRESSKEY        &quot;press a key.&quot;</span>
+<span class="lineNum">      37 </span><span class="lineNoCov">          0 : #define PRESSYN         &quot;press y or n.&quot;</span>
+<span class="lineNum">      38 </span>            : #define QUITMSG &quot;are you sure you want to\nquit this great game?&quot;
+<span class="lineNum">      39 </span><span class="lineNoCov">          0 : #define LOADNET         &quot;you can't do load while in a net game!\n\n&quot;PRESSKEY</span>
+<span class="lineNum">      40 </span><span class="lineNoCov">          0 : #define QLOADNET        &quot;you can't quickload during a netgame!\n\n&quot;PRESSKEY</span>
+<span class="lineNum">      41 </span><span class="lineNoCov">          0 : #define QSAVESPOT       &quot;you haven't picked a quicksave slot yet!\n\n&quot;PRESSKEY</span>
+<span class="lineNum">      42 </span><span class="lineNoCov">          0 : #define SAVEDEAD        &quot;you can't save if you aren't playing!\n\n&quot;PRESSKEY</span>
+<span class="lineNum">      43 </span><span class="lineNoCov">          0 : #define QSPROMPT        &quot;quicksave over your game named\n\n'%s'?\n\n&quot;PRESSYN</span>
+<span class="lineNum">      44 </span><span class="lineNoCov">          0 : #define QLPROMPT        &quot;do you want to quickload the game named\n\n'%s'?\n\n&quot;PRESSYN</span>
+<span class="lineNum">      45 </span>            : 
+<span class="lineNum">      46 </span><span class="lineNoCov">          0 : #define NEWGAME \</span>
+<span class="lineNum">      47 </span><span class="lineNoCov">          0 : &quot;you can't start a new game\n&quot;\</span>
+<span class="lineNum">      48 </span><span class="lineNoCov">          0 : &quot;while in a network game.\n\n&quot;PRESSKEY</span>
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span><span class="lineNoCov">          0 : #define NIGHTMARE       \</span>
+<span class="lineNum">      51 </span><span class="lineNoCov">          0 : &quot;are you sure? this skill level\n&quot;\</span>
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 : &quot;isn't even remotely fair.\n\n&quot;PRESSYN</span>
+<span class="lineNum">      53 </span>            : 
+<span class="lineNum">      54 </span><span class="lineNoCov">          0 : #define SWSTRING        \</span>
+<span class="lineNum">      55 </span><span class="lineNoCov">          0 : &quot;this is the shareware version of doom.\n\n&quot;\</span>
+<span class="lineNum">      56 </span><span class="lineNoCov">          0 : &quot;you need to order the entire trilogy.\n\n&quot;PRESSKEY</span>
+<span class="lineNum">      57 </span>            : 
+<span class="lineNum">      58 </span><span class="lineNoCov">          0 : #define MSGOFF  &quot;Messages OFF&quot;</span>
+<span class="lineNum">      59 </span><span class="lineNoCov">          0 : #define MSGON           &quot;Messages ON&quot;</span>
+<span class="lineNum">      60 </span><span class="lineNoCov">          0 : #define NETEND  &quot;you can't end a netgame!\n\n&quot;PRESSKEY</span>
+<span class="lineNum">      61 </span><span class="lineNoCov">          0 : #define ENDGAME &quot;are you sure you want to end the game?\n\n&quot;PRESSYN</span>
+<span class="lineNum">      62 </span>            : 
+<span class="lineNum">      63 </span><span class="lineNoCov">          0 : #define DOSY            &quot;(press y to quit to dos.)&quot;</span>
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span><span class="lineNoCov">          0 : #define DETAILHI        &quot;High detail&quot;</span>
+<span class="lineNum">      66 </span><span class="lineNoCov">          0 : #define DETAILLO        &quot;Low detail&quot;</span>
+<span class="lineNum">      67 </span><span class="lineNoCov">          0 : #define GAMMALVL0       &quot;Gamma correction OFF&quot;</span>
+<span class="lineNum">      68 </span>            : #define GAMMALVL1       &quot;Gamma correction level 1&quot;
+<span class="lineNum">      69 </span>            : #define GAMMALVL2       &quot;Gamma correction level 2&quot;
+<span class="lineNum">      70 </span>            : #define GAMMALVL3       &quot;Gamma correction level 3&quot;
+<span class="lineNum">      71 </span>            : #define GAMMALVL4       &quot;Gamma correction level 4&quot;
+<span class="lineNum">      72 </span><span class="lineNoCov">          0 : #define EMPTYSTRING     &quot;empty slot&quot;</span>
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span>            : //
+<span class="lineNum">      75 </span>            : //      P_inter.C
+<span class="lineNum">      76 </span>            : //
+<span class="lineNum">      77 </span><span class="lineNoCov">          0 : #define GOTARMOR        &quot;Picked up the armor.&quot;</span>
+<span class="lineNum">      78 </span><span class="lineNoCov">          0 : #define GOTMEGA &quot;Picked up the MegaArmor!&quot;</span>
+<span class="lineNum">      79 </span><span class="lineNoCov">          0 : #define GOTHTHBONUS     &quot;Picked up a health bonus.&quot;</span>
+<span class="lineNum">      80 </span><span class="lineNoCov">          0 : #define GOTARMBONUS     &quot;Picked up an armor bonus.&quot;</span>
+<span class="lineNum">      81 </span><span class="lineNoCov">          0 : #define GOTSTIM &quot;Picked up a stimpack.&quot;</span>
+<span class="lineNum">      82 </span><span class="lineNoCov">          0 : #define GOTMEDINEED     &quot;Picked up a medikit that you REALLY need!&quot;</span>
+<span class="lineNum">      83 </span><span class="lineNoCov">          0 : #define GOTMEDIKIT      &quot;Picked up a medikit.&quot;</span>
+<span class="lineNum">      84 </span><span class="lineNoCov">          0 : #define GOTSUPER        &quot;Supercharge!&quot;</span>
+<span class="lineNum">      85 </span>            : 
+<span class="lineNum">      86 </span><span class="lineNoCov">          0 : #define GOTBLUECARD     &quot;Picked up a blue keycard.&quot;</span>
+<span class="lineNum">      87 </span><span class="lineNoCov">          0 : #define GOTYELWCARD     &quot;Picked up a yellow keycard.&quot;</span>
+<span class="lineNum">      88 </span><span class="lineNoCov">          0 : #define GOTREDCARD      &quot;Picked up a red keycard.&quot;</span>
+<span class="lineNum">      89 </span><span class="lineNoCov">          0 : #define GOTBLUESKUL     &quot;Picked up a blue skull key.&quot;</span>
+<span class="lineNum">      90 </span><span class="lineNoCov">          0 : #define GOTYELWSKUL     &quot;Picked up a yellow skull key.&quot;</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 : #define GOTREDSKULL     &quot;Picked up a red skull key.&quot;</span>
+<span class="lineNum">      92 </span>            : 
+<span class="lineNum">      93 </span><span class="lineNoCov">          0 : #define GOTINVUL        &quot;Invulnerability!&quot;</span>
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 : #define GOTBERSERK      &quot;Berserk!&quot;</span>
+<span class="lineNum">      95 </span><span class="lineNoCov">          0 : #define GOTINVIS        &quot;Partial Invisibility&quot;</span>
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 : #define GOTSUIT &quot;Radiation Shielding Suit&quot;</span>
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 : #define GOTMAP  &quot;Computer Area Map&quot;</span>
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 : #define GOTVISOR        &quot;Light Amplification Visor&quot;</span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 : #define GOTMSPHERE      &quot;MegaSphere!&quot;</span>
+<span class="lineNum">     100 </span>            : 
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 : #define GOTCLIP &quot;Picked up a clip.&quot;</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 : #define GOTCLIPBOX      &quot;Picked up a box of bullets.&quot;</span>
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 : #define GOTROCKET       &quot;Picked up a rocket.&quot;</span>
+<span class="lineNum">     104 </span><span class="lineNoCov">          0 : #define GOTROCKBOX      &quot;Picked up a box of rockets.&quot;</span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 : #define GOTCELL &quot;Picked up an energy cell.&quot;</span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 : #define GOTCELLBOX      &quot;Picked up an energy cell pack.&quot;</span>
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 : #define GOTSHELLS       &quot;Picked up 4 shotgun shells.&quot;</span>
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 : #define GOTSHELLBOX     &quot;Picked up a box of shotgun shells.&quot;</span>
+<span class="lineNum">     109 </span><span class="lineNoCov">          0 : #define GOTBACKPACK     &quot;Picked up a backpack full of ammo!&quot;</span>
+<span class="lineNum">     110 </span>            : 
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 : #define GOTBFG9000      &quot;You got the BFG9000!  Oh, yes.&quot;</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 : #define GOTCHAINGUN     &quot;You got the chaingun!&quot;</span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 : #define GOTCHAINSAW     &quot;A chainsaw!  Find some meat!&quot;</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 : #define GOTLAUNCHER     &quot;You got the rocket launcher!&quot;</span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 : #define GOTPLASMA       &quot;You got the plasma gun!&quot;</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 : #define GOTSHOTGUN      &quot;You got the shotgun!&quot;</span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 : #define GOTSHOTGUN2     &quot;You got the super shotgun!&quot;</span>
+<span class="lineNum">     118 </span>            : 
+<span class="lineNum">     119 </span>            : //
+<span class="lineNum">     120 </span>            : // P_Doors.C
+<span class="lineNum">     121 </span>            : //
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 : #define PD_BLUEO        &quot;You need a blue key to activate this object&quot;</span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 : #define PD_REDO &quot;You need a red key to activate this object&quot;</span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 : #define PD_YELLOWO      &quot;You need a yellow key to activate this object&quot;</span>
+<span class="lineNum">     125 </span><span class="lineNoCov">          0 : #define PD_BLUEK        &quot;You need a blue key to open this door&quot;</span>
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 : #define PD_REDK &quot;You need a red key to open this door&quot;</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 : #define PD_YELLOWK      &quot;You need a yellow key to open this door&quot;</span>
+<span class="lineNum">     128 </span>            : 
+<span class="lineNum">     129 </span>            : //
+<span class="lineNum">     130 </span>            : //      G_game.C
+<span class="lineNum">     131 </span>            : //
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 : #define GGSAVED &quot;game saved.&quot;</span>
+<span class="lineNum">     133 </span>            : 
+<span class="lineNum">     134 </span>            : //
+<span class="lineNum">     135 </span>            : //      HU_stuff.C
+<span class="lineNum">     136 </span>            : //
+<span class="lineNum">     137 </span><span class="lineNoCov">          0 : #define HUSTR_MSGU      &quot;[Message unsent]&quot;</span>
+<span class="lineNum">     138 </span>            : 
+<span class="lineNum">     139 </span>            : #define HUSTR_E1M1      &quot;E1M1: Hangar&quot;
+<span class="lineNum">     140 </span>            : #define HUSTR_E1M2      &quot;E1M2: Nuclear Plant&quot;
+<span class="lineNum">     141 </span>            : #define HUSTR_E1M3      &quot;E1M3: Toxin Refinery&quot;
+<span class="lineNum">     142 </span>            : #define HUSTR_E1M4      &quot;E1M4: Command Control&quot;
+<span class="lineNum">     143 </span>            : #define HUSTR_E1M5      &quot;E1M5: Phobos Lab&quot;
+<span class="lineNum">     144 </span>            : #define HUSTR_E1M6      &quot;E1M6: Central Processing&quot;
+<span class="lineNum">     145 </span>            : #define HUSTR_E1M7      &quot;E1M7: Computer Station&quot;
+<span class="lineNum">     146 </span>            : #define HUSTR_E1M8      &quot;E1M8: Phobos Anomaly&quot;
+<span class="lineNum">     147 </span>            : #define HUSTR_E1M9      &quot;E1M9: Military Base&quot;
+<span class="lineNum">     148 </span>            : 
+<span class="lineNum">     149 </span>            : #define HUSTR_E2M1      &quot;E2M1: Deimos Anomaly&quot;
+<span class="lineNum">     150 </span>            : #define HUSTR_E2M2      &quot;E2M2: Containment Area&quot;
+<span class="lineNum">     151 </span>            : #define HUSTR_E2M3      &quot;E2M3: Refinery&quot;
+<span class="lineNum">     152 </span>            : #define HUSTR_E2M4      &quot;E2M4: Deimos Lab&quot;
+<span class="lineNum">     153 </span>            : #define HUSTR_E2M5      &quot;E2M5: Command Center&quot;
+<span class="lineNum">     154 </span>            : #define HUSTR_E2M6      &quot;E2M6: Halls of the Damned&quot;
+<span class="lineNum">     155 </span>            : #define HUSTR_E2M7      &quot;E2M7: Spawning Vats&quot;
+<span class="lineNum">     156 </span>            : #define HUSTR_E2M8      &quot;E2M8: Tower of Babel&quot;
+<span class="lineNum">     157 </span>            : #define HUSTR_E2M9      &quot;E2M9: Fortress of Mystery&quot;
+<span class="lineNum">     158 </span>            : 
+<span class="lineNum">     159 </span>            : #define HUSTR_E3M1      &quot;E3M1: Hell Keep&quot;
+<span class="lineNum">     160 </span>            : #define HUSTR_E3M2      &quot;E3M2: Slough of Despair&quot;
+<span class="lineNum">     161 </span>            : #define HUSTR_E3M3      &quot;E3M3: Pandemonium&quot;
+<span class="lineNum">     162 </span>            : #define HUSTR_E3M4      &quot;E3M4: House of Pain&quot;
+<span class="lineNum">     163 </span>            : #define HUSTR_E3M5      &quot;E3M5: Unholy Cathedral&quot;
+<span class="lineNum">     164 </span>            : #define HUSTR_E3M6      &quot;E3M6: Mt. Erebus&quot;
+<span class="lineNum">     165 </span>            : #define HUSTR_E3M7      &quot;E3M7: Limbo&quot;
+<span class="lineNum">     166 </span>            : #define HUSTR_E3M8      &quot;E3M8: Dis&quot;
+<span class="lineNum">     167 </span>            : #define HUSTR_E3M9      &quot;E3M9: Warrens&quot;
+<span class="lineNum">     168 </span>            : 
+<span class="lineNum">     169 </span>            : #define HUSTR_E4M1      &quot;E4M1: Hell Beneath&quot;
+<span class="lineNum">     170 </span>            : #define HUSTR_E4M2      &quot;E4M2: Perfect Hatred&quot;
+<span class="lineNum">     171 </span>            : #define HUSTR_E4M3      &quot;E4M3: Sever The Wicked&quot;
+<span class="lineNum">     172 </span>            : #define HUSTR_E4M4      &quot;E4M4: Unruly Evil&quot;
+<span class="lineNum">     173 </span>            : #define HUSTR_E4M5      &quot;E4M5: They Will Repent&quot;
+<span class="lineNum">     174 </span>            : #define HUSTR_E4M6      &quot;E4M6: Against Thee Wickedly&quot;
+<span class="lineNum">     175 </span>            : #define HUSTR_E4M7      &quot;E4M7: And Hell Followed&quot;
+<span class="lineNum">     176 </span>            : #define HUSTR_E4M8      &quot;E4M8: Unto The Cruel&quot;
+<span class="lineNum">     177 </span>            : #define HUSTR_E4M9      &quot;E4M9: Fear&quot;
+<span class="lineNum">     178 </span>            : 
+<span class="lineNum">     179 </span>            : #define HUSTR_1 &quot;level 1: entryway&quot;
+<span class="lineNum">     180 </span>            : #define HUSTR_2 &quot;level 2: underhalls&quot;
+<span class="lineNum">     181 </span>            : #define HUSTR_3 &quot;level 3: the gantlet&quot;
+<span class="lineNum">     182 </span>            : #define HUSTR_4 &quot;level 4: the focus&quot;
+<span class="lineNum">     183 </span>            : #define HUSTR_5 &quot;level 5: the waste tunnels&quot;
+<span class="lineNum">     184 </span>            : #define HUSTR_6 &quot;level 6: the crusher&quot;
+<span class="lineNum">     185 </span>            : #define HUSTR_7 &quot;level 7: dead simple&quot;
+<span class="lineNum">     186 </span>            : #define HUSTR_8 &quot;level 8: tricks and traps&quot;
+<span class="lineNum">     187 </span>            : #define HUSTR_9 &quot;level 9: the pit&quot;
+<span class="lineNum">     188 </span>            : #define HUSTR_10        &quot;level 10: refueling base&quot;
+<span class="lineNum">     189 </span>            : #define HUSTR_11        &quot;level 11: 'o' of destruction!&quot;
+<span class="lineNum">     190 </span>            : 
+<span class="lineNum">     191 </span>            : #define HUSTR_12        &quot;level 12: the factory&quot;
+<span class="lineNum">     192 </span>            : #define HUSTR_13        &quot;level 13: downtown&quot;
+<span class="lineNum">     193 </span>            : #define HUSTR_14        &quot;level 14: the inmost dens&quot;
+<span class="lineNum">     194 </span>            : #define HUSTR_15        &quot;level 15: industrial zone&quot;
+<span class="lineNum">     195 </span>            : #define HUSTR_16        &quot;level 16: suburbs&quot;
+<span class="lineNum">     196 </span>            : #define HUSTR_17        &quot;level 17: tenements&quot;
+<span class="lineNum">     197 </span>            : #define HUSTR_18        &quot;level 18: the courtyard&quot;
+<span class="lineNum">     198 </span>            : #define HUSTR_19        &quot;level 19: the citadel&quot;
+<span class="lineNum">     199 </span>            : #define HUSTR_20        &quot;level 20: gotcha!&quot;
+<span class="lineNum">     200 </span>            : 
+<span class="lineNum">     201 </span>            : #define HUSTR_21        &quot;level 21: nirvana&quot;
+<span class="lineNum">     202 </span>            : #define HUSTR_22        &quot;level 22: the catacombs&quot;
+<span class="lineNum">     203 </span>            : #define HUSTR_23        &quot;level 23: barrels o' fun&quot;
+<span class="lineNum">     204 </span>            : #define HUSTR_24        &quot;level 24: the chasm&quot;
+<span class="lineNum">     205 </span>            : #define HUSTR_25        &quot;level 25: bloodfalls&quot;
+<span class="lineNum">     206 </span>            : #define HUSTR_26        &quot;level 26: the abandoned mines&quot;
+<span class="lineNum">     207 </span>            : #define HUSTR_27        &quot;level 27: monster condo&quot;
+<span class="lineNum">     208 </span>            : #define HUSTR_28        &quot;level 28: the spirit world&quot;
+<span class="lineNum">     209 </span>            : #define HUSTR_29        &quot;level 29: the living end&quot;
+<span class="lineNum">     210 </span>            : #define HUSTR_30        &quot;level 30: icon of sin&quot;
+<span class="lineNum">     211 </span>            : 
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 : #define HUSTR_31        &quot;level 31: wolfenstein&quot;</span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 : #define HUSTR_32        &quot;level 32: grosse&quot;</span>
+<span class="lineNum">     214 </span>            : 
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 : #define PHUSTR_1        &quot;level 1: congo&quot;</span>
+<span class="lineNum">     216 </span>            : #define PHUSTR_2        &quot;level 2: well of souls&quot;
+<span class="lineNum">     217 </span>            : #define PHUSTR_3        &quot;level 3: aztec&quot;
+<span class="lineNum">     218 </span>            : #define PHUSTR_4        &quot;level 4: caged&quot;
+<span class="lineNum">     219 </span>            : #define PHUSTR_5        &quot;level 5: ghost town&quot;
+<span class="lineNum">     220 </span>            : #define PHUSTR_6        &quot;level 6: baron's lair&quot;
+<span class="lineNum">     221 </span>            : #define PHUSTR_7        &quot;level 7: caughtyard&quot;
+<span class="lineNum">     222 </span>            : #define PHUSTR_8        &quot;level 8: realm&quot;
+<span class="lineNum">     223 </span>            : #define PHUSTR_9        &quot;level 9: abattoire&quot;
+<span class="lineNum">     224 </span>            : #define PHUSTR_10       &quot;level 10: onslaught&quot;
+<span class="lineNum">     225 </span>            : #define PHUSTR_11       &quot;level 11: hunted&quot;
+<span class="lineNum">     226 </span>            : 
+<span class="lineNum">     227 </span>            : #define PHUSTR_12       &quot;level 12: speed&quot;
+<span class="lineNum">     228 </span>            : #define PHUSTR_13       &quot;level 13: the crypt&quot;
+<span class="lineNum">     229 </span>            : #define PHUSTR_14       &quot;level 14: genesis&quot;
+<span class="lineNum">     230 </span>            : #define PHUSTR_15       &quot;level 15: the twilight&quot;
+<span class="lineNum">     231 </span>            : #define PHUSTR_16       &quot;level 16: the omen&quot;
+<span class="lineNum">     232 </span>            : #define PHUSTR_17       &quot;level 17: compound&quot;
+<span class="lineNum">     233 </span>            : #define PHUSTR_18       &quot;level 18: neurosphere&quot;
+<span class="lineNum">     234 </span>            : #define PHUSTR_19       &quot;level 19: nme&quot;
+<span class="lineNum">     235 </span>            : #define PHUSTR_20       &quot;level 20: the death domain&quot;
+<span class="lineNum">     236 </span>            : 
+<span class="lineNum">     237 </span>            : #define PHUSTR_21       &quot;level 21: slayer&quot;
+<span class="lineNum">     238 </span>            : #define PHUSTR_22       &quot;level 22: impossible mission&quot;
+<span class="lineNum">     239 </span>            : #define PHUSTR_23       &quot;level 23: tombstone&quot;
+<span class="lineNum">     240 </span>            : #define PHUSTR_24       &quot;level 24: the final frontier&quot;
+<span class="lineNum">     241 </span>            : #define PHUSTR_25       &quot;level 25: the temple of darkness&quot;
+<span class="lineNum">     242 </span>            : #define PHUSTR_26       &quot;level 26: bunker&quot;
+<span class="lineNum">     243 </span>            : #define PHUSTR_27       &quot;level 27: anti-christ&quot;
+<span class="lineNum">     244 </span>            : #define PHUSTR_28       &quot;level 28: the sewers&quot;
+<span class="lineNum">     245 </span>            : #define PHUSTR_29       &quot;level 29: odyssey of noises&quot;
+<span class="lineNum">     246 </span>            : #define PHUSTR_30       &quot;level 30: the gateway of hell&quot;
+<span class="lineNum">     247 </span>            : 
+<span class="lineNum">     248 </span>            : #define PHUSTR_31       &quot;level 31: cyberden&quot;
+<span class="lineNum">     249 </span>            : #define PHUSTR_32       &quot;level 32: go 2 it&quot;
+<span class="lineNum">     250 </span>            : 
+<span class="lineNum">     251 </span>            : #define THUSTR_1        &quot;level 1: system control&quot;
+<span class="lineNum">     252 </span>            : #define THUSTR_2        &quot;level 2: human bbq&quot;
+<span class="lineNum">     253 </span>            : #define THUSTR_3        &quot;level 3: power control&quot;
+<span class="lineNum">     254 </span>            : #define THUSTR_4        &quot;level 4: wormhole&quot;
+<span class="lineNum">     255 </span>            : #define THUSTR_5        &quot;level 5: hanger&quot;
+<span class="lineNum">     256 </span>            : #define THUSTR_6        &quot;level 6: open season&quot;
+<span class="lineNum">     257 </span>            : #define THUSTR_7        &quot;level 7: prison&quot;
+<span class="lineNum">     258 </span>            : #define THUSTR_8        &quot;level 8: metal&quot;
+<span class="lineNum">     259 </span>            : #define THUSTR_9        &quot;level 9: stronghold&quot;
+<span class="lineNum">     260 </span>            : #define THUSTR_10       &quot;level 10: redemption&quot;
+<span class="lineNum">     261 </span>            : #define THUSTR_11       &quot;level 11: storage facility&quot;
+<span class="lineNum">     262 </span>            : 
+<span class="lineNum">     263 </span>            : #define THUSTR_12       &quot;level 12: crater&quot;
+<span class="lineNum">     264 </span>            : #define THUSTR_13       &quot;level 13: nukage processing&quot;
+<span class="lineNum">     265 </span>            : #define THUSTR_14       &quot;level 14: steel works&quot;
+<span class="lineNum">     266 </span>            : #define THUSTR_15       &quot;level 15: dead zone&quot;
+<span class="lineNum">     267 </span>            : #define THUSTR_16       &quot;level 16: deepest reaches&quot;
+<span class="lineNum">     268 </span>            : #define THUSTR_17       &quot;level 17: processing area&quot;
+<span class="lineNum">     269 </span>            : #define THUSTR_18       &quot;level 18: mill&quot;
+<span class="lineNum">     270 </span>            : #define THUSTR_19       &quot;level 19: shipping/respawning&quot;
+<span class="lineNum">     271 </span>            : #define THUSTR_20       &quot;level 20: central processing&quot;
+<span class="lineNum">     272 </span>            : 
+<span class="lineNum">     273 </span>            : #define THUSTR_21       &quot;level 21: administration center&quot;
+<span class="lineNum">     274 </span>            : #define THUSTR_22       &quot;level 22: habitat&quot;
+<span class="lineNum">     275 </span>            : #define THUSTR_23       &quot;level 23: lunar mining project&quot;
+<span class="lineNum">     276 </span>            : #define THUSTR_24       &quot;level 24: quarry&quot;
+<span class="lineNum">     277 </span>            : #define THUSTR_25       &quot;level 25: baron's den&quot;
+<span class="lineNum">     278 </span>            : #define THUSTR_26       &quot;level 26: ballistyx&quot;
+<span class="lineNum">     279 </span>            : #define THUSTR_27       &quot;level 27: mount pain&quot;
+<span class="lineNum">     280 </span>            : #define THUSTR_28       &quot;level 28: heck&quot;
+<span class="lineNum">     281 </span>            : #define THUSTR_29       &quot;level 29: river styx&quot;
+<span class="lineNum">     282 </span>            : #define THUSTR_30       &quot;level 30: last call&quot;
+<span class="lineNum">     283 </span>            : 
+<span class="lineNum">     284 </span>            : #define THUSTR_31       &quot;level 31: pharaoh&quot;
+<span class="lineNum">     285 </span>            : #define THUSTR_32       &quot;level 32: caribbean&quot;
+<span class="lineNum">     286 </span>            : 
+<span class="lineNum">     287 </span>            : #define HUSTR_CHATMACRO1        &quot;I'm ready to kick butt!&quot;
+<span class="lineNum">     288 </span>            : #define HUSTR_CHATMACRO2        &quot;I'm OK.&quot;
+<span class="lineNum">     289 </span>            : #define HUSTR_CHATMACRO3        &quot;I'm not looking too good!&quot;
+<span class="lineNum">     290 </span>            : #define HUSTR_CHATMACRO4        &quot;Help!&quot;
+<span class="lineNum">     291 </span>            : #define HUSTR_CHATMACRO5        &quot;You suck!&quot;
+<span class="lineNum">     292 </span>            : #define HUSTR_CHATMACRO6        &quot;Next time, scumbag...&quot;
+<span class="lineNum">     293 </span>            : #define HUSTR_CHATMACRO7        &quot;Come here!&quot;
+<span class="lineNum">     294 </span>            : #define HUSTR_CHATMACRO8        &quot;I'll take care of it.&quot;
+<span class="lineNum">     295 </span>            : #define HUSTR_CHATMACRO9        &quot;Yes&quot;
+<span class="lineNum">     296 </span>            : #define HUSTR_CHATMACRO0        &quot;No&quot;
+<span class="lineNum">     297 </span>            : 
+<span class="lineNum">     298 </span><span class="lineNoCov">          0 : #define HUSTR_TALKTOSELF1       &quot;You mumble to yourself&quot;</span>
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 : #define HUSTR_TALKTOSELF2       &quot;Who's there?&quot;</span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 : #define HUSTR_TALKTOSELF3       &quot;You scare yourself&quot;</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 : #define HUSTR_TALKTOSELF4       &quot;You start to rave&quot;</span>
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 : #define HUSTR_TALKTOSELF5       &quot;You've lost it...&quot;</span>
+<span class="lineNum">     303 </span>            : 
+<span class="lineNum">     304 </span>            : #define HUSTR_MESSAGESENT       &quot;[Message Sent]&quot;
+<span class="lineNum">     305 </span>            : 
+<span class="lineNum">     306 </span>            : // The following should NOT be changed unless it seems
+<span class="lineNum">     307 </span>            : // just AWFULLY necessary
+<span class="lineNum">     308 </span>            : 
+<span class="lineNum">     309 </span>            : #define HUSTR_PLRGREEN  &quot;Green: &quot;
+<span class="lineNum">     310 </span>            : #define HUSTR_PLRINDIGO &quot;Indigo: &quot;
+<span class="lineNum">     311 </span>            : #define HUSTR_PLRBROWN  &quot;Brown: &quot;
+<span class="lineNum">     312 </span>            : #define HUSTR_PLRRED            &quot;Red: &quot;
+<span class="lineNum">     313 </span>            : 
+<span class="lineNum">     314 </span><span class="lineCov">      23123 : #define HUSTR_KEYGREEN  'g'</span>
+<span class="lineNum">     315 </span><span class="lineCov">      23123 : #define HUSTR_KEYINDIGO 'i'</span>
+<span class="lineNum">     316 </span><span class="lineCov">      23123 : #define HUSTR_KEYBROWN  'b'</span>
+<span class="lineNum">     317 </span><span class="lineCov">      23123 : #define HUSTR_KEYRED    'r'</span>
+<span class="lineNum">     318 </span>            : 
+<span class="lineNum">     319 </span>            : //
+<span class="lineNum">     320 </span>            : //      AM_map.C
+<span class="lineNum">     321 </span>            : //
+<span class="lineNum">     322 </span>            : 
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 : #define AMSTR_FOLLOWON  &quot;Follow Mode ON&quot;</span>
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 : #define AMSTR_FOLLOWOFF &quot;Follow Mode OFF&quot;</span>
+<span class="lineNum">     325 </span>            : 
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 : #define AMSTR_GRIDON    &quot;Grid ON&quot;</span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 : #define AMSTR_GRIDOFF   &quot;Grid OFF&quot;</span>
+<span class="lineNum">     328 </span>            : 
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 : #define AMSTR_MARKEDSPOT        &quot;Marked Spot&quot;</span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 : #define AMSTR_MARKSCLEARED      &quot;All Marks Cleared&quot;</span>
+<span class="lineNum">     331 </span>            : 
+<span class="lineNum">     332 </span>            : //
+<span class="lineNum">     333 </span>            : //      ST_stuff.C
+<span class="lineNum">     334 </span>            : //
+<span class="lineNum">     335 </span>            : 
+<span class="lineNum">     336 </span><span class="lineNoCov">          0 : #define STSTR_MUS               &quot;Music Change&quot;</span>
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 : #define STSTR_NOMUS             &quot;IMPOSSIBLE SELECTION&quot;</span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 : #define STSTR_DQDON             &quot;Degreelessness Mode On&quot;</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 : #define STSTR_DQDOFF    &quot;Degreelessness Mode Off&quot;</span>
+<span class="lineNum">     340 </span>            : 
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 : #define STSTR_KFAADDED  &quot;Very Happy Ammo Added&quot;</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 : #define STSTR_FAADDED   &quot;Ammo (no keys) Added&quot;</span>
+<span class="lineNum">     343 </span>            : 
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 : #define STSTR_NCON              &quot;No Clipping Mode ON&quot;</span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 : #define STSTR_NCOFF             &quot;No Clipping Mode OFF&quot;</span>
+<span class="lineNum">     346 </span>            : 
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 : #define STSTR_BEHOLD    &quot;inVuln, Str, Inviso, Rad, Allmap, or Lite-amp&quot;</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 : #define STSTR_BEHOLDX   &quot;Power-up Toggled&quot;</span>
+<span class="lineNum">     349 </span>            : 
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 : #define STSTR_CHOPPERS  &quot;... doesn't suck - GM&quot;</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 : #define STSTR_CLEV              &quot;Changing Level...&quot;</span>
+<span class="lineNum">     352 </span>            : 
+<span class="lineNum">     353 </span>            : //
+<span class="lineNum">     354 </span>            : //      F_Finale.C
+<span class="lineNum">     355 </span>            : //
+<span class="lineNum">     356 </span>            : #define E1TEXT \
+<span class="lineNum">     357 </span>            : &quot;Once you beat the big badasses and\n&quot;\
+<span class="lineNum">     358 </span>            : &quot;clean out the moon base you're supposed\n&quot;\
+<span class="lineNum">     359 </span>            : &quot;to win, aren't you? Aren't you? Where's\n&quot;\
+<span class="lineNum">     360 </span>            : &quot;your fat reward and ticket home? What\n&quot;\
+<span class="lineNum">     361 </span>            : &quot;the hell is this? It's not supposed to\n&quot;\
+<span class="lineNum">     362 </span>            : &quot;end this way!\n&quot;\
+<span class="lineNum">     363 </span>            : &quot;\n&quot; \
+<span class="lineNum">     364 </span>            : &quot;It stinks like rotten meat, but looks\n&quot;\
+<span class="lineNum">     365 </span>            : &quot;like the lost Deimos base.  Looks like\n&quot;\
+<span class="lineNum">     366 </span>            : &quot;you're stuck on The Shores of Hell.\n&quot;\
+<span class="lineNum">     367 </span>            : &quot;The only way out is through.\n&quot;\
+<span class="lineNum">     368 </span>            : &quot;\n&quot;\
+<span class="lineNum">     369 </span>            : &quot;To continue the DOOM experience, play\n&quot;\
+<span class="lineNum">     370 </span>            : &quot;The Shores of Hell and its amazing\n&quot;\
+<span class="lineNum">     371 </span>            : &quot;sequel, Inferno!\n&quot;
+<span class="lineNum">     372 </span>            : 
+<span class="lineNum">     373 </span>            : 
+<span class="lineNum">     374 </span>            : #define E2TEXT \
+<span class="lineNum">     375 </span>            : &quot;You've done it! The hideous cyber-\n&quot;\
+<span class="lineNum">     376 </span>            : &quot;demon lord that ruled the lost Deimos\n&quot;\
+<span class="lineNum">     377 </span>            : &quot;moon base has been slain and you\n&quot;\
+<span class="lineNum">     378 </span>            : &quot;are triumphant! But ... where are\n&quot;\
+<span class="lineNum">     379 </span>            : &quot;you? You clamber to the edge of the\n&quot;\
+<span class="lineNum">     380 </span>            : &quot;moon and look down to see the awful\n&quot;\
+<span class="lineNum">     381 </span>            : &quot;truth.\n&quot; \
+<span class="lineNum">     382 </span>            : &quot;\n&quot;\
+<span class="lineNum">     383 </span>            : &quot;Deimos floats above Hell itself!\n&quot;\
+<span class="lineNum">     384 </span>            : &quot;You've never heard of anyone escaping\n&quot;\
+<span class="lineNum">     385 </span>            : &quot;from Hell, but you'll make the bastards\n&quot;\
+<span class="lineNum">     386 </span>            : &quot;sorry they ever heard of you! Quickly,\n&quot;\
+<span class="lineNum">     387 </span>            : &quot;you rappel down to  the surface of\n&quot;\
+<span class="lineNum">     388 </span>            : &quot;Hell.\n&quot;\
+<span class="lineNum">     389 </span>            : &quot;\n&quot; \
+<span class="lineNum">     390 </span>            : &quot;Now, it's on to the final chapter of\n&quot;\
+<span class="lineNum">     391 </span>            : &quot;DOOM! -- Inferno.&quot;
+<span class="lineNum">     392 </span>            : 
+<span class="lineNum">     393 </span>            : 
+<span class="lineNum">     394 </span>            : #define E3TEXT \
+<span class="lineNum">     395 </span>            : &quot;The loathsome spiderdemon that\n&quot;\
+<span class="lineNum">     396 </span>            : &quot;masterminded the invasion of the moon\n&quot;\
+<span class="lineNum">     397 </span>            : &quot;bases and caused so much death has had\n&quot;\
+<span class="lineNum">     398 </span>            : &quot;its ass kicked for all time.\n&quot;\
+<span class="lineNum">     399 </span>            : &quot;\n&quot;\
+<span class="lineNum">     400 </span>            : &quot;A hidden doorway opens and you enter.\n&quot;\
+<span class="lineNum">     401 </span>            : &quot;You've proven too tough for Hell to\n&quot;\
+<span class="lineNum">     402 </span>            : &quot;contain, and now Hell at last plays\n&quot;\
+<span class="lineNum">     403 </span>            : &quot;fair -- for you emerge from the door\n&quot;\
+<span class="lineNum">     404 </span>            : &quot;to see the green fields of Earth!\n&quot;\
+<span class="lineNum">     405 </span>            : &quot;Home at last.\n&quot; \
+<span class="lineNum">     406 </span>            : &quot;\n&quot;\
+<span class="lineNum">     407 </span>            : &quot;You wonder what's been happening on\n&quot;\
+<span class="lineNum">     408 </span>            : &quot;Earth while you were battling evil\n&quot;\
+<span class="lineNum">     409 </span>            : &quot;unleashed. It's good that no Hell-\n&quot;\
+<span class="lineNum">     410 </span>            : &quot;spawn could have come through that\n&quot;\
+<span class="lineNum">     411 </span>            : &quot;door with you ...&quot;
+<span class="lineNum">     412 </span>            : 
+<span class="lineNum">     413 </span>            : 
+<span class="lineNum">     414 </span>            : #define E4TEXT \
+<span class="lineNum">     415 </span>            : &quot;the spider mastermind must have sent forth\n&quot;\
+<span class="lineNum">     416 </span>            : &quot;its legions of hellspawn before your\n&quot;\
+<span class="lineNum">     417 </span>            : &quot;final confrontation with that terrible\n&quot;\
+<span class="lineNum">     418 </span>            : &quot;beast from hell.  but you stepped forward\n&quot;\
+<span class="lineNum">     419 </span>            : &quot;and brought forth eternal damnation and\n&quot;\
+<span class="lineNum">     420 </span>            : &quot;suffering upon the horde as a true hero\n&quot;\
+<span class="lineNum">     421 </span>            : &quot;would in the face of something so evil.\n&quot;\
+<span class="lineNum">     422 </span>            : &quot;\n&quot;\
+<span class="lineNum">     423 </span>            : &quot;besides, someone was gonna pay for what\n&quot;\
+<span class="lineNum">     424 </span>            : &quot;happened to daisy, your pet rabbit.\n&quot;\
+<span class="lineNum">     425 </span>            : &quot;\n&quot;\
+<span class="lineNum">     426 </span>            : &quot;but now, you see spread before you more\n&quot;\
+<span class="lineNum">     427 </span>            : &quot;potential pain and gibbitude as a nation\n&quot;\
+<span class="lineNum">     428 </span>            : &quot;of demons run amok among our cities.\n&quot;\
+<span class="lineNum">     429 </span>            : &quot;\n&quot;\
+<span class="lineNum">     430 </span>            : &quot;next stop, hell on earth!&quot;
+<span class="lineNum">     431 </span>            : 
+<span class="lineNum">     432 </span>            : 
+<span class="lineNum">     433 </span>            : // after level 6, put this:
+<span class="lineNum">     434 </span>            : 
+<span class="lineNum">     435 </span>            : #define C1TEXT \
+<span class="lineNum">     436 </span>            : &quot;YOU HAVE ENTERED DEEPLY INTO THE INFESTED\n&quot; \
+<span class="lineNum">     437 </span>            : &quot;STARPORT. BUT SOMETHING IS WRONG. THE\n&quot; \
+<span class="lineNum">     438 </span>            : &quot;MONSTERS HAVE BROUGHT THEIR OWN REALITY\n&quot; \
+<span class="lineNum">     439 </span>            : &quot;WITH THEM, AND THE STARPORT'S TECHNOLOGY\n&quot; \
+<span class="lineNum">     440 </span>            : &quot;IS BEING SUBVERTED BY THEIR PRESENCE.\n&quot; \
+<span class="lineNum">     441 </span>            : &quot;\n&quot;\
+<span class="lineNum">     442 </span>            : &quot;AHEAD, YOU SEE AN OUTPOST OF HELL, A\n&quot; \
+<span class="lineNum">     443 </span>            : &quot;FORTIFIED ZONE. IF YOU CAN GET PAST IT,\n&quot; \
+<span class="lineNum">     444 </span>            : &quot;YOU CAN PENETRATE INTO THE HAUNTED HEART\n&quot; \
+<span class="lineNum">     445 </span>            : &quot;OF THE STARBASE AND FIND THE CONTROLLING\n&quot; \
+<span class="lineNum">     446 </span>            : &quot;SWITCH WHICH HOLDS EARTH'S POPULATION\n&quot; \
+<span class="lineNum">     447 </span>            : &quot;HOSTAGE.&quot;
+<span class="lineNum">     448 </span>            : 
+<span class="lineNum">     449 </span>            : // After level 11, put this:
+<span class="lineNum">     450 </span>            : 
+<span class="lineNum">     451 </span>            : #define C2TEXT \
+<span class="lineNum">     452 </span>            : &quot;YOU HAVE WON! YOUR VICTORY HAS ENABLED\n&quot; \
+<span class="lineNum">     453 </span>            : &quot;HUMANKIND TO EVACUATE EARTH AND ESCAPE\n&quot;\
+<span class="lineNum">     454 </span>            : &quot;THE NIGHTMARE.  NOW YOU ARE THE ONLY\n&quot;\
+<span class="lineNum">     455 </span>            : &quot;HUMAN LEFT ON THE FACE OF THE PLANET.\n&quot;\
+<span class="lineNum">     456 </span>            : &quot;CANNIBAL MUTATIONS, CARNIVOROUS ALIENS,\n&quot;\
+<span class="lineNum">     457 </span>            : &quot;AND EVIL SPIRITS ARE YOUR ONLY NEIGHBORS.\n&quot;\
+<span class="lineNum">     458 </span>            : &quot;YOU SIT BACK AND WAIT FOR DEATH, CONTENT\n&quot;\
+<span class="lineNum">     459 </span>            : &quot;THAT YOU HAVE SAVED YOUR SPECIES.\n&quot;\
+<span class="lineNum">     460 </span>            : &quot;\n&quot;\
+<span class="lineNum">     461 </span>            : &quot;BUT THEN, EARTH CONTROL BEAMS DOWN A\n&quot;\
+<span class="lineNum">     462 </span>            : &quot;MESSAGE FROM SPACE: \&quot;SENSORS HAVE LOCATED\n&quot;\
+<span class="lineNum">     463 </span>            : &quot;THE SOURCE OF THE ALIEN INVASION. IF YOU\n&quot;\
+<span class="lineNum">     464 </span>            : &quot;GO THERE, YOU MAY BE ABLE TO BLOCK THEIR\n&quot;\
+<span class="lineNum">     465 </span>            : &quot;ENTRY.  THE ALIEN BASE IS IN THE HEART OF\n&quot;\
+<span class="lineNum">     466 </span>            : &quot;YOUR OWN HOME CITY, NOT FAR FROM THE\n&quot;\
+<span class="lineNum">     467 </span>            : &quot;STARPORT.\&quot; SLOWLY AND PAINFULLY YOU GET\n&quot;\
+<span class="lineNum">     468 </span>            : &quot;UP AND RETURN TO THE FRAY.&quot;
+<span class="lineNum">     469 </span>            : 
+<span class="lineNum">     470 </span>            : 
+<span class="lineNum">     471 </span>            : // After level 20, put this:
+<span class="lineNum">     472 </span>            : 
+<span class="lineNum">     473 </span>            : #define C3TEXT \
+<span class="lineNum">     474 </span>            : &quot;YOU ARE AT THE CORRUPT HEART OF THE CITY,\n&quot;\
+<span class="lineNum">     475 </span>            : &quot;SURROUNDED BY THE CORPSES OF YOUR ENEMIES.\n&quot;\
+<span class="lineNum">     476 </span>            : &quot;YOU SEE NO WAY TO DESTROY THE CREATURES'\n&quot;\
+<span class="lineNum">     477 </span>            : &quot;ENTRYWAY ON THIS SIDE, SO YOU CLENCH YOUR\n&quot;\
+<span class="lineNum">     478 </span>            : &quot;TEETH AND PLUNGE THROUGH IT.\n&quot;\
+<span class="lineNum">     479 </span>            : &quot;\n&quot;\
+<span class="lineNum">     480 </span>            : &quot;THERE MUST BE A WAY TO CLOSE IT ON THE\n&quot;\
+<span class="lineNum">     481 </span>            : &quot;OTHER SIDE. WHAT DO YOU CARE IF YOU'VE\n&quot;\
+<span class="lineNum">     482 </span>            : &quot;GOT TO GO THROUGH HELL TO GET TO IT?&quot;
+<span class="lineNum">     483 </span>            : 
+<span class="lineNum">     484 </span>            : 
+<span class="lineNum">     485 </span>            : // After level 29, put this:
+<span class="lineNum">     486 </span>            : 
+<span class="lineNum">     487 </span>            : #define C4TEXT \
+<span class="lineNum">     488 </span>            : &quot;THE HORRENDOUS VISAGE OF THE BIGGEST\n&quot;\
+<span class="lineNum">     489 </span>            : &quot;DEMON YOU'VE EVER SEEN CRUMBLES BEFORE\n&quot;\
+<span class="lineNum">     490 </span>            : &quot;YOU, AFTER YOU PUMP YOUR ROCKETS INTO\n&quot;\
+<span class="lineNum">     491 </span>            : &quot;HIS EXPOSED BRAIN. THE MONSTER SHRIVELS\n&quot;\
+<span class="lineNum">     492 </span>            : &quot;UP AND DIES, ITS THRASHING LIMBS\n&quot;\
+<span class="lineNum">     493 </span>            : &quot;DEVASTATING UNTOLD MILES OF HELL'S\n&quot;\
+<span class="lineNum">     494 </span>            : &quot;SURFACE.\n&quot;\
+<span class="lineNum">     495 </span>            : &quot;\n&quot;\
+<span class="lineNum">     496 </span>            : &quot;YOU'VE DONE IT. THE INVASION IS OVER.\n&quot;\
+<span class="lineNum">     497 </span>            : &quot;EARTH IS SAVED. HELL IS A WRECK. YOU\n&quot;\
+<span class="lineNum">     498 </span>            : &quot;WONDER WHERE BAD FOLKS WILL GO WHEN THEY\n&quot;\
+<span class="lineNum">     499 </span>            : &quot;DIE, NOW. WIPING THE SWEAT FROM YOUR\n&quot;\
+<span class="lineNum">     500 </span>            : &quot;FOREHEAD YOU BEGIN THE LONG TREK BACK\n&quot;\
+<span class="lineNum">     501 </span>            : &quot;HOME. REBUILDING EARTH OUGHT TO BE A\n&quot;\
+<span class="lineNum">     502 </span>            : &quot;LOT MORE FUN THAN RUINING IT WAS.\n&quot;
+<span class="lineNum">     503 </span>            : 
+<span class="lineNum">     504 </span>            : 
+<span class="lineNum">     505 </span>            : 
+<span class="lineNum">     506 </span>            : // Before level 31, put this:
+<span class="lineNum">     507 </span>            : 
+<span class="lineNum">     508 </span>            : #define C5TEXT \
+<span class="lineNum">     509 </span>            : &quot;CONGRATULATIONS, YOU'VE FOUND THE SECRET\n&quot;\
+<span class="lineNum">     510 </span>            : &quot;LEVEL! LOOKS LIKE IT'S BEEN BUILT BY\n&quot;\
+<span class="lineNum">     511 </span>            : &quot;HUMANS, RATHER THAN DEMONS. YOU WONDER\n&quot;\
+<span class="lineNum">     512 </span>            : &quot;WHO THE INMATES OF THIS CORNER OF HELL\n&quot;\
+<span class="lineNum">     513 </span>            : &quot;WILL BE.&quot;
+<span class="lineNum">     514 </span>            : 
+<span class="lineNum">     515 </span>            : 
+<span class="lineNum">     516 </span>            : // Before level 32, put this:
+<span class="lineNum">     517 </span>            : 
+<span class="lineNum">     518 </span>            : #define C6TEXT \
+<span class="lineNum">     519 </span>            : &quot;CONGRATULATIONS, YOU'VE FOUND THE\n&quot;\
+<span class="lineNum">     520 </span>            : &quot;SUPER SECRET LEVEL!  YOU'D BETTER\n&quot;\
+<span class="lineNum">     521 </span>            : &quot;BLAZE THROUGH THIS ONE!\n&quot;
+<span class="lineNum">     522 </span>            : 
+<span class="lineNum">     523 </span>            : 
+<span class="lineNum">     524 </span>            : // after map 06 
+<span class="lineNum">     525 </span>            : 
+<span class="lineNum">     526 </span>            : #define P1TEXT  \
+<span class="lineNum">     527 </span>            : &quot;You gloat over the steaming carcass of the\n&quot;\
+<span class="lineNum">     528 </span>            : &quot;Guardian.  With its death, you've wrested\n&quot;\
+<span class="lineNum">     529 </span>            : &quot;the Accelerator from the stinking claws\n&quot;\
+<span class="lineNum">     530 </span>            : &quot;of Hell.  You relax and glance around the\n&quot;\
+<span class="lineNum">     531 </span>            : &quot;room.  Damn!  There was supposed to be at\n&quot;\
+<span class="lineNum">     532 </span>            : &quot;least one working prototype, but you can't\n&quot;\
+<span class="lineNum">     533 </span>            : &quot;see it. The demons must have taken it.\n&quot;\
+<span class="lineNum">     534 </span>            : &quot;\n&quot;\
+<span class="lineNum">     535 </span>            : &quot;You must find the prototype, or all your\n&quot;\
+<span class="lineNum">     536 </span>            : &quot;struggles will have been wasted. Keep\n&quot;\
+<span class="lineNum">     537 </span>            : &quot;moving, keep fighting, keep killing.\n&quot;\
+<span class="lineNum">     538 </span>            : &quot;Oh yes, keep living, too.&quot;
+<span class="lineNum">     539 </span>            : 
+<span class="lineNum">     540 </span>            : 
+<span class="lineNum">     541 </span>            : // after map 11
+<span class="lineNum">     542 </span>            : 
+<span class="lineNum">     543 </span>            : #define P2TEXT \
+<span class="lineNum">     544 </span>            : &quot;Even the deadly Arch-Vile labyrinth could\n&quot;\
+<span class="lineNum">     545 </span>            : &quot;not stop you, and you've gotten to the\n&quot;\
+<span class="lineNum">     546 </span>            : &quot;prototype Accelerator which is soon\n&quot;\
+<span class="lineNum">     547 </span>            : &quot;efficiently and permanently deactivated.\n&quot;\
+<span class="lineNum">     548 </span>            : &quot;\n&quot;\
+<span class="lineNum">     549 </span>            : &quot;You're good at that kind of thing.&quot;
+<span class="lineNum">     550 </span>            : 
+<span class="lineNum">     551 </span>            : 
+<span class="lineNum">     552 </span>            : // after map 20
+<span class="lineNum">     553 </span>            : 
+<span class="lineNum">     554 </span>            : #define P3TEXT \
+<span class="lineNum">     555 </span>            : &quot;You've bashed and battered your way into\n&quot;\
+<span class="lineNum">     556 </span>            : &quot;the heart of the devil-hive.  Time for a\n&quot;\
+<span class="lineNum">     557 </span>            : &quot;Search-and-Destroy mission, aimed at the\n&quot;\
+<span class="lineNum">     558 </span>            : &quot;Gatekeeper, whose foul offspring is\n&quot;\
+<span class="lineNum">     559 </span>            : &quot;cascading to Earth.  Yeah, he's bad. But\n&quot;\
+<span class="lineNum">     560 </span>            : &quot;you know who's worse!\n&quot;\
+<span class="lineNum">     561 </span>            : &quot;\n&quot;\
+<span class="lineNum">     562 </span>            : &quot;Grinning evilly, you check your gear, and\n&quot;\
+<span class="lineNum">     563 </span>            : &quot;get ready to give the bastard a little Hell\n&quot;\
+<span class="lineNum">     564 </span>            : &quot;of your own making!&quot;
+<span class="lineNum">     565 </span>            : 
+<span class="lineNum">     566 </span>            : // after map 30
+<span class="lineNum">     567 </span>            : 
+<span class="lineNum">     568 </span>            : #define P4TEXT \
+<span class="lineNum">     569 </span>            : &quot;The Gatekeeper's evil face is splattered\n&quot;\
+<span class="lineNum">     570 </span>            : &quot;all over the place.  As its tattered corpse\n&quot;\
+<span class="lineNum">     571 </span>            : &quot;collapses, an inverted Gate forms and\n&quot;\
+<span class="lineNum">     572 </span>            : &quot;sucks down the shards of the last\n&quot;\
+<span class="lineNum">     573 </span>            : &quot;prototype Accelerator, not to mention the\n&quot;\
+<span class="lineNum">     574 </span>            : &quot;few remaining demons.  You're done. Hell\n&quot;\
+<span class="lineNum">     575 </span>            : &quot;has gone back to pounding bad dead folks \n&quot;\
+<span class="lineNum">     576 </span>            : &quot;instead of good live ones.  Remember to\n&quot;\
+<span class="lineNum">     577 </span>            : &quot;tell your grandkids to put a rocket\n&quot;\
+<span class="lineNum">     578 </span>            : &quot;launcher in your coffin. If you go to Hell\n&quot;\
+<span class="lineNum">     579 </span>            : &quot;when you die, you'll need it for some\n&quot;\
+<span class="lineNum">     580 </span>            : &quot;final cleaning-up ...&quot;
+<span class="lineNum">     581 </span>            : 
+<span class="lineNum">     582 </span>            : // before map 31
+<span class="lineNum">     583 </span>            : 
+<span class="lineNum">     584 </span>            : #define P5TEXT \
+<span class="lineNum">     585 </span>            : &quot;You've found the second-hardest level we\n&quot;\
+<span class="lineNum">     586 </span>            : &quot;got. Hope you have a saved game a level or\n&quot;\
+<span class="lineNum">     587 </span>            : &quot;two previous.  If not, be prepared to die\n&quot;\
+<span class="lineNum">     588 </span>            : &quot;aplenty. For master marines only.&quot;
+<span class="lineNum">     589 </span>            : 
+<span class="lineNum">     590 </span>            : // before map 32
+<span class="lineNum">     591 </span>            : 
+<span class="lineNum">     592 </span>            : #define P6TEXT \
+<span class="lineNum">     593 </span>            : &quot;Betcha wondered just what WAS the hardest\n&quot;\
+<span class="lineNum">     594 </span>            : &quot;level we had ready for ya?  Now you know.\n&quot;\
+<span class="lineNum">     595 </span>            : &quot;No one gets out alive.&quot;
+<span class="lineNum">     596 </span>            : 
+<span class="lineNum">     597 </span>            : 
+<span class="lineNum">     598 </span>            : #define T1TEXT \
+<span class="lineNum">     599 </span>            : &quot;You've fought your way out of the infested\n&quot;\
+<span class="lineNum">     600 </span>            : &quot;experimental labs.   It seems that UAC has\n&quot;\
+<span class="lineNum">     601 </span>            : &quot;once again gulped it down.  With their\n&quot;\
+<span class="lineNum">     602 </span>            : &quot;high turnover, it must be hard for poor\n&quot;\
+<span class="lineNum">     603 </span>            : &quot;old UAC to buy corporate health insurance\n&quot;\
+<span class="lineNum">     604 </span>            : &quot;nowadays..\n&quot;\
+<span class="lineNum">     605 </span>            : &quot;\n&quot;\
+<span class="lineNum">     606 </span>            : &quot;Ahead lies the military complex, now\n&quot;\
+<span class="lineNum">     607 </span>            : &quot;swarming with diseased horrors hot to get\n&quot;\
+<span class="lineNum">     608 </span>            : &quot;their teeth into you. With luck, the\n&quot;\
+<span class="lineNum">     609 </span>            : &quot;complex still has some warlike ordnance\n&quot;\
+<span class="lineNum">     610 </span>            : &quot;laying around.&quot;
+<span class="lineNum">     611 </span>            : 
+<span class="lineNum">     612 </span>            : 
+<span class="lineNum">     613 </span>            : #define T2TEXT \
+<span class="lineNum">     614 </span>            : &quot;You hear the grinding of heavy machinery\n&quot;\
+<span class="lineNum">     615 </span>            : &quot;ahead.  You sure hope they're not stamping\n&quot;\
+<span class="lineNum">     616 </span>            : &quot;out new hellspawn, but you're ready to\n&quot;\
+<span class="lineNum">     617 </span>            : &quot;ream out a whole herd if you have to.\n&quot;\
+<span class="lineNum">     618 </span>            : &quot;They might be planning a blood feast, but\n&quot;\
+<span class="lineNum">     619 </span>            : &quot;you feel about as mean as two thousand\n&quot;\
+<span class="lineNum">     620 </span>            : &quot;maniacs packed into one mad killer.\n&quot;\
+<span class="lineNum">     621 </span>            : &quot;\n&quot;\
+<span class="lineNum">     622 </span>            : &quot;You don't plan to go down easy.&quot;
+<span class="lineNum">     623 </span>            : 
+<span class="lineNum">     624 </span>            : 
+<span class="lineNum">     625 </span>            : #define T3TEXT \
+<span class="lineNum">     626 </span>            : &quot;The vista opening ahead looks real damn\n&quot;\
+<span class="lineNum">     627 </span>            : &quot;familiar. Smells familiar, too -- like\n&quot;\
+<span class="lineNum">     628 </span>            : &quot;fried excrement. You didn't like this\n&quot;\
+<span class="lineNum">     629 </span>            : &quot;place before, and you sure as hell ain't\n&quot;\
+<span class="lineNum">     630 </span>            : &quot;planning to like it now. The more you\n&quot;\
+<span class="lineNum">     631 </span>            : &quot;brood on it, the madder you get.\n&quot;\
+<span class="lineNum">     632 </span>            : &quot;Hefting your gun, an evil grin trickles\n&quot;\
+<span class="lineNum">     633 </span>            : &quot;onto your face. Time to take some names.&quot;
+<span class="lineNum">     634 </span>            : 
+<span class="lineNum">     635 </span>            : #define T4TEXT \
+<span class="lineNum">     636 </span>            : &quot;Suddenly, all is silent, from one horizon\n&quot;\
+<span class="lineNum">     637 </span>            : &quot;to the other. The agonizing echo of Hell\n&quot;\
+<span class="lineNum">     638 </span>            : &quot;fades away, the nightmare sky turns to\n&quot;\
+<span class="lineNum">     639 </span>            : &quot;blue, the heaps of monster corpses start \n&quot;\
+<span class="lineNum">     640 </span>            : &quot;to evaporate along with the evil stench \n&quot;\
+<span class="lineNum">     641 </span>            : &quot;that filled the air. Jeeze, maybe you've\n&quot;\
+<span class="lineNum">     642 </span>            : &quot;done it. Have you really won?\n&quot;\
+<span class="lineNum">     643 </span>            : &quot;\n&quot;\
+<span class="lineNum">     644 </span>            : &quot;Something rumbles in the distance.\n&quot;\
+<span class="lineNum">     645 </span>            : &quot;A blue light begins to glow inside the\n&quot;\
+<span class="lineNum">     646 </span>            : &quot;ruined skull of the demon-spitter.&quot;
+<span class="lineNum">     647 </span>            : 
+<span class="lineNum">     648 </span>            : 
+<span class="lineNum">     649 </span>            : #define T5TEXT \
+<span class="lineNum">     650 </span>            : &quot;What now? Looks totally different. Kind\n&quot;\
+<span class="lineNum">     651 </span>            : &quot;of like King Tut's condo. Well,\n&quot;\
+<span class="lineNum">     652 </span>            : &quot;whatever's here can't be any worse\n&quot;\
+<span class="lineNum">     653 </span>            : &quot;than usual. Can it?  Or maybe it's best\n&quot;\
+<span class="lineNum">     654 </span>            : &quot;to let sleeping gods lie..&quot;
+<span class="lineNum">     655 </span>            : 
+<span class="lineNum">     656 </span>            : 
+<span class="lineNum">     657 </span>            : #define T6TEXT \
+<span class="lineNum">     658 </span>            : &quot;Time for a vacation. You've burst the\n&quot;\
+<span class="lineNum">     659 </span>            : &quot;bowels of hell and by golly you're ready\n&quot;\
+<span class="lineNum">     660 </span>            : &quot;for a break. You mutter to yourself,\n&quot;\
+<span class="lineNum">     661 </span>            : &quot;Maybe someone else can kick Hell's ass\n&quot;\
+<span class="lineNum">     662 </span>            : &quot;next time around. Ahead lies a quiet town,\n&quot;\
+<span class="lineNum">     663 </span>            : &quot;with peaceful flowing water, quaint\n&quot;\
+<span class="lineNum">     664 </span>            : &quot;buildings, and presumably no Hellspawn.\n&quot;\
+<span class="lineNum">     665 </span>            : &quot;\n&quot;\
+<span class="lineNum">     666 </span>            : &quot;As you step off the transport, you hear\n&quot;\
+<span class="lineNum">     667 </span>            : &quot;the stomp of a cyberdemon's iron shoe.&quot;
+<span class="lineNum">     668 </span>            : 
+<span class="lineNum">     669 </span>            : 
+<span class="lineNum">     670 </span>            : 
+<span class="lineNum">     671 </span>            : //
+<span class="lineNum">     672 </span>            : // Character cast strings F_FINALE.C
+<span class="lineNum">     673 </span>            : //
+<span class="lineNum">     674 </span>            : #define CC_ZOMBIE       &quot;ZOMBIEMAN&quot;
+<span class="lineNum">     675 </span>            : #define CC_SHOTGUN      &quot;SHOTGUN GUY&quot;
+<span class="lineNum">     676 </span>            : #define CC_HEAVY        &quot;HEAVY WEAPON DUDE&quot;
+<span class="lineNum">     677 </span>            : #define CC_IMP  &quot;IMP&quot;
+<span class="lineNum">     678 </span>            : #define CC_DEMON        &quot;DEMON&quot;
+<span class="lineNum">     679 </span>            : #define CC_LOST &quot;LOST SOUL&quot;
+<span class="lineNum">     680 </span>            : #define CC_CACO &quot;CACODEMON&quot;
+<span class="lineNum">     681 </span>            : #define CC_HELL &quot;HELL KNIGHT&quot;
+<span class="lineNum">     682 </span>            : #define CC_BARON        &quot;BARON OF HELL&quot;
+<span class="lineNum">     683 </span>            : #define CC_ARACH        &quot;ARACHNOTRON&quot;
+<span class="lineNum">     684 </span>            : #define CC_PAIN &quot;PAIN ELEMENTAL&quot;
+<span class="lineNum">     685 </span>            : #define CC_REVEN        &quot;REVENANT&quot;
+<span class="lineNum">     686 </span>            : #define CC_MANCU        &quot;MANCUBUS&quot;
+<span class="lineNum">     687 </span>            : #define CC_ARCH &quot;ARCH-VILE&quot;
+<span class="lineNum">     688 </span>            : #define CC_SPIDER       &quot;THE SPIDER MASTERMIND&quot;
+<span class="lineNum">     689 </span>            : #define CC_CYBER        &quot;THE CYBERDEMON&quot;
+<span class="lineNum">     690 </span>            : #define CC_HERO &quot;OUR HERO&quot;
+<span class="lineNum">     691 </span>            : 
+<span class="lineNum">     692 </span>            : 
+<span class="lineNum">     693 </span>            : #endif
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

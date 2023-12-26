@@ -1,0 +1,1454 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/i_musicpack.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - i_musicpack.c<span style="font-size: 80%;"> (source / <a href="i_musicpack.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">921</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">33</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      System interface for music.
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      22 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      23 </span>            : #include &lt;ctype.h&gt;
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span>            : #include &quot;SDL.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;SDL_mixer.h&quot;
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span>            : #include &quot;i_glob.h&quot;
+<span class="lineNum">      29 </span>            : #include &quot;i_midipipe.h&quot;
+<span class="lineNum">      30 </span>            : 
+<span class="lineNum">      31 </span>            : #include &quot;config.h&quot;
+<span class="lineNum">      32 </span>            : #include &quot;doomtype.h&quot;
+<span class="lineNum">      33 </span>            : #include &quot;memio.h&quot;
+<span class="lineNum">      34 </span>            : #include &quot;mus2mid.h&quot;
+<span class="lineNum">      35 </span>            : 
+<span class="lineNum">      36 </span>            : #include &quot;deh_str.h&quot;
+<span class="lineNum">      37 </span>            : #include &quot;gusconf.h&quot;
+<span class="lineNum">      38 </span>            : #include &quot;i_sound.h&quot;
+<span class="lineNum">      39 </span>            : #include &quot;i_system.h&quot;
+<span class="lineNum">      40 </span>            : #include &quot;i_swap.h&quot;
+<span class="lineNum">      41 </span>            : #include &quot;m_argv.h&quot;
+<span class="lineNum">      42 </span>            : #include &quot;m_config.h&quot;
+<span class="lineNum">      43 </span>            : #include &quot;m_misc.h&quot;
+<span class="lineNum">      44 </span>            : #include &quot;sha1.h&quot;
+<span class="lineNum">      45 </span>            : #include &quot;w_wad.h&quot;
+<span class="lineNum">      46 </span>            : #include &quot;z_zone.h&quot;
+<span class="lineNum">      47 </span>            : 
+<span class="lineNum">      48 </span><span class="lineNoCov">          0 : #define MID_HEADER_MAGIC &quot;MThd&quot;</span>
+<span class="lineNum">      49 </span><span class="lineNoCov">          0 : #define MUS_HEADER_MAGIC &quot;MUS\x1a&quot;</span>
+<span class="lineNum">      50 </span>            : 
+<span class="lineNum">      51 </span><span class="lineNoCov">          0 : #define FLAC_HEADER &quot;fLaC&quot;</span>
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 : #define OGG_HEADER &quot;OggS&quot;</span>
+<span class="lineNum">      53 </span>            : 
+<span class="lineNum">      54 </span>            : // Looping Vorbis metadata tag names. These have been defined by ZDoom
+<span class="lineNum">      55 </span>            : // for specifying the start and end positions for looping music tracks
+<span class="lineNum">      56 </span>            : // in .ogg and .flac files.
+<span class="lineNum">      57 </span>            : // More information is here: http://zdoom.org/wiki/Audio_loop
+<span class="lineNum">      58 </span><span class="lineNoCov">          0 : #define LOOP_START_TAG &quot;LOOP_START&quot;</span>
+<span class="lineNum">      59 </span><span class="lineNoCov">          0 : #define LOOP_END_TAG   &quot;LOOP_END&quot;</span>
+<span class="lineNum">      60 </span>            : 
+<span class="lineNum">      61 </span>            : // FLAC metadata headers that we care about.
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 : #define FLAC_STREAMINFO      0</span>
+<span class="lineNum">      63 </span><span class="lineNoCov">          0 : #define FLAC_VORBIS_COMMENT  4</span>
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span>            : // Ogg metadata headers that we care about.
+<span class="lineNum">      66 </span><span class="lineNoCov">          0 : #define OGG_ID_HEADER        1</span>
+<span class="lineNum">      67 </span><span class="lineNoCov">          0 : #define OGG_COMMENT_HEADER   3</span>
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : // Structure for music substitution.
+<span class="lineNum">      70 </span>            : // We store a mapping based on SHA1 checksum -&gt; filename of substitute music
+<span class="lineNum">      71 </span>            : // file to play, so that substitution occurs based on content rather than
+<span class="lineNum">      72 </span>            : // lump name. This has some inherent advantages:
+<span class="lineNum">      73 </span>            : //  * Music for Plutonia (reused from Doom 1) works automatically.
+<span class="lineNum">      74 </span>            : //  * If a PWAD replaces music, the replacement music is used rather than
+<span class="lineNum">      75 </span>            : //    the substitute music for the IWAD.
+<span class="lineNum">      76 </span>            : //  * If a PWAD reuses music from an IWAD (even from a different game), we get
+<span class="lineNum">      77 </span>            : //    the high quality version of the music automatically (neat!)
+<span class="lineNum">      78 </span>            : 
+<span class="lineNum">      79 </span>            : typedef struct
+<span class="lineNum">      80 </span>            : {
+<span class="lineNum">      81 </span>            :     const char *hash_prefix;
+<span class="lineNum">      82 </span>            :     const char *filename;
+<span class="lineNum">      83 </span>            : } subst_music_t;
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            : // Structure containing parsed metadata read from a digital music track:
+<span class="lineNum">      86 </span>            : typedef struct
+<span class="lineNum">      87 </span>            : {
+<span class="lineNum">      88 </span>            :     boolean valid;
+<span class="lineNum">      89 </span>            :     unsigned int samplerate_hz;
+<span class="lineNum">      90 </span>            :     int start_time, end_time;
+<span class="lineNum">      91 </span>            : } file_metadata_t;
+<span class="lineNum">      92 </span>            : 
+<span class="lineNum">      93 </span>            : static subst_music_t *subst_music = NULL;
+<span class="lineNum">      94 </span>            : static unsigned int subst_music_len = 0;
+<span class="lineNum">      95 </span>            : 
+<span class="lineNum">      96 </span>            : static boolean music_initialized = false;
+<span class="lineNum">      97 </span>            : 
+<span class="lineNum">      98 </span>            : // If this is true, this module initialized SDL sound and has the 
+<span class="lineNum">      99 </span>            : // responsibility to shut it down
+<span class="lineNum">     100 </span>            : 
+<span class="lineNum">     101 </span>            : static boolean sdl_was_initialized = false;
+<span class="lineNum">     102 </span>            : 
+<span class="lineNum">     103 </span>            : char *music_pack_path = &quot;&quot;;
+<span class="lineNum">     104 </span>            : 
+<span class="lineNum">     105 </span>            : // If true, we are playing a substitute digital track rather than in-WAD
+<span class="lineNum">     106 </span>            : // MIDI/MUS track, and file_metadata contains loop metadata.
+<span class="lineNum">     107 </span>            : static file_metadata_t file_metadata;
+<span class="lineNum">     108 </span>            : 
+<span class="lineNum">     109 </span>            : // Position (in samples) that we have reached in the current track.
+<span class="lineNum">     110 </span>            : // This is updated by the TrackPositionCallback function.
+<span class="lineNum">     111 </span>            : static unsigned int current_track_pos;
+<span class="lineNum">     112 </span>            : 
+<span class="lineNum">     113 </span>            : // Currently playing music track.
+<span class="lineNum">     114 </span>            : static Mix_Music *current_track_music = NULL;
+<span class="lineNum">     115 </span>            : 
+<span class="lineNum">     116 </span>            : // If true, the currently playing track is being played on loop.
+<span class="lineNum">     117 </span>            : static boolean current_track_loop;
+<span class="lineNum">     118 </span>            : 
+<span class="lineNum">     119 </span>            : // Table of known hashes and filenames to look up for them. This allows
+<span class="lineNum">     120 </span>            : // users to drop in a set of files without having to also provide a
+<span class="lineNum">     121 </span>            : // configuration file.
+<span class="lineNum">     122 </span>            : static const subst_music_t known_filenames[] = {
+<span class="lineNum">     123 </span>            :     // Doom 1 music files.
+<span class="lineNum">     124 </span>            :     {&quot;b2e05b4e8dff8d76f8f4&quot;, &quot;d_inter.{ext}&quot;},
+<span class="lineNum">     125 </span>            :     {&quot;0c0acce45130bab935d2&quot;, &quot;d_intro.{ext}&quot;},
+<span class="lineNum">     126 </span>            :     {&quot;fca4086939a68ae4ed84&quot;, &quot;d_victor.{ext}&quot;},
+<span class="lineNum">     127 </span>            :     {&quot;5971e5e20554f47ca065&quot;, &quot;d_intro.{ext}&quot;},
+<span class="lineNum">     128 </span>            :     {&quot;99767e32769229897f77&quot;, &quot;d_e1m1.{ext}&quot;},
+<span class="lineNum">     129 </span>            :     {&quot;b5e7dfb4efe9e688bf2a&quot;, &quot;d_e1m2.{ext}&quot;},
+<span class="lineNum">     130 </span>            :     {&quot;fda8fa73e4d30a6b961c&quot;, &quot;d_e1m3.{ext}&quot;},
+<span class="lineNum">     131 </span>            :     {&quot;3805f9bf3f1702f7e7f5&quot;, &quot;d_e1m4.{ext}&quot;},
+<span class="lineNum">     132 </span>            :     {&quot;f546ed823b234fe39165&quot;, &quot;d_e1m5.{ext}&quot;},
+<span class="lineNum">     133 </span>            :     {&quot;4450811b5a6748cfd83e&quot;, &quot;d_e1m6.{ext}&quot;},
+<span class="lineNum">     134 </span>            :     {&quot;73edb50d96b0ac03be34&quot;, &quot;d_e1m7.{ext}&quot;},
+<span class="lineNum">     135 </span>            :     {&quot;47d711a6fd32f5047879&quot;, &quot;d_e1m8.{ext}&quot;},
+<span class="lineNum">     136 </span>            :     {&quot;62c631c2fdaa5ecd9a8d&quot;, &quot;d_e1m9.{ext}&quot;},
+<span class="lineNum">     137 </span>            :     {&quot;7702a6449585428e7185&quot;, &quot;d_e2m1.{ext}&quot;},
+<span class="lineNum">     138 </span>            :     {&quot;1cb1810989cbfae2b29b&quot;, &quot;d_e2m2.{ext}&quot;},
+<span class="lineNum">     139 </span>            :     {&quot;7d740f3c881a22945e47&quot;, &quot;d_e2m4.{ext}&quot;},
+<span class="lineNum">     140 </span>            :     {&quot;ae9c3dc2f9aeea002327&quot;, &quot;d_e2m6.{ext}&quot;},
+<span class="lineNum">     141 </span>            :     {&quot;b26aad3caa420e9a2c76&quot;, &quot;d_e2m7.{ext}&quot;},
+<span class="lineNum">     142 </span>            :     {&quot;90f06251a2a90bfaefd4&quot;, &quot;d_e2m8.{ext}&quot;},
+<span class="lineNum">     143 </span>            :     {&quot;b2fb439f23c08c8e2577&quot;, &quot;d_e3m1.{ext}&quot;},
+<span class="lineNum">     144 </span>            :     {&quot;b6c07bb249526b864208&quot;, &quot;d_e3m2.{ext}&quot;},
+<span class="lineNum">     145 </span>            :     {&quot;ce3587ee503ffe707b2d&quot;, &quot;d_e3m3.{ext}&quot;},
+<span class="lineNum">     146 </span>            :     {&quot;d746ea2aa16b3237422c&quot;, &quot;d_e3m8.{ext}&quot;},
+<span class="lineNum">     147 </span>            :     {&quot;3da3b1335560a92912e6&quot;, &quot;d_bunny.{ext}&quot;},
+<span class="lineNum">     148 </span>            : 
+<span class="lineNum">     149 </span>            :     // Duplicates that don't have identical hashes:
+<span class="lineNum">     150 </span>            :     {&quot;4a5badc4f10a7d4ed021&quot;, &quot;d_inter.{ext}&quot;},  // E2M3
+<span class="lineNum">     151 </span>            :     {&quot;36b14bf165b3fdd3958e&quot;, &quot;d_e1m7.{ext}&quot;},   // E3M5
+<span class="lineNum">     152 </span>            :     {&quot;e77c3d42f2ea87f04607&quot;, &quot;d_e1m6.{ext}&quot;},   // E3M6
+<span class="lineNum">     153 </span>            :     {&quot;3d85ec9c10b5ea465568&quot;, &quot;d_e2m7.{ext}&quot;},   // E3M7
+<span class="lineNum">     154 </span>            :     {&quot;4d42e2ce1c1ff192500e&quot;, &quot;d_e1m9.{ext}&quot;},   // E3M9
+<span class="lineNum">     155 </span>            : 
+<span class="lineNum">     156 </span>            :     // These tracks are reused in Alien Vendetta, but are MIDs:
+<span class="lineNum">     157 </span>            :     {&quot;a05e45f67e1b64733fe3&quot;, &quot;d_e2m1.{ext}&quot;},   // MAP02
+<span class="lineNum">     158 </span>            :     {&quot;8024ae1616ddd97ce330&quot;, &quot;d_e1m4.{ext}&quot;},   // MAP03
+<span class="lineNum">     159 </span>            :     {&quot;3af8d79ddba49edaf9eb&quot;, &quot;d_victor.{ext}&quot;}, // MAP05
+<span class="lineNum">     160 </span>            :     {&quot;a55352c96c025b6bd08a&quot;, &quot;d_inter.{ext}&quot;},  // MAP07
+<span class="lineNum">     161 </span>            :     {&quot;76d1fc25ab7b1b4a58d6&quot;, &quot;d_e1m8.{ext}&quot;},   // MAP11
+<span class="lineNum">     162 </span>            :     {&quot;497777f0863eca7cea87&quot;, &quot;d_e1m2.{ext}&quot;},   // MAP12
+<span class="lineNum">     163 </span>            :     {&quot;0228fd87f8762f112fb6&quot;, &quot;d_e2m2.{ext}&quot;},   // MAP13
+<span class="lineNum">     164 </span>            :     {&quot;db94e8e1d7c02092eab5&quot;, &quot;d_e1m6.{ext}&quot;},   // MAP14
+<span class="lineNum">     165 </span>            :     {&quot;5a8d7a307eebc952795c&quot;, &quot;d_e2m7.{ext}&quot;},   // MAP16
+<span class="lineNum">     166 </span>            :     {&quot;1a36b692bf26d94a72cc&quot;, &quot;d_e1m7.{ext}&quot;},   // MAP23
+<span class="lineNum">     167 </span>            :     {&quot;37c6cefa351b06995152&quot;, &quot;d_e1m5.{ext}&quot;},   // MAP27
+<span class="lineNum">     168 </span>            :     {&quot;36b97b87fe98348d44b6&quot;, &quot;d_e2m6.{ext}&quot;},   // MAP28
+<span class="lineNum">     169 </span>            : 
+<span class="lineNum">     170 </span>            :     // Doom II music files.
+<span class="lineNum">     171 </span>            :     {&quot;79080e9681a2d7bec3fb&quot;, &quot;d_runnin.{ext}&quot;},  // MAP01,15
+<span class="lineNum">     172 </span>            :     {&quot;868b3aae73c7b12e92c0&quot;, &quot;d_stalks.{ext}&quot;},  // MAP02,11,17
+<span class="lineNum">     173 </span>            :     {&quot;19237754d2eb85f41d84&quot;, &quot;d_countd.{ext}&quot;},  // MAP03,21
+<span class="lineNum">     174 </span>            :     {&quot;00abff3b61b25a6855d2&quot;, &quot;d_betwee.{ext}&quot;},  // MAP04
+<span class="lineNum">     175 </span>            :     {&quot;954636c7ee09edf5d98f&quot;, &quot;d_doom.{ext}&quot;},    // MAP05,13
+<span class="lineNum">     176 </span>            :     {&quot;8d32b2b7aa3b806474c1&quot;, &quot;d_the_da.{ext}&quot;},  // MAP06,12,24
+<span class="lineNum">     177 </span>            :     {&quot;41efc3c84bb321af2b6b&quot;, &quot;d_shawn.{ext}&quot;},   // MAP07,19,29
+<span class="lineNum">     178 </span>            :     // Assuming single D_DDTBLU: http://doomwiki.org/wiki/Doom_II_music#Trivia
+<span class="lineNum">     179 </span>            :     {&quot;51c0872fec9f43259318&quot;, &quot;d_ddtblu.{ext}&quot;},  // MAP08
+<span class="lineNum">     180 </span>            :     {&quot;acb7ad85494d18235df8&quot;, &quot;d_ddtblu.{ext}&quot;},  // MAP14,22
+<span class="lineNum">     181 </span>            :     {&quot;4b7ceccbf47e78e2fa0b&quot;, &quot;d_in_cit.{ext}&quot;},  // MAP09
+<span class="lineNum">     182 </span>            :     {&quot;1d1f4a9edba174584e11&quot;, &quot;d_dead.{ext}&quot;},    // MAP10,16
+<span class="lineNum">     183 </span>            :     {&quot;1736c81aac77f9bffd3d&quot;, &quot;d_romero.{ext}&quot;},  // MAP18,27
+<span class="lineNum">     184 </span>            :     {&quot;a55d400570ad255a576b&quot;, &quot;d_messag.{ext}&quot;},  // MAP20,26
+<span class="lineNum">     185 </span>            :     {&quot;29d30c3fbd712016f2e5&quot;, &quot;d_ampie.{ext}&quot;},   // MAP23
+<span class="lineNum">     186 </span>            :     {&quot;bcfe9786afdcfb704afa&quot;, &quot;d_adrian.{ext}&quot;},  // MAP25
+<span class="lineNum">     187 </span>            :     {&quot;e05c10389e71836834ae&quot;, &quot;d_tense.{ext}&quot;},   // MAP28
+<span class="lineNum">     188 </span>            :     {&quot;b779022b1d0f0010b8f0&quot;, &quot;d_openin.{ext}&quot;},  // MAP30
+<span class="lineNum">     189 </span>            :     {&quot;a9a5f7b0ab3be0f4fc24&quot;, &quot;d_evil.{ext}&quot;},    // MAP31
+<span class="lineNum">     190 </span>            :     {&quot;4503d155aafec0296689&quot;, &quot;d_ultima.{ext}&quot;},  // MAP32
+<span class="lineNum">     191 </span>            :     {&quot;56f2363f01df38908c77&quot;, &quot;d_dm2ttl.{ext}&quot;},
+<span class="lineNum">     192 </span>            :     {&quot;71e58baf9e9dea4dd24a&quot;, &quot;d_dm2int.{ext}&quot;},
+<span class="lineNum">     193 </span>            :     {&quot;e632318629869811f7dc&quot;, &quot;d_read_m.{ext}&quot;},
+<span class="lineNum">     194 </span>            : 
+<span class="lineNum">     195 </span>            :     // Duplicate filenames: the above filenames are the &quot;canonical&quot; files
+<span class="lineNum">     196 </span>            :     // for the given SHA1 hashes, but we can also look for these filenames
+<span class="lineNum">     197 </span>            :     // corresponding to the duplicated music tracks too.
+<span class="lineNum">     198 </span>            :     {&quot;868b3aae73c7b12e92c0&quot;, &quot;d_stlks2.{ext}&quot;},
+<span class="lineNum">     199 </span>            :     {&quot;868b3aae73c7b12e92c0&quot;, &quot;d_stlks3.{ext}&quot;},
+<span class="lineNum">     200 </span>            :     {&quot;8d32b2b7aa3b806474c1&quot;, &quot;d_theda2.{ext}&quot;},
+<span class="lineNum">     201 </span>            :     {&quot;8d32b2b7aa3b806474c1&quot;, &quot;d_theda3.{ext}&quot;},
+<span class="lineNum">     202 </span>            :     {&quot;954636c7ee09edf5d98f&quot;, &quot;d_doom2.{ext}&quot;},
+<span class="lineNum">     203 </span>            :     {&quot;acb7ad85494d18235df8&quot;, &quot;d_ddtbl2.{ext}&quot;},
+<span class="lineNum">     204 </span>            :     {&quot;acb7ad85494d18235df8&quot;, &quot;d_ddtbl3.{ext}&quot;},
+<span class="lineNum">     205 </span>            :     {&quot;79080e9681a2d7bec3fb&quot;, &quot;d_runni2.{ext}&quot;},
+<span class="lineNum">     206 </span>            :     {&quot;1d1f4a9edba174584e11&quot;, &quot;d_dead2.{ext}&quot;},
+<span class="lineNum">     207 </span>            :     {&quot;41efc3c84bb321af2b6b&quot;, &quot;d_shawn2.{ext}&quot;},
+<span class="lineNum">     208 </span>            :     {&quot;41efc3c84bb321af2b6b&quot;, &quot;d_shawn3.{ext}&quot;},
+<span class="lineNum">     209 </span>            :     {&quot;19237754d2eb85f41d84&quot;, &quot;d_count2.{ext}&quot;},
+<span class="lineNum">     210 </span>            :     {&quot;a55d400570ad255a576b&quot;, &quot;d_messg2.{ext}&quot;},
+<span class="lineNum">     211 </span>            :     {&quot;1736c81aac77f9bffd3d&quot;, &quot;d_romer2.{ext}&quot;},
+<span class="lineNum">     212 </span>            : 
+<span class="lineNum">     213 </span>            :     // These tracks are reused in Alien Vendetta, but are MIDs:
+<span class="lineNum">     214 </span>            :     {&quot;9433604c098b7b1119a4&quot;, &quot;d_in_cit.{ext}&quot;},  // MAP26
+<span class="lineNum">     215 </span>            : 
+<span class="lineNum">     216 </span>            :     // Heretic tracks.
+<span class="lineNum">     217 </span>            :     {&quot;12818ca0d3c957e7d57e&quot;, &quot;mus_titl.{ext}&quot;},
+<span class="lineNum">     218 </span>            :     {&quot;5cb988538ce1b1857349&quot;, &quot;mus_intr.{ext}&quot;},
+<span class="lineNum">     219 </span>            :     {&quot;6f126abe35a78b61b930&quot;, &quot;mus_cptd.{ext}&quot;},
+<span class="lineNum">     220 </span>            :     {&quot;62557250f0427c067dc9&quot;, &quot;mus_e1m1.{ext}&quot;},
+<span class="lineNum">     221 </span>            :     {&quot;1e8d5fd814490b9ae166&quot;, &quot;mus_e1m2.{ext}&quot;},
+<span class="lineNum">     222 </span>            :     {&quot;f0f31e8834e85035d434&quot;, &quot;mus_e1m3.{ext}&quot;},
+<span class="lineNum">     223 </span>            :     {&quot;054d6997405cc5a32b46&quot;, &quot;mus_e1m4.{ext}&quot;},
+<span class="lineNum">     224 </span>            :     {&quot;31950ab062cc1e5ca49d&quot;, &quot;mus_e1m5.{ext}&quot;},
+<span class="lineNum">     225 </span>            :     {&quot;7389024fbab0dff47211&quot;, &quot;mus_e1m6.{ext}&quot;},
+<span class="lineNum">     226 </span>            :     {&quot;f2aa312dddd0a294a095&quot;, &quot;mus_e1m7.{ext}&quot;},
+<span class="lineNum">     227 </span>            :     {&quot;cd6856731d1ae1f3aa4e&quot;, &quot;mus_e1m8.{ext}&quot;},
+<span class="lineNum">     228 </span>            :     {&quot;d7fe793f266733d92e61&quot;, &quot;mus_e1m9.{ext}&quot;},
+<span class="lineNum">     229 </span>            :     {&quot;933545b48fad8c66f042&quot;, &quot;mus_e2m1.{ext}&quot;},
+<span class="lineNum">     230 </span>            :     {&quot;bf88ecd4ae1621222592&quot;, &quot;mus_e2m2.{ext}&quot;},
+<span class="lineNum">     231 </span>            :     {&quot;4f619f87a828c2ca4801&quot;, &quot;mus_e2m3.{ext}&quot;},
+<span class="lineNum">     232 </span>            :     {&quot;13033a83c49424b2f2ab&quot;, &quot;mus_e2m4.{ext}&quot;},
+<span class="lineNum">     233 </span>            :     {&quot;b3851f9351ae411d9de3&quot;, &quot;mus_e2m6.{ext}&quot;},
+<span class="lineNum">     234 </span>            :     {&quot;82539791159fbbc02a23&quot;, &quot;mus_e2m7.{ext}&quot;},
+<span class="lineNum">     235 </span>            :     {&quot;fd9e53a49cfa62c463a0&quot;, &quot;mus_e2m8.{ext}&quot;},
+<span class="lineNum">     236 </span>            :     {&quot;29503959324d2ca67958&quot;, &quot;mus_e2m9.{ext}&quot;},
+<span class="lineNum">     237 </span>            :     {&quot;3aa632257c5be375b97b&quot;, &quot;mus_e3m2.{ext}&quot;},
+<span class="lineNum">     238 </span>            :     {&quot;69ba0dce7913d53b67a8&quot;, &quot;mus_e3m3.{ext}&quot;},
+<span class="lineNum">     239 </span>            : 
+<span class="lineNum">     240 </span>            :     // These Heretic tracks are reused in Alien Vendetta, but are MIDs:
+<span class="lineNum">     241 </span>            :     {&quot;51344131e8d260753ce7&quot;, &quot;mus_e2m3.{ext}&quot;},  // MAP15
+<span class="lineNum">     242 </span>            :     {&quot;78b570b2397570440aff&quot;, &quot;mus_e1m1.{ext}&quot;},  // MAP19
+<span class="lineNum">     243 </span>            :     {&quot;ee21ba9fad4de3dfaef0&quot;, &quot;mus_e1m4.{ext}&quot;},  // MAP29
+<span class="lineNum">     244 </span>            :     {&quot;d2bb643a60696ccbca03&quot;, &quot;mus_e1m9.{ext}&quot;},  // MAP32
+<span class="lineNum">     245 </span>            : 
+<span class="lineNum">     246 </span>            :     // Hexen tracks:
+<span class="lineNum">     247 </span>            :     {&quot;fbf55fc1ee26bd01266b&quot;, &quot;winnowr.{ext}&quot;},
+<span class="lineNum">     248 </span>            :     {&quot;71776e2da2b7ba607d81&quot;, &quot;jachr.{ext}&quot;},
+<span class="lineNum">     249 </span>            :     {&quot;c5c8630608b8132b33cd&quot;, &quot;simonr.{ext}&quot;},
+<span class="lineNum">     250 </span>            :     {&quot;43683b3f55a031de88d4&quot;, &quot;wutzitr.{ext}&quot;},
+<span class="lineNum">     251 </span>            :     {&quot;a6062883f29436ef73db&quot;, &quot;falconr.{ext}&quot;},
+<span class="lineNum">     252 </span>            :     {&quot;512cb6cc9b558d5f0fef&quot;, &quot;levelr.{ext}&quot;},
+<span class="lineNum">     253 </span>            :     {&quot;d31226ae75fce6a24208&quot;, &quot;chartr.{ext}&quot;},
+<span class="lineNum">     254 </span>            :     {&quot;bf1f1e561bbdba4e699f&quot;, &quot;swampr.{ext}&quot;},
+<span class="lineNum">     255 </span>            :     {&quot;b303193f756ca0e2de0f&quot;, &quot;deepr.{ext}&quot;},
+<span class="lineNum">     256 </span>            :     {&quot;f0635f0386d883b00186&quot;, &quot;fubasr.{ext}&quot;},
+<span class="lineNum">     257 </span>            :     {&quot;18f2a01f83df6e3abedc&quot;, &quot;grover.{ext}&quot;},
+<span class="lineNum">     258 </span>            :     {&quot;b2527eb0522f08b2cf5f&quot;, &quot;fortr.{ext}&quot;},
+<span class="lineNum">     259 </span>            :     {&quot;343addba8ba53a20a160&quot;, &quot;foojar.{ext}&quot;},
+<span class="lineNum">     260 </span>            :     {&quot;c13109045b06b5a63386&quot;, &quot;sixater.{ext}&quot;},
+<span class="lineNum">     261 </span>            :     {&quot;693525aaf69eac5429ab&quot;, &quot;wobabyr.{ext}&quot;},
+<span class="lineNum">     262 </span>            :     {&quot;8f884223811c2bb8311d&quot;, &quot;cryptr.{ext}&quot;},
+<span class="lineNum">     263 </span>            :     {&quot;de540e6826e62b32c01c&quot;, &quot;fantar.{ext}&quot;},
+<span class="lineNum">     264 </span>            :     {&quot;efdff548df918934f71f&quot;, &quot;blechr.{ext}&quot;},
+<span class="lineNum">     265 </span>            :     {&quot;de91f150f6a127e72e35&quot;, &quot;voidr.{ext}&quot;},
+<span class="lineNum">     266 </span>            :     {&quot;e0497fe27289fe18515b&quot;, &quot;chap_1r.{ext}&quot;},
+<span class="lineNum">     267 </span>            :     {&quot;f2ef1abdc3f672a3519a&quot;, &quot;chap_2r.{ext}&quot;},
+<span class="lineNum">     268 </span>            :     {&quot;78cd9882f61cc441bef4&quot;, &quot;chap_3r.{ext}&quot;},
+<span class="lineNum">     269 </span>            :     {&quot;97b2b575d9d096c1f89f&quot;, &quot;chap_4r.{ext}&quot;},
+<span class="lineNum">     270 </span>            :     {&quot;ad0197a0f6c52ac30915&quot;, &quot;chippyr.{ext}&quot;},
+<span class="lineNum">     271 </span>            :     {&quot;30506c62e9f0989ffe09&quot;, &quot;percr.{ext}&quot;},
+<span class="lineNum">     272 </span>            :     {&quot;3542803beaa43bf1de1a&quot;, &quot;secretr.{ext}&quot;},
+<span class="lineNum">     273 </span>            :     {&quot;81067721f40c611d09fb&quot;, &quot;bonesr.{ext}&quot;},
+<span class="lineNum">     274 </span>            :     {&quot;4822af2e1a2eb7faf660&quot;, &quot;octor.{ext}&quot;},
+<span class="lineNum">     275 </span>            :     {&quot;26bb3cec902ed8008fc2&quot;, &quot;rithmr.{ext}&quot;},
+<span class="lineNum">     276 </span>            :     {&quot;94ab641c7aa93caac77a&quot;, &quot;stalkr.{ext}&quot;},
+<span class="lineNum">     277 </span>            :     {&quot;d0a3f337c54b0703b4d3&quot;, &quot;borkr.{ext}&quot;},
+<span class="lineNum">     278 </span>            :     {&quot;79e7781ec7eb9b9434b5&quot;, &quot;crucibr.{ext}&quot;},
+<span class="lineNum">     279 </span>            :     {&quot;c2786e5581a7f8801969&quot;, &quot;hexen.{ext}&quot;},
+<span class="lineNum">     280 </span>            :     {&quot;97fae9a084c0efda5151&quot;, &quot;hub.{ext}&quot;},
+<span class="lineNum">     281 </span>            :     {&quot;c5da52d5c2ec4803ef8f&quot;, &quot;hall.{ext}&quot;},
+<span class="lineNum">     282 </span>            :     {&quot;1e71bc0e2feafb06214e&quot;, &quot;orb.{ext}&quot;},
+<span class="lineNum">     283 </span>            :     {&quot;bc9dcfa6632e847e03af&quot;, &quot;chess.{ext}&quot;},
+<span class="lineNum">     284 </span>            : 
+<span class="lineNum">     285 </span>            :     // Hexen CD tracks: alternate filenames for a ripped copy of
+<span class="lineNum">     286 </span>            :     // the CD soundtrack.
+<span class="lineNum">     287 </span>            :     {&quot;71776e2da2b7ba607d81&quot;, &quot;hexen02.{ext}&quot;},   // level  2 (jachr)
+<span class="lineNum">     288 </span>            :     {&quot;efdff548df918934f71f&quot;, &quot;hexen03.{ext}&quot;},   // level 26 (blechr)
+<span class="lineNum">     289 </span>            :     {&quot;c2786e5581a7f8801969&quot;, &quot;hexen04.{ext}&quot;},   // (hexen)
+<span class="lineNum">     290 </span>            :     {&quot;1e71bc0e2feafb06214e&quot;, &quot;hexen05.{ext}&quot;},   // (orb)
+<span class="lineNum">     291 </span>            :     {&quot;f0635f0386d883b00186&quot;, &quot;hexen06.{ext}&quot;},   // level 10 (fubasr)
+<span class="lineNum">     292 </span>            :     {&quot;bc9dcfa6632e847e03af&quot;, &quot;hexen07.{ext}&quot;},   // (chess)
+<span class="lineNum">     293 </span>            :     {&quot;8f884223811c2bb8311d&quot;, &quot;hexen08.{ext}&quot;},   // level 24 (cryptr)
+<span class="lineNum">     294 </span>            :     {&quot;a6062883f29436ef73db&quot;, &quot;hexen09.{ext}&quot;},   // level  5 (falconr)
+<span class="lineNum">     295 </span>            :     {&quot;4822af2e1a2eb7faf660&quot;, &quot;hexen10.{ext}&quot;},   // level 36 (octor)
+<span class="lineNum">     296 </span>            :     {&quot;26bb3cec902ed8008fc2&quot;, &quot;hexen11.{ext}&quot;},   // level 37 (rithmr)
+<span class="lineNum">     297 </span>            :     {&quot;c13109045b06b5a63386&quot;, &quot;hexen12.{ext}&quot;},   // level 22 (sixater)
+<span class="lineNum">     298 </span>            :     {&quot;fbf55fc1ee26bd01266b&quot;, &quot;hexen13.{ext}&quot;},   // level  1 (winnowr)
+<span class="lineNum">     299 </span>            :     {&quot;bf1f1e561bbdba4e699f&quot;, &quot;hexen14.{ext}&quot;},   // level  8 (swampr)
+<span class="lineNum">     300 </span>            :     {&quot;43683b3f55a031de88d4&quot;, &quot;hexen15.{ext}&quot;},   // level  4 (wutzitr)
+<span class="lineNum">     301 </span>            :     {&quot;81067721f40c611d09fb&quot;, &quot;hexen16.{ext}&quot;},   // level 35 (bonesr)
+<span class="lineNum">     302 </span>            :     {&quot;e0497fe27289fe18515b&quot;, &quot;hexen17.{ext}&quot;},   // level 28 (chap_1r)
+<span class="lineNum">     303 </span>            :     {&quot;97b2b575d9d096c1f89f&quot;, &quot;hexen18.{ext}&quot;},   // level 31 (chap_4r)
+<span class="lineNum">     304 </span>            :     {&quot;de540e6826e62b32c01c&quot;, &quot;hexen19.{ext}&quot;},   // level 25 (fantar)
+<span class="lineNum">     305 </span>            :     {&quot;343addba8ba53a20a160&quot;, &quot;hexen20.{ext}&quot;},   // level 21 (foojar)
+<span class="lineNum">     306 </span>            :     {&quot;512cb6cc9b558d5f0fef&quot;, &quot;hexen21.{ext}&quot;},   // level  6 (levelr)
+<span class="lineNum">     307 </span>            :     {&quot;c5c8630608b8132b33cd&quot;, &quot;hexen22.{ext}&quot;},   // level  3 (simonr)
+<span class="lineNum">     308 </span>            : 
+<span class="lineNum">     309 </span>            :     // Strife:
+<span class="lineNum">     310 </span>            :     {&quot;8ac2b2b47707f0fdf8f6&quot;, &quot;d_logo.{ext}&quot;},   // Title
+<span class="lineNum">     311 </span>            :     {&quot;62e1c58054a1f1bc39b2&quot;, &quot;d_action.{ext}&quot;}, // 1,15,28
+<span class="lineNum">     312 </span>            :     {&quot;12fa000f3fa1edac5c4f&quot;, &quot;d_tavern.{ext}&quot;}, // 2
+<span class="lineNum">     313 </span>            :     {&quot;695e56ab3251792d20e5&quot;, &quot;d_danger.{ext}&quot;}, // 3,11
+<span class="lineNum">     314 </span>            :     {&quot;96fe30e8712217b60dd7&quot;, &quot;d_fast.{ext}&quot;},   // 4
+<span class="lineNum">     315 </span>            :     {&quot;61345598a3de04aad508&quot;, &quot;d_darker.{ext}&quot;}, // 6,14
+<span class="lineNum">     316 </span>            :     {&quot;52353e9a435b7b1cb268&quot;, &quot;d_strike.{ext}&quot;}, // 7,19
+<span class="lineNum">     317 </span>            :     {&quot;061164504907bffc9c22&quot;, &quot;d_slide.{ext}&quot;},  // 8,18,22
+<span class="lineNum">     318 </span>            :     {&quot;3dbb4b703ce69aafcdd5&quot;, &quot;d_tribal.{ext}&quot;}, // 9
+<span class="lineNum">     319 </span>            :     {&quot;393773688eba050c3548&quot;, &quot;d_march.{ext}&quot;},  // 10
+<span class="lineNum">     320 </span>            :     {&quot;3cba3c627de065a667dd&quot;, &quot;d_mood.{ext}&quot;},   // 12
+<span class="lineNum">     321 </span>            :     {&quot;b1f65a333e5c70255784&quot;, &quot;d_castle.{ext}&quot;}, // 13
+<span class="lineNum">     322 </span>            :     {&quot;e1455a83a04c9ac4a09f&quot;, &quot;d_fight.{ext}&quot;},  // 16,31
+<span class="lineNum">     323 </span>            :     {&quot;17f822b7374b1f069b89&quot;, &quot;d_spense.{ext}&quot;}, // 17
+<span class="lineNum">     324 </span>            :     {&quot;e66c5a1a7d05f021f4ae&quot;, &quot;d_dark.{ext}&quot;},   // 20
+<span class="lineNum">     325 </span>            :     {&quot;1c92bd0625026af30dad&quot;, &quot;d_tech.{ext}&quot;},   // 21,27
+<span class="lineNum">     326 </span>            :     {&quot;7ae280713d078de7933a&quot;, &quot;d_drone.{ext}&quot;},  // 23,30
+<span class="lineNum">     327 </span>            :     {&quot;4a664afd0d7eae79c97a&quot;, &quot;d_panthr.{ext}&quot;}, // 24
+<span class="lineNum">     328 </span>            :     {&quot;4a7d62beeac5601ccf21&quot;, &quot;d_sad.{ext}&quot;},    // 25
+<span class="lineNum">     329 </span>            :     {&quot;e60e109779400f2855d7&quot;, &quot;d_instry.{ext}&quot;}, // 26,29
+<span class="lineNum">     330 </span>            :     {&quot;b7d36878faeb291d6df5&quot;, &quot;d_happy.{ext}&quot;},  // Better ending
+<span class="lineNum">     331 </span>            :     {&quot;ff4a342c8c5ec51b06c3&quot;, &quot;d_end.{ext}&quot;},    // Worse ending
+<span class="lineNum">     332 </span>            :     // This conflicts with Doom's d_intro:
+<span class="lineNum">     333 </span>            :     //{&quot;ec8fa484c4e85adbf700&quot;, &quot;d_intro.{ext}&quot;},  // 5
+<span class="lineNum">     334 </span>            : };
+<span class="lineNum">     335 </span>            : 
+<span class="lineNum">     336 </span>            : // Given a time string (for LOOP_START/LOOP_END), parse it and return
+<a name="337"><span class="lineNum">     337 </span>            : // the time (in # samples since start of track) it represents.</a>
+<span class="lineNum">     338 </span>            : static unsigned int ParseVorbisTime(unsigned int samplerate_hz, char *value)
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     340 </span><span class="lineNoCov">          0 :     char *num_start, *p;</span>
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 :     unsigned int result = 0;</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 :     char c;</span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 :     if (strchr(value, ':') == NULL)</span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 :         return atoi(value);</span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :     result = 0;</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :     num_start = value;</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 :     for (p = value; *p != '\0'; ++p)</span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :         if (*p == '.' || *p == ':')</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :             c = *p; *p = '\0';</span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :             result = result * 60 + atoi(num_start);</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 :             num_start = p + 1;</span>
+<span class="lineNum">     359 </span><span class="lineNoCov">          0 :             *p = c;</span>
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 :         if (*p == '.')</span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 :             return result * samplerate_hz</span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :                  + (unsigned int) (atof(p) * samplerate_hz);</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :     return (result * 60 + atoi(num_start)) * samplerate_hz;</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     371 </span>            : 
+<span class="lineNum">     372 </span>            : // Given a vorbis comment string (eg. &quot;LOOP_START=12345&quot;), set fields
+<a name="373"><span class="lineNum">     373 </span>            : // in the metadata structure as appropriate.</a>
+<span class="lineNum">     374 </span>            : static void ParseVorbisComment(file_metadata_t *metadata, char *comment)
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 :     char *eq, *key, *value;</span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :     eq = strchr(comment, '=');</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :     if (eq == NULL)</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     382 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     383 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 :     key = comment;</span>
+<span class="lineNum">     386 </span><span class="lineNoCov">          0 :     *eq = '\0';</span>
+<span class="lineNum">     387 </span><span class="lineNoCov">          0 :     value = eq + 1;</span>
+<span class="lineNum">     388 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     389 </span><span class="lineNoCov">          0 :     if (!strcmp(key, LOOP_START_TAG))</span>
+<span class="lineNum">     390 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     391 </span><span class="lineNoCov">          0 :         metadata-&gt;start_time = ParseVorbisTime(metadata-&gt;samplerate_hz, value);</span>
+<span class="lineNum">     392 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     393 </span><span class="lineNoCov">          0 :     else if (!strcmp(key, LOOP_END_TAG))</span>
+<span class="lineNum">     394 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     395 </span><span class="lineNoCov">          0 :         metadata-&gt;end_time = ParseVorbisTime(metadata-&gt;samplerate_hz, value);</span>
+<span class="lineNum">     396 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     397 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     398 </span>            : 
+<a name="399"><span class="lineNum">     399 </span>            : // Parse a vorbis comments structure, reading from the given file.</a>
+<span class="lineNum">     400 </span>            : static void ParseVorbisComments(file_metadata_t *metadata, FILE *fs)
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     402 </span><span class="lineNoCov">          0 :     uint32_t buf;</span>
+<span class="lineNum">     403 </span><span class="lineNoCov">          0 :     unsigned int num_comments, i, comment_len;</span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 :     char *comment;</span>
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 :     // We must have read the sample rate already from an earlier header.</span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 :     if (metadata-&gt;samplerate_hz == 0)</span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 :     // Skip the starting part we don't care about.</span>
+<span class="lineNum">     413 </span><span class="lineNoCov">          0 :     if (fread(&amp;buf, 4, 1, fs) &lt; 1)</span>
+<span class="lineNum">     414 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 :     if (fseek(fs, LONG(buf), SEEK_CUR) != 0)</span>
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :     // Read count field for number of comments.</span>
+<span class="lineNum">     423 </span><span class="lineNoCov">          0 :     if (fread(&amp;buf, 4, 1, fs) &lt; 1)</span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     425 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 :     num_comments = LONG(buf);</span>
+<span class="lineNum">     428 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     429 </span><span class="lineNoCov">          0 :     // Read each individual comment.</span>
+<span class="lineNum">     430 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; num_comments; ++i)</span>
+<span class="lineNum">     431 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     432 </span><span class="lineNoCov">          0 :         // Read length of comment.</span>
+<span class="lineNum">     433 </span><span class="lineNoCov">          0 :         if (fread(&amp;buf, 4, 1, fs) &lt; 1)</span>
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     435 </span><span class="lineNoCov">          0 :             return;</span>
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 :         comment_len = LONG(buf);</span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :         // Read actual comment data into string buffer.</span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 :         comment = calloc(1, comment_len + 1);</span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 :         if (comment == NULL</span>
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 :          || fread(comment, 1, comment_len, fs) &lt; comment_len)</span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :             free(comment);</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :         // Parse comment string.</span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 :         ParseVorbisComment(metadata, comment);</span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 :         free(comment);</span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 : }</span>
+<a name="454"><span class="lineNum">     454 </span>            : </a>
+<span class="lineNum">     455 </span>            : static void ParseFlacStreaminfo(file_metadata_t *metadata, FILE *fs)
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 :     byte buf[34];</span>
+<span class="lineNum">     458 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     459 </span><span class="lineNoCov">          0 :     // Read block data.</span>
+<span class="lineNum">     460 </span><span class="lineNoCov">          0 :     if (fread(buf, sizeof(buf), 1, fs) &lt; 1)</span>
+<span class="lineNum">     461 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     462 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     463 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     464 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     465 </span><span class="lineNoCov">          0 :     // We only care about sample rate and song length.</span>
+<span class="lineNum">     466 </span><span class="lineNoCov">          0 :     metadata-&gt;samplerate_hz = (buf[10] &lt;&lt; 12) | (buf[11] &lt;&lt; 4)</span>
+<span class="lineNum">     467 </span><span class="lineNoCov">          0 :                             | (buf[12] &gt;&gt; 4);</span>
+<span class="lineNum">     468 </span><span class="lineNoCov">          0 :     // Song length is actually a 36 bit field, but 32 bits should be</span>
+<span class="lineNum">     469 </span><span class="lineNoCov">          0 :     // enough for everybody.</span>
+<span class="lineNum">     470 </span><span class="lineNoCov">          0 :     //metadata-&gt;song_length = (buf[14] &lt;&lt; 24) | (buf[15] &lt;&lt; 16)</span>
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 :     //                      | (buf[16] &lt;&lt; 8) | buf[17];</span>
+<span class="lineNum">     472 </span><span class="lineNoCov">          0 : }</span>
+<a name="473"><span class="lineNum">     473 </span>            : </a>
+<span class="lineNum">     474 </span>            : static void ParseFlacFile(file_metadata_t *metadata, FILE *fs)
+<span class="lineNum">     475 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     476 </span><span class="lineNoCov">          0 :     byte header[4];</span>
+<span class="lineNum">     477 </span><span class="lineNoCov">          0 :     unsigned int block_type;</span>
+<span class="lineNum">     478 </span><span class="lineNoCov">          0 :     size_t block_len;</span>
+<span class="lineNum">     479 </span><span class="lineNoCov">          0 :     boolean last_block;</span>
+<span class="lineNum">     480 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     481 </span><span class="lineNoCov">          0 :     for (;;)</span>
+<span class="lineNum">     482 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 :         long pos = -1;</span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     485 </span><span class="lineNoCov">          0 :         // Read METADATA_BLOCK_HEADER:</span>
+<span class="lineNum">     486 </span><span class="lineNoCov">          0 :         if (fread(header, 4, 1, fs) &lt; 1)</span>
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     488 </span><span class="lineNoCov">          0 :             return;</span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     490 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     491 </span><span class="lineNoCov">          0 :         block_type = header[0] &amp; ~0x80;</span>
+<span class="lineNum">     492 </span><span class="lineNoCov">          0 :         last_block = (header[0] &amp; 0x80) != 0;</span>
+<span class="lineNum">     493 </span><span class="lineNoCov">          0 :         block_len = (header[1] &lt;&lt; 16) | (header[2] &lt;&lt; 8) | header[3];</span>
+<span class="lineNum">     494 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     495 </span><span class="lineNoCov">          0 :         pos = ftell(fs);</span>
+<span class="lineNum">     496 </span><span class="lineNoCov">          0 :         if (pos &lt; 0)</span>
+<span class="lineNum">     497 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     498 </span><span class="lineNoCov">          0 :             return;</span>
+<span class="lineNum">     499 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     500 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     501 </span><span class="lineNoCov">          0 :         if (block_type == FLAC_STREAMINFO)</span>
+<span class="lineNum">     502 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     503 </span><span class="lineNoCov">          0 :             ParseFlacStreaminfo(metadata, fs);</span>
+<span class="lineNum">     504 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     505 </span><span class="lineNoCov">          0 :         else if (block_type == FLAC_VORBIS_COMMENT)</span>
+<span class="lineNum">     506 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     507 </span><span class="lineNoCov">          0 :             ParseVorbisComments(metadata, fs);</span>
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     509 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     510 </span><span class="lineNoCov">          0 :         if (last_block)</span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     512 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     513 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     515 </span><span class="lineNoCov">          0 :         // Seek to start of next block.</span>
+<span class="lineNum">     516 </span><span class="lineNoCov">          0 :         if (fseek(fs, pos + block_len, SEEK_SET) != 0)</span>
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     518 </span><span class="lineNoCov">          0 :             return;</span>
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     520 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 : }</span>
+<a name="522"><span class="lineNum">     522 </span>            : </a>
+<span class="lineNum">     523 </span>            : static void ParseOggIdHeader(file_metadata_t *metadata, FILE *fs)
+<span class="lineNum">     524 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :     byte buf[21];</span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     527 </span><span class="lineNoCov">          0 :     if (fread(buf, sizeof(buf), 1, fs) &lt; 1)</span>
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     529 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     530 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     532 </span><span class="lineNoCov">          0 :     metadata-&gt;samplerate_hz = (buf[8] &lt;&lt; 24) | (buf[7] &lt;&lt; 16)</span>
+<span class="lineNum">     533 </span><span class="lineNoCov">          0 :                             | (buf[6] &lt;&lt; 8) | buf[5];</span>
+<span class="lineNum">     534 </span><span class="lineNoCov">          0 : }</span>
+<a name="535"><span class="lineNum">     535 </span>            : </a>
+<span class="lineNum">     536 </span>            : static void ParseOggFile(file_metadata_t *metadata, FILE *fs)
+<span class="lineNum">     537 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     538 </span><span class="lineNoCov">          0 :     byte buf[7];</span>
+<span class="lineNum">     539 </span><span class="lineNoCov">          0 :     unsigned int offset;</span>
+<span class="lineNum">     540 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     541 </span><span class="lineNoCov">          0 :     // Scan through the start of the file looking for headers. They</span>
+<span class="lineNum">     542 </span><span class="lineNoCov">          0 :     // begin '[byte]vorbis' where the byte value indicates header type.</span>
+<span class="lineNum">     543 </span><span class="lineNoCov">          0 :     memset(buf, 0, sizeof(buf));</span>
+<span class="lineNum">     544 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     545 </span><span class="lineNoCov">          0 :     for (offset = 0; offset &lt; 100 * 1024; ++offset)</span>
+<span class="lineNum">     546 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     547 </span><span class="lineNoCov">          0 :         // buf[] is used as a sliding window. Each iteration, we</span>
+<span class="lineNum">     548 </span><span class="lineNoCov">          0 :         // move the buffer one byte to the left and read an extra</span>
+<span class="lineNum">     549 </span><span class="lineNoCov">          0 :         // byte onto the end.</span>
+<span class="lineNum">     550 </span><span class="lineNoCov">          0 :         memmove(buf, buf + 1, sizeof(buf) - 1);</span>
+<span class="lineNum">     551 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     552 </span><span class="lineNoCov">          0 :         if (fread(&amp;buf[6], 1, 1, fs) &lt; 1)</span>
+<span class="lineNum">     553 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     554 </span><span class="lineNoCov">          0 :             return;</span>
+<span class="lineNum">     555 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     556 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     557 </span><span class="lineNoCov">          0 :         if (!memcmp(buf + 1, &quot;vorbis&quot;, 6))</span>
+<span class="lineNum">     558 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     559 </span><span class="lineNoCov">          0 :             switch (buf[0])</span>
+<span class="lineNum">     560 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 :                 case OGG_ID_HEADER:</span>
+<span class="lineNum">     562 </span><span class="lineNoCov">          0 :                     ParseOggIdHeader(metadata, fs);</span>
+<span class="lineNum">     563 </span><span class="lineNoCov">          0 :                     break;</span>
+<span class="lineNum">     564 </span><span class="lineNoCov">          0 :                 case OGG_COMMENT_HEADER:</span>
+<span class="lineNum">     565 </span><span class="lineNoCov">          0 :                     ParseVorbisComments(metadata, fs);</span>
+<span class="lineNum">     566 </span><span class="lineNoCov">          0 :                     break;</span>
+<span class="lineNum">     567 </span><span class="lineNoCov">          0 :                 default:</span>
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 :                     break;</span>
+<span class="lineNum">     569 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     570 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     571 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     572 </span><span class="lineNoCov">          0 : }</span>
+<a name="573"><span class="lineNum">     573 </span>            : </a>
+<span class="lineNum">     574 </span>            : static void ReadLoopPoints(const char *filename, file_metadata_t *metadata)
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :     FILE *fs;</span>
+<span class="lineNum">     577 </span><span class="lineNoCov">          0 :     char header[4];</span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :     metadata-&gt;valid = false;</span>
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 :     metadata-&gt;samplerate_hz = 0;</span>
+<span class="lineNum">     581 </span><span class="lineNoCov">          0 :     metadata-&gt;start_time = 0;</span>
+<span class="lineNum">     582 </span><span class="lineNoCov">          0 :     metadata-&gt;end_time = -1;</span>
+<span class="lineNum">     583 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     584 </span><span class="lineNoCov">          0 :     fs = fopen(filename, &quot;rb&quot;);</span>
+<span class="lineNum">     585 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     586 </span><span class="lineNoCov">          0 :     if (fs == NULL)</span>
+<span class="lineNum">     587 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     588 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     589 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     590 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     591 </span><span class="lineNoCov">          0 :     // Check for a recognized file format; use the first four bytes</span>
+<span class="lineNum">     592 </span><span class="lineNoCov">          0 :     // of the file.</span>
+<span class="lineNum">     593 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     594 </span><span class="lineNoCov">          0 :     if (fread(header, 4, 1, fs) &lt; 1)</span>
+<span class="lineNum">     595 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :         fclose(fs);</span>
+<span class="lineNum">     597 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     598 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     599 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 :     if (memcmp(header, FLAC_HEADER, 4) == 0)</span>
+<span class="lineNum">     601 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 :         ParseFlacFile(metadata, fs);</span>
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 :     else if (memcmp(header, OGG_HEADER, 4) == 0)</span>
+<span class="lineNum">     605 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 :         ParseOggFile(metadata, fs);</span>
+<span class="lineNum">     607 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     608 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     609 </span><span class="lineNoCov">          0 :     fclose(fs);</span>
+<span class="lineNum">     610 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     611 </span><span class="lineNoCov">          0 :     // Only valid if at the very least we read the sample rate.</span>
+<span class="lineNum">     612 </span><span class="lineNoCov">          0 :     metadata-&gt;valid = metadata-&gt;samplerate_hz &gt; 0;</span>
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     614 </span><span class="lineNoCov">          0 :     // If start and end time are both zero, ignore the loop tags.</span>
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 :     // This is consistent with other source ports.</span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :     if (metadata-&gt;start_time == 0 &amp;&amp; metadata-&gt;end_time == 0)</span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 :         metadata-&gt;valid = false;</span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     620 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     621 </span>            : 
+<span class="lineNum">     622 </span>            : // Given a MUS lump, look up a substitute MUS file to play instead
+<span class="lineNum">     623 </span>            : // (or NULL to just use normal MIDI playback).
+<a name="624"><span class="lineNum">     624 </span>            : </a>
+<span class="lineNum">     625 </span>            : static const char *GetSubstituteMusicFile(void *data, size_t data_len)
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 :     sha1_context_t context;</span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 :     sha1_digest_t hash;</span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 :     const char *filename;</span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 :     char hash_str[sizeof(sha1_digest_t) * 2 + 1];</span>
+<span class="lineNum">     631 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">     632 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     633 </span><span class="lineNoCov">          0 :     // Don't bother doing a hash if we're never going to find anything.</span>
+<span class="lineNum">     634 </span><span class="lineNoCov">          0 :     if (subst_music_len == 0)</span>
+<span class="lineNum">     635 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     636 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     637 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     638 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     639 </span><span class="lineNoCov">          0 :     SHA1_Init(&amp;context);</span>
+<span class="lineNum">     640 </span><span class="lineNoCov">          0 :     SHA1_Update(&amp;context, data, data_len);</span>
+<span class="lineNum">     641 </span><span class="lineNoCov">          0 :     SHA1_Final(hash, &amp;context);</span>
+<span class="lineNum">     642 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     643 </span><span class="lineNoCov">          0 :     // Build a string representation of the hash.</span>
+<span class="lineNum">     644 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; sizeof(sha1_digest_t); ++i)</span>
+<span class="lineNum">     645 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     646 </span><span class="lineNoCov">          0 :         M_snprintf(hash_str + i * 2, sizeof(hash_str) - i * 2,</span>
+<span class="lineNum">     647 </span><span class="lineNoCov">          0 :                    &quot;%02x&quot;, hash[i]);</span>
+<span class="lineNum">     648 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     649 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     650 </span><span class="lineNoCov">          0 :     // Look for a hash that matches.</span>
+<span class="lineNum">     651 </span><span class="lineNoCov">          0 :     // The substitute mapping list can (intentionally) contain multiple</span>
+<span class="lineNum">     652 </span><span class="lineNoCov">          0 :     // filename mappings for the same hash. This allows us to try</span>
+<span class="lineNum">     653 </span><span class="lineNoCov">          0 :     // different files and fall back if our first choice isn't found.</span>
+<span class="lineNum">     654 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     655 </span><span class="lineNoCov">          0 :     filename = NULL;</span>
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; subst_music_len; ++i)</span>
+<span class="lineNum">     658 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     659 </span><span class="lineNoCov">          0 :         if (M_StringStartsWith(hash_str, subst_music[i].hash_prefix))</span>
+<span class="lineNum">     660 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     661 </span><span class="lineNoCov">          0 :             filename = subst_music[i].filename;</span>
+<span class="lineNum">     662 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     663 </span><span class="lineNoCov">          0 :             // If the file exists, then use this file in preference to</span>
+<span class="lineNum">     664 </span><span class="lineNoCov">          0 :             // any fallbacks. But we always return a filename if it's</span>
+<span class="lineNum">     665 </span><span class="lineNoCov">          0 :             // in the list, even if it's just so we can print an error</span>
+<span class="lineNum">     666 </span><span class="lineNoCov">          0 :             // message to the user saying it doesn't exist.</span>
+<span class="lineNum">     667 </span><span class="lineNoCov">          0 :             if (M_FileExists(filename))</span>
+<span class="lineNum">     668 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     669 </span><span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     670 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     671 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     672 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     673 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     674 </span><span class="lineNoCov">          0 :     return filename;</span>
+<span class="lineNum">     675 </span><span class="lineNoCov">          0 : }</span>
+<a name="676"><span class="lineNum">     676 </span>            : </a>
+<span class="lineNum">     677 </span>            : static char *GetFullPath(const char *musicdir, const char *path)
+<span class="lineNum">     678 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     679 </span><span class="lineNoCov">          0 :     char *result;</span>
+<span class="lineNum">     680 </span><span class="lineNoCov">          0 :     char *systemized_path;</span>
+<span class="lineNum">     681 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     682 </span><span class="lineNoCov">          0 :     // Starting with directory separator means we have an absolute path,</span>
+<span class="lineNum">     683 </span><span class="lineNoCov">          0 :     // so just return it.</span>
+<span class="lineNum">     684 </span><span class="lineNoCov">          0 :     if (path[0] == DIR_SEPARATOR)</span>
+<span class="lineNum">     685 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     686 </span><span class="lineNoCov">          0 :         return M_StringDuplicate(path);</span>
+<span class="lineNum">     687 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     688 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     689 </span>            : #ifdef _WIN32
+<span class="lineNum">     690 </span>            :     // d:\path\...
+<span class="lineNum">     691 </span>            :     if (isalpha(path[0]) &amp;&amp; path[1] == ':' &amp;&amp; path[2] == DIR_SEPARATOR)
+<span class="lineNum">     692 </span>            :     {
+<span class="lineNum">     693 </span>            :         return M_StringDuplicate(path);
+<span class="lineNum">     694 </span>            :     }
+<span class="lineNum">     695 </span>            : #endif
+<span class="lineNum">     696 </span>            : 
+<span class="lineNum">     697 </span><span class="lineNoCov">          0 :     // Paths in the substitute filenames can contain Unix-style /</span>
+<span class="lineNum">     698 </span><span class="lineNoCov">          0 :     // path separators, but we should convert this to the separator</span>
+<span class="lineNum">     699 </span><span class="lineNoCov">          0 :     // for the native platform.</span>
+<span class="lineNum">     700 </span><span class="lineNoCov">          0 :     systemized_path = M_StringReplace(path, &quot;/&quot;, DIR_SEPARATOR_S);</span>
+<span class="lineNum">     701 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     702 </span><span class="lineNoCov">          0 :     // Copy config filename and cut off the filename to just get the</span>
+<span class="lineNum">     703 </span><span class="lineNoCov">          0 :     // parent dir.</span>
+<span class="lineNum">     704 </span><span class="lineNoCov">          0 :     result = M_StringJoin(musicdir, systemized_path, NULL);</span>
+<span class="lineNum">     705 </span><span class="lineNoCov">          0 :     free(systemized_path);</span>
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     707 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     708 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     709 </span>            : 
+<span class="lineNum">     710 </span>            : // If filename ends with .{ext}, check if a .ogg, .flac or .mp3 exists with
+<span class="lineNum">     711 </span>            : // that name, returning it if found. If none exist, NULL is returned. If the
+<span class="lineNum">     712 </span>            : // filename doesn't end with .{ext} then it just acts as a wrapper around
+<a name="713"><span class="lineNum">     713 </span>            : // GetFullPath().</a>
+<span class="lineNum">     714 </span>            : static char *ExpandFileExtension(const char *musicdir, const char *filename)
+<span class="lineNum">     715 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     716 </span><span class="lineNoCov">          0 :     static const char *extns[] = {&quot;.flac&quot;, &quot;.ogg&quot;, &quot;.mp3&quot;};</span>
+<span class="lineNum">     717 </span><span class="lineNoCov">          0 :     char *replaced, *result;</span>
+<span class="lineNum">     718 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     719 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     720 </span><span class="lineNoCov">          0 :     if (!M_StringEndsWith(filename, &quot;.{ext}&quot;))</span>
+<span class="lineNum">     721 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     722 </span><span class="lineNoCov">          0 :         return GetFullPath(musicdir, filename);</span>
+<span class="lineNum">     723 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     724 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     725 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; arrlen(extns); ++i)</span>
+<span class="lineNum">     726 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     727 </span><span class="lineNoCov">          0 :         replaced = M_StringReplace(filename, &quot;.{ext}&quot;, extns[i]);</span>
+<span class="lineNum">     728 </span><span class="lineNoCov">          0 :         result = GetFullPath(musicdir, replaced);</span>
+<span class="lineNum">     729 </span><span class="lineNoCov">          0 :         free(replaced);</span>
+<span class="lineNum">     730 </span><span class="lineNoCov">          0 :         if (M_FileExists(result))</span>
+<span class="lineNum">     731 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     732 </span><span class="lineNoCov">          0 :             return result;</span>
+<span class="lineNum">     733 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     734 </span><span class="lineNoCov">          0 :         free(result);</span>
+<span class="lineNum">     735 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     736 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     737 </span><span class="lineNoCov">          0 :     return NULL;</span>
+<span class="lineNum">     738 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     739 </span>            : 
+<span class="lineNum">     740 </span>            : // Add a substitute music file to the lookup list.
+<a name="741"><span class="lineNum">     741 </span>            : static void AddSubstituteMusic(const char *musicdir, const char *hash_prefix,</a>
+<span class="lineNum">     742 </span>            :                                const char *filename)
+<span class="lineNum">     743 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     744 </span><span class="lineNoCov">          0 :     subst_music_t *s;</span>
+<span class="lineNum">     745 </span><span class="lineNoCov">          0 :     char *path;</span>
+<span class="lineNum">     746 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     747 </span><span class="lineNoCov">          0 :     path = ExpandFileExtension(musicdir, filename);</span>
+<span class="lineNum">     748 </span><span class="lineNoCov">          0 :     if (path == NULL)</span>
+<span class="lineNum">     749 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     750 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     751 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     752 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     753 </span><span class="lineNoCov">          0 :     ++subst_music_len;</span>
+<span class="lineNum">     754 </span><span class="lineNoCov">          0 :     subst_music =</span>
+<span class="lineNum">     755 </span><span class="lineNoCov">          0 :         I_Realloc(subst_music, sizeof(subst_music_t) * subst_music_len);</span>
+<span class="lineNum">     756 </span><span class="lineNoCov">          0 :     s = &amp;subst_music[subst_music_len - 1];</span>
+<span class="lineNum">     757 </span><span class="lineNoCov">          0 :     s-&gt;hash_prefix = hash_prefix;</span>
+<span class="lineNum">     758 </span><span class="lineNoCov">          0 :     s-&gt;filename = path;</span>
+<span class="lineNum">     759 </span><span class="lineNoCov">          0 : }</span>
+<a name="760"><span class="lineNum">     760 </span>            : </a>
+<span class="lineNum">     761 </span>            : static const char *ReadHashPrefix(char *line)
+<span class="lineNum">     762 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     763 </span><span class="lineNoCov">          0 :     char *result;</span>
+<span class="lineNum">     764 </span><span class="lineNoCov">          0 :     char *p;</span>
+<span class="lineNum">     765 </span><span class="lineNoCov">          0 :     int i, len;</span>
+<span class="lineNum">     766 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     767 </span><span class="lineNoCov">          0 :     for (p = line; *p != '\0' &amp;&amp; !isspace(*p) &amp;&amp; *p != '='; ++p)</span>
+<span class="lineNum">     768 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     769 </span><span class="lineNoCov">          0 :         if (!isxdigit(*p))</span>
+<span class="lineNum">     770 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     771 </span><span class="lineNoCov">          0 :             return NULL;</span>
+<span class="lineNum">     772 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     773 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     774 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     775 </span><span class="lineNoCov">          0 :     len = p - line;</span>
+<span class="lineNum">     776 </span><span class="lineNoCov">          0 :     if (len == 0 || len &gt; sizeof(sha1_digest_t) * 2)</span>
+<span class="lineNum">     777 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     778 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     779 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     780 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     781 </span><span class="lineNoCov">          0 :     result = malloc(len + 1);</span>
+<span class="lineNum">     782 </span><span class="lineNoCov">          0 :     if (result == NULL)</span>
+<span class="lineNum">     783 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     784 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     785 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     786 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     787 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; len; ++i)</span>
+<span class="lineNum">     788 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     789 </span><span class="lineNoCov">          0 :         result[i] = tolower(line[i]);</span>
+<span class="lineNum">     790 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     791 </span><span class="lineNoCov">          0 :     result[len] = '\0';</span>
+<span class="lineNum">     792 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     793 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     794 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     795 </span>            : 
+<span class="lineNum">     796 </span>            : // Parse a line from substitute music configuration file; returns error
+<span class="lineNum">     797 </span>            : // message or NULL for no error.
+<a name="798"><span class="lineNum">     798 </span>            : </a>
+<span class="lineNum">     799 </span>            : static const char *ParseSubstituteLine(char *musicdir, char *line)
+<span class="lineNum">     800 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     801 </span><span class="lineNoCov">          0 :     const char *hash_prefix;</span>
+<span class="lineNum">     802 </span><span class="lineNoCov">          0 :     char *filename;</span>
+<span class="lineNum">     803 </span><span class="lineNoCov">          0 :     char *p;</span>
+<span class="lineNum">     804 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     805 </span><span class="lineNoCov">          0 :     // Strip out comments if present.</span>
+<span class="lineNum">     806 </span><span class="lineNoCov">          0 :     p = strchr(line, '#');</span>
+<span class="lineNum">     807 </span><span class="lineNoCov">          0 :     if (p != NULL)</span>
+<span class="lineNum">     808 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     809 </span><span class="lineNoCov">          0 :         while (p &gt; line &amp;&amp; isspace(*(p - 1)))</span>
+<span class="lineNum">     810 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     811 </span><span class="lineNoCov">          0 :             --p;</span>
+<span class="lineNum">     812 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     813 </span><span class="lineNoCov">          0 :         *p = '\0';</span>
+<span class="lineNum">     814 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     815 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     816 </span><span class="lineNoCov">          0 :     // Skip leading spaces.</span>
+<span class="lineNum">     817 </span><span class="lineNoCov">          0 :     for (p = line; *p != '\0' &amp;&amp; isspace(*p); ++p);</span>
+<span class="lineNum">     818 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     819 </span><span class="lineNoCov">          0 :     // Empty line? This includes comment lines now that comments have</span>
+<span class="lineNum">     820 </span><span class="lineNoCov">          0 :     // been stripped.</span>
+<span class="lineNum">     821 </span><span class="lineNoCov">          0 :     if (*p == '\0')</span>
+<span class="lineNum">     822 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     823 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">     824 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     825 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     826 </span><span class="lineNoCov">          0 :     hash_prefix = ReadHashPrefix(p);</span>
+<span class="lineNum">     827 </span><span class="lineNoCov">          0 :     if (hash_prefix == NULL)</span>
+<span class="lineNum">     828 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     829 </span><span class="lineNoCov">          0 :         return &quot;Invalid hash prefix&quot;;</span>
+<span class="lineNum">     830 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     831 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     832 </span><span class="lineNoCov">          0 :     p += strlen(hash_prefix);</span>
+<span class="lineNum">     833 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     834 </span><span class="lineNoCov">          0 :     // Skip spaces.</span>
+<span class="lineNum">     835 </span><span class="lineNoCov">          0 :     for (; *p != '\0' &amp;&amp; isspace(*p); ++p);</span>
+<span class="lineNum">     836 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     837 </span><span class="lineNoCov">          0 :     if (*p != '=')</span>
+<span class="lineNum">     838 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     839 </span><span class="lineNoCov">          0 :         return &quot;Expected '='&quot;;</span>
+<span class="lineNum">     840 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     841 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     842 </span><span class="lineNoCov">          0 :     ++p;</span>
+<span class="lineNum">     843 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     844 </span><span class="lineNoCov">          0 :     // Skip spaces.</span>
+<span class="lineNum">     845 </span><span class="lineNoCov">          0 :     for (; *p != '\0' &amp;&amp; isspace(*p); ++p);</span>
+<span class="lineNum">     846 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     847 </span><span class="lineNoCov">          0 :     filename = p;</span>
+<span class="lineNum">     848 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     849 </span><span class="lineNoCov">          0 :     // We're now at the filename. Cut off trailing space characters.</span>
+<span class="lineNum">     850 </span><span class="lineNoCov">          0 :     while (strlen(p) &gt; 0 &amp;&amp; isspace(p[strlen(p) - 1]))</span>
+<span class="lineNum">     851 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     852 </span><span class="lineNoCov">          0 :         p[strlen(p) - 1] = '\0';</span>
+<span class="lineNum">     853 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     854 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     855 </span><span class="lineNoCov">          0 :     if (strlen(p) == 0)</span>
+<span class="lineNum">     856 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     857 </span><span class="lineNoCov">          0 :         return &quot;No filename specified for music substitution&quot;;</span>
+<span class="lineNum">     858 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     859 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     860 </span><span class="lineNoCov">          0 :     // Expand full path and add to our database of substitutes.</span>
+<span class="lineNum">     861 </span><span class="lineNoCov">          0 :     AddSubstituteMusic(musicdir, hash_prefix, filename);</span>
+<span class="lineNum">     862 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     863 </span><span class="lineNoCov">          0 :     return NULL;</span>
+<span class="lineNum">     864 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     865 </span>            : 
+<span class="lineNum">     866 </span>            : // Read a substitute music configuration file.
+<a name="867"><span class="lineNum">     867 </span>            : </a>
+<span class="lineNum">     868 </span>            : static boolean ReadSubstituteConfig(char *musicdir, const char *filename)
+<span class="lineNum">     869 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     870 </span><span class="lineNoCov">          0 :     char *buffer;</span>
+<span class="lineNum">     871 </span><span class="lineNoCov">          0 :     char *line;</span>
+<span class="lineNum">     872 </span><span class="lineNoCov">          0 :     int linenum = 1;</span>
+<span class="lineNum">     873 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     874 </span><span class="lineNoCov">          0 :     // This unnecessarily opens the file twice...</span>
+<span class="lineNum">     875 </span><span class="lineNoCov">          0 :     if (!M_FileExists(filename))</span>
+<span class="lineNum">     876 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     877 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     878 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     879 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     880 </span><span class="lineNoCov">          0 :     M_ReadFile(filename, (byte **) &amp;buffer);</span>
+<span class="lineNum">     881 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     882 </span><span class="lineNoCov">          0 :     line = buffer;</span>
+<span class="lineNum">     883 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     884 </span><span class="lineNoCov">          0 :     while (line != NULL)</span>
+<span class="lineNum">     885 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     886 </span><span class="lineNoCov">          0 :         const char *error;</span>
+<span class="lineNum">     887 </span><span class="lineNoCov">          0 :         char *next;</span>
+<span class="lineNum">     888 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     889 </span><span class="lineNoCov">          0 :         // find end of line</span>
+<span class="lineNum">     890 </span><span class="lineNoCov">          0 :         char *eol = strchr(line, '\n');</span>
+<span class="lineNum">     891 </span><span class="lineNoCov">          0 :         if (eol != NULL)</span>
+<span class="lineNum">     892 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     893 </span><span class="lineNoCov">          0 :             // change the newline into NUL</span>
+<span class="lineNum">     894 </span><span class="lineNoCov">          0 :             *eol = '\0';</span>
+<span class="lineNum">     895 </span><span class="lineNoCov">          0 :             next = eol + 1;</span>
+<span class="lineNum">     896 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     897 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     898 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     899 </span><span class="lineNoCov">          0 :             // end of buffer</span>
+<span class="lineNum">     900 </span><span class="lineNoCov">          0 :             next = NULL;</span>
+<span class="lineNum">     901 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     902 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     903 </span><span class="lineNoCov">          0 :         error = ParseSubstituteLine(musicdir, line);</span>
+<span class="lineNum">     904 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     905 </span><span class="lineNoCov">          0 :         if (error != NULL)</span>
+<span class="lineNum">     906 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     907 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;%s:%i: Error: %s\n&quot;, filename, linenum, error);</span>
+<span class="lineNum">     908 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     909 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     910 </span><span class="lineNoCov">          0 :         ++linenum;</span>
+<span class="lineNum">     911 </span><span class="lineNoCov">          0 :         line = next;</span>
+<span class="lineNum">     912 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     913 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     914 </span><span class="lineNoCov">          0 :     Z_Free(buffer);</span>
+<span class="lineNum">     915 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     916 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     917 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     918 </span>            : 
+<span class="lineNum">     919 </span>            : // Find substitute configs and try to load them.
+<a name="920"><span class="lineNum">     920 </span>            : </a>
+<span class="lineNum">     921 </span>            : static void LoadSubstituteConfigs(void)
+<span class="lineNum">     922 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     923 </span><span class="lineNoCov">          0 :     glob_t *glob;</span>
+<span class="lineNum">     924 </span><span class="lineNoCov">          0 :     char *musicdir;</span>
+<span class="lineNum">     925 </span><span class="lineNoCov">          0 :     const char *path;</span>
+<span class="lineNum">     926 </span><span class="lineNoCov">          0 :     unsigned int old_music_len;</span>
+<span class="lineNum">     927 </span><span class="lineNoCov">          0 :     unsigned int i;</span>
+<span class="lineNum">     928 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     929 </span><span class="lineNoCov">          0 :     // We can configure the path to music packs using the music_pack_path</span>
+<span class="lineNum">     930 </span><span class="lineNoCov">          0 :     // configuration variable. Otherwise we use the current directory, or</span>
+<span class="lineNum">     931 </span><span class="lineNoCov">          0 :     // $configdir/music to look for .cfg files.</span>
+<span class="lineNum">     932 </span><span class="lineNoCov">          0 :     if (strcmp(music_pack_path, &quot;&quot;) != 0)</span>
+<span class="lineNum">     933 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     934 </span><span class="lineNoCov">          0 :         musicdir = M_StringJoin(music_pack_path, DIR_SEPARATOR_S, NULL);</span>
+<span class="lineNum">     935 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     936 </span><span class="lineNoCov">          0 :     else if (!strcmp(configdir, &quot;&quot;))</span>
+<span class="lineNum">     937 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     938 </span><span class="lineNoCov">          0 :         musicdir = M_StringDuplicate(&quot;&quot;);</span>
+<span class="lineNum">     939 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     940 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     941 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     942 </span><span class="lineNoCov">          0 :         musicdir = M_StringJoin(configdir, &quot;music&quot;, DIR_SEPARATOR_S, NULL);</span>
+<span class="lineNum">     943 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     944 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     945 </span><span class="lineNoCov">          0 :     // Load all music packs, by searching for .cfg files.</span>
+<span class="lineNum">     946 </span><span class="lineNoCov">          0 :     glob = I_StartGlob(musicdir, &quot;*.cfg&quot;, GLOB_FLAG_SORTED|GLOB_FLAG_NOCASE);</span>
+<span class="lineNum">     947 </span><span class="lineNoCov">          0 :     for (;;)</span>
+<span class="lineNum">     948 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     949 </span><span class="lineNoCov">          0 :         path = I_NextGlob(glob);</span>
+<span class="lineNum">     950 </span><span class="lineNoCov">          0 :         if (path == NULL)</span>
+<span class="lineNum">     951 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     952 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">     953 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     954 </span><span class="lineNoCov">          0 :         ReadSubstituteConfig(musicdir, path);</span>
+<span class="lineNum">     955 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     956 </span><span class="lineNoCov">          0 :     I_EndGlob(glob);</span>
+<span class="lineNum">     957 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     958 </span><span class="lineNoCov">          0 :     if (subst_music_len &gt; 0)</span>
+<span class="lineNum">     959 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     960 </span><span class="lineNoCov">          0 :         printf(&quot;Loaded %u music substitutions from config files.\n&quot;,</span>
+<span class="lineNum">     961 </span><span class="lineNoCov">          0 :                subst_music_len);</span>
+<span class="lineNum">     962 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     963 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     964 </span><span class="lineNoCov">          0 :     old_music_len = subst_music_len;</span>
+<span class="lineNum">     965 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     966 </span><span class="lineNoCov">          0 :     // Add entries from known filenames list. We add this after those from the</span>
+<span class="lineNum">     967 </span><span class="lineNoCov">          0 :     // configuration files, so that the entries here can be overridden.</span>
+<span class="lineNum">     968 </span><span class="lineNoCov">          0 :     for (i = 0; i &lt; arrlen(known_filenames); ++i)</span>
+<span class="lineNum">     969 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     970 </span><span class="lineNoCov">          0 :         AddSubstituteMusic(musicdir, known_filenames[i].hash_prefix,</span>
+<span class="lineNum">     971 </span><span class="lineNoCov">          0 :                            known_filenames[i].filename);</span>
+<span class="lineNum">     972 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     973 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     974 </span><span class="lineNoCov">          0 :     if (subst_music_len &gt; old_music_len)</span>
+<span class="lineNum">     975 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     976 </span><span class="lineNoCov">          0 :         printf(&quot;Configured %u music substitutions based on filename.\n&quot;,</span>
+<span class="lineNum">     977 </span><span class="lineNoCov">          0 :                subst_music_len - old_music_len);</span>
+<span class="lineNum">     978 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     979 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     980 </span><span class="lineNoCov">          0 :     free(musicdir);</span>
+<span class="lineNum">     981 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     982 </span>            : 
+<span class="lineNum">     983 </span>            : // Returns true if the given lump number is a music lump that should
+<span class="lineNum">     984 </span>            : // be included in substitute configs.
+<span class="lineNum">     985 </span>            : // Identifying music lumps by name is not feasible; some games (eg.
+<span class="lineNum">     986 </span>            : // Heretic, Hexen) don't have a common naming pattern for music lumps.
+<a name="987"><span class="lineNum">     987 </span>            : </a>
+<span class="lineNum">     988 </span>            : static boolean IsMusicLump(int lumpnum)
+<span class="lineNum">     989 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     990 </span><span class="lineNoCov">          0 :     byte *data;</span>
+<span class="lineNum">     991 </span><span class="lineNoCov">          0 :     boolean result;</span>
+<span class="lineNum">     992 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     993 </span><span class="lineNoCov">          0 :     if (W_LumpLength(lumpnum) &lt; 4)</span>
+<span class="lineNum">     994 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     995 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     996 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     997 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     998 </span><span class="lineNoCov">          0 :     data = W_CacheLumpNum(lumpnum, PU_STATIC);</span>
+<span class="lineNum">     999 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1000 </span><span class="lineNoCov">          0 :     result = memcmp(data, MUS_HEADER_MAGIC, 4) == 0</span>
+<span class="lineNum">    1001 </span><span class="lineNoCov">          0 :           || memcmp(data, MID_HEADER_MAGIC, 4) == 0;</span>
+<span class="lineNum">    1002 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1003 </span><span class="lineNoCov">          0 :     W_ReleaseLumpNum(lumpnum);</span>
+<span class="lineNum">    1004 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1005 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">    1006 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1007 </span>            : 
+<span class="lineNum">    1008 </span>            : // Dump an example config file containing checksums for all MIDI music
+<span class="lineNum">    1009 </span>            : // found in the WAD directory.
+<a name="1010"><span class="lineNum">    1010 </span>            : </a>
+<span class="lineNum">    1011 </span>            : static void DumpSubstituteConfig(const char *filename)
+<span class="lineNum">    1012 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1013 </span><span class="lineNoCov">          0 :     sha1_context_t context;</span>
+<span class="lineNum">    1014 </span><span class="lineNoCov">          0 :     sha1_digest_t digest;</span>
+<span class="lineNum">    1015 </span><span class="lineNoCov">          0 :     char name[9];</span>
+<span class="lineNum">    1016 </span><span class="lineNoCov">          0 :     byte *data;</span>
+<span class="lineNum">    1017 </span><span class="lineNoCov">          0 :     FILE *fs;</span>
+<span class="lineNum">    1018 </span><span class="lineNoCov">          0 :     unsigned int lumpnum;</span>
+<span class="lineNum">    1019 </span><span class="lineNoCov">          0 :     size_t h;</span>
+<span class="lineNum">    1020 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1021 </span><span class="lineNoCov">          0 :     fs = fopen(filename, &quot;w&quot;);</span>
+<span class="lineNum">    1022 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1023 </span><span class="lineNoCov">          0 :     if (fs == NULL)</span>
+<span class="lineNum">    1024 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1025 </span><span class="lineNoCov">          0 :         I_Error(&quot;Failed to open %s for writing&quot;, filename);</span>
+<span class="lineNum">    1026 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1027 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1028 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1029 </span><span class="lineNoCov">          0 :     fprintf(fs, &quot;# Example %s substitute MIDI file.\n\n&quot;, PACKAGE_NAME);</span>
+<span class="lineNum">    1030 </span><span class="lineNoCov">          0 :     fprintf(fs, &quot;# SHA1 hash                              = filename\n&quot;);</span>
+<span class="lineNum">    1031 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1032 </span><span class="lineNoCov">          0 :     for (lumpnum = 0; lumpnum &lt; numlumps; ++lumpnum)</span>
+<span class="lineNum">    1033 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1034 </span><span class="lineNoCov">          0 :         strncpy(name, lumpinfo[lumpnum]-&gt;name, 8);</span>
+<span class="lineNum">    1035 </span><span class="lineNoCov">          0 :         name[8] = '\0';</span>
+<span class="lineNum">    1036 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1037 </span><span class="lineNoCov">          0 :         if (!IsMusicLump(lumpnum))</span>
+<span class="lineNum">    1038 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1039 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1040 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1041 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1042 </span><span class="lineNoCov">          0 :         // Calculate hash.</span>
+<span class="lineNum">    1043 </span><span class="lineNoCov">          0 :         data = W_CacheLumpNum(lumpnum, PU_STATIC);</span>
+<span class="lineNum">    1044 </span><span class="lineNoCov">          0 :         SHA1_Init(&amp;context);</span>
+<span class="lineNum">    1045 </span><span class="lineNoCov">          0 :         SHA1_Update(&amp;context, data, W_LumpLength(lumpnum));</span>
+<span class="lineNum">    1046 </span><span class="lineNoCov">          0 :         SHA1_Final(digest, &amp;context);</span>
+<span class="lineNum">    1047 </span><span class="lineNoCov">          0 :         W_ReleaseLumpNum(lumpnum);</span>
+<span class="lineNum">    1048 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1049 </span><span class="lineNoCov">          0 :         // Print line.</span>
+<span class="lineNum">    1050 </span><span class="lineNoCov">          0 :         for (h = 0; h &lt; sizeof(sha1_digest_t); ++h)</span>
+<span class="lineNum">    1051 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1052 </span><span class="lineNoCov">          0 :             fprintf(fs, &quot;%02x&quot;, digest[h]);</span>
+<span class="lineNum">    1053 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1054 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1055 </span><span class="lineNoCov">          0 :         fprintf(fs, &quot; = %s.ogg\n&quot;, name);</span>
+<span class="lineNum">    1056 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1057 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1058 </span><span class="lineNoCov">          0 :     fprintf(fs, &quot;\n&quot;);</span>
+<span class="lineNum">    1059 </span><span class="lineNoCov">          0 :     fclose(fs);</span>
+<span class="lineNum">    1060 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1061 </span><span class="lineNoCov">          0 :     printf(&quot;Substitute MIDI config file written to %s.\n&quot;, filename);</span>
+<span class="lineNum">    1062 </span><span class="lineNoCov">          0 :     I_Quit();</span>
+<span class="lineNum">    1063 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1064 </span>            : 
+<span class="lineNum">    1065 </span>            : // Shutdown music
+<a name="1066"><span class="lineNum">    1066 </span>            : </a>
+<span class="lineNum">    1067 </span>            : static void I_MP_ShutdownMusic(void)
+<span class="lineNum">    1068 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1069 </span><span class="lineNoCov">          0 :     if (music_initialized)</span>
+<span class="lineNum">    1070 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1071 </span><span class="lineNoCov">          0 :         Mix_HaltMusic();</span>
+<span class="lineNum">    1072 </span><span class="lineNoCov">          0 :         music_initialized = false;</span>
+<span class="lineNum">    1073 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1074 </span><span class="lineNoCov">          0 :         if (sdl_was_initialized)</span>
+<span class="lineNum">    1075 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1076 </span><span class="lineNoCov">          0 :             Mix_CloseAudio();</span>
+<span class="lineNum">    1077 </span><span class="lineNoCov">          0 :             SDL_QuitSubSystem(SDL_INIT_AUDIO);</span>
+<span class="lineNum">    1078 </span><span class="lineNoCov">          0 :             sdl_was_initialized = false;</span>
+<span class="lineNum">    1079 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1080 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1081 </span><span class="lineNoCov">          0 : }</span>
+<a name="1082"><span class="lineNum">    1082 </span>            : </a>
+<span class="lineNum">    1083 </span>            : static boolean SDLIsInitialized(void)
+<span class="lineNum">    1084 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1085 </span><span class="lineNoCov">          0 :     int freq, channels;</span>
+<span class="lineNum">    1086 </span><span class="lineNoCov">          0 :     Uint16 format;</span>
+<span class="lineNum">    1087 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1088 </span><span class="lineNoCov">          0 :     return Mix_QuerySpec(&amp;freq, &amp;format, &amp;channels) != 0;</span>
+<span class="lineNum">    1089 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1090 </span>            : 
+<a name="1091"><span class="lineNum">    1091 </span>            : // Callback function that is invoked to track current track position.</a>
+<span class="lineNum">    1092 </span>            : void TrackPositionCallback(int chan, void *stream, int len, void *udata)
+<span class="lineNum">    1093 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1094 </span><span class="lineNoCov">          0 :     // Position is doubled up twice: for 16-bit samples and for stereo.</span>
+<span class="lineNum">    1095 </span><span class="lineNoCov">          0 :     current_track_pos += len / 4;</span>
+<span class="lineNum">    1096 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1097 </span>            : 
+<a name="1098"><span class="lineNum">    1098 </span>            : // Initialize music subsystem</a>
+<span class="lineNum">    1099 </span>            : static boolean I_MP_InitMusic(void)
+<span class="lineNum">    1100 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1101 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">    1102 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1103 </span><span class="lineNoCov">          0 :     //!</span>
+<span class="lineNum">    1104 </span><span class="lineNoCov">          0 :     // @category obscure</span>
+<span class="lineNum">    1105 </span><span class="lineNoCov">          0 :     // @arg &lt;filename&gt;</span>
+<span class="lineNum">    1106 </span><span class="lineNoCov">          0 :     //</span>
+<span class="lineNum">    1107 </span><span class="lineNoCov">          0 :     // Read all MIDI files from loaded WAD files, dump an example substitution</span>
+<span class="lineNum">    1108 </span><span class="lineNoCov">          0 :     // music config file to the specified filename and quit.</span>
+<span class="lineNum">    1109 </span><span class="lineNoCov">          0 :     //</span>
+<span class="lineNum">    1110 </span><span class="lineNoCov">          0 :     i = M_CheckParmWithArgs(&quot;-dumpsubstconfig&quot;, 1);</span>
+<span class="lineNum">    1111 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1112 </span><span class="lineNoCov">          0 :     if (i &gt; 0)</span>
+<span class="lineNum">    1113 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1114 </span><span class="lineNoCov">          0 :         DumpSubstituteConfig(myargv[i + 1]);</span>
+<span class="lineNum">    1115 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1116 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1117 </span><span class="lineNoCov">          0 :     // If we're in GENMIDI mode, try to load sound packs.</span>
+<span class="lineNum">    1118 </span><span class="lineNoCov">          0 :     LoadSubstituteConfigs();</span>
+<span class="lineNum">    1119 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1120 </span><span class="lineNoCov">          0 :     // We can't initialize if we don't have any substitute files to work with.</span>
+<span class="lineNum">    1121 </span><span class="lineNoCov">          0 :     // If so, don't bother with SDL initialization etc.</span>
+<span class="lineNum">    1122 </span><span class="lineNoCov">          0 :     if (subst_music_len == 0)</span>
+<span class="lineNum">    1123 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1124 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">    1125 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1126 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1127 </span><span class="lineNoCov">          0 :     // If SDL_mixer is not initialized, we have to initialize it</span>
+<span class="lineNum">    1128 </span><span class="lineNoCov">          0 :     // and have the responsibility to shut it down later on.</span>
+<span class="lineNum">    1129 </span><span class="lineNoCov">          0 :     if (SDLIsInitialized())</span>
+<span class="lineNum">    1130 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1131 </span><span class="lineNoCov">          0 :         music_initialized = true;</span>
+<span class="lineNum">    1132 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1133 </span><span class="lineNoCov">          0 :     else if (SDL_Init(SDL_INIT_AUDIO) &lt; 0)</span>
+<span class="lineNum">    1134 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1135 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;Unable to set up sound.\n&quot;);</span>
+<span class="lineNum">    1136 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1137 </span><span class="lineNoCov">          0 :     else if (Mix_OpenAudioDevice(snd_samplerate, AUDIO_S16SYS, 2, 1024, NULL, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) &lt; 0)</span>
+<span class="lineNum">    1138 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1139 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;Error initializing SDL_mixer: %s\n&quot;,</span>
+<span class="lineNum">    1140 </span><span class="lineNoCov">          0 :                 Mix_GetError());</span>
+<span class="lineNum">    1141 </span><span class="lineNoCov">          0 :         SDL_QuitSubSystem(SDL_INIT_AUDIO);</span>
+<span class="lineNum">    1142 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1143 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">    1144 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1145 </span><span class="lineNoCov">          0 :         SDL_PauseAudio(0);</span>
+<span class="lineNum">    1146 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1147 </span><span class="lineNoCov">          0 :         sdl_was_initialized = true;</span>
+<span class="lineNum">    1148 </span><span class="lineNoCov">          0 :         music_initialized = true;</span>
+<span class="lineNum">    1149 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1150 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1151 </span><span class="lineNoCov">          0 :     // Initialize SDL_Mixer for digital music playback</span>
+<span class="lineNum">    1152 </span><span class="lineNoCov">          0 :     Mix_Init(MIX_INIT_FLAC | MIX_INIT_OGG | MIX_INIT_MP3);</span>
+<span class="lineNum">    1153 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1154 </span><span class="lineNoCov">          0 :     // Register an effect function to track the music position.</span>
+<span class="lineNum">    1155 </span><span class="lineNoCov">          0 :     Mix_RegisterEffect(MIX_CHANNEL_POST, TrackPositionCallback, NULL, NULL);</span>
+<span class="lineNum">    1156 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1157 </span><span class="lineNoCov">          0 :     return music_initialized;</span>
+<span class="lineNum">    1158 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1159 </span>            : 
+<span class="lineNum">    1160 </span>            : // Set music volume (0 - 127)
+<a name="1161"><span class="lineNum">    1161 </span>            : </a>
+<span class="lineNum">    1162 </span>            : static void I_MP_SetMusicVolume(int volume)
+<span class="lineNum">    1163 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1164 </span><span class="lineNoCov">          0 :     Mix_VolumeMusic((volume * MIX_MAX_VOLUME) / 127);</span>
+<span class="lineNum">    1165 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1166 </span>            : 
+<span class="lineNum">    1167 </span>            : // Start playing a mid
+<a name="1168"><span class="lineNum">    1168 </span>            : </a>
+<span class="lineNum">    1169 </span>            : static void I_MP_PlaySong(void *handle, boolean looping)
+<span class="lineNum">    1170 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1171 </span><span class="lineNoCov">          0 :     int loops;</span>
+<span class="lineNum">    1172 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1173 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1174 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1175 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1176 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1177 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1178 </span><span class="lineNoCov">          0 :     if (handle == NULL)</span>
+<span class="lineNum">    1179 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1180 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1181 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1182 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1183 </span><span class="lineNoCov">          0 :     current_track_music = (Mix_Music *) handle;</span>
+<span class="lineNum">    1184 </span><span class="lineNoCov">          0 :     current_track_loop = looping;</span>
+<span class="lineNum">    1185 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1186 </span><span class="lineNoCov">          0 :     if (looping)</span>
+<span class="lineNum">    1187 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1188 </span><span class="lineNoCov">          0 :         loops = -1;</span>
+<span class="lineNum">    1189 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1190 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">    1191 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1192 </span><span class="lineNoCov">          0 :         loops = 1;</span>
+<span class="lineNum">    1193 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1194 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1195 </span><span class="lineNoCov">          0 :     // Don't loop when playing substitute music, as we do it</span>
+<span class="lineNum">    1196 </span><span class="lineNoCov">          0 :     // ourselves instead.</span>
+<span class="lineNum">    1197 </span><span class="lineNoCov">          0 :     if (file_metadata.valid)</span>
+<span class="lineNum">    1198 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1199 </span><span class="lineNoCov">          0 :         loops = 1;</span>
+<span class="lineNum">    1200 </span><span class="lineNoCov">          0 :         SDL_LockAudio();</span>
+<span class="lineNum">    1201 </span><span class="lineNoCov">          0 :         current_track_pos = 0;  // start of track</span>
+<span class="lineNum">    1202 </span><span class="lineNoCov">          0 :         SDL_UnlockAudio();</span>
+<span class="lineNum">    1203 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1204 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1205 </span><span class="lineNoCov">          0 :     if (Mix_PlayMusic(current_track_music, loops) == -1)</span>
+<span class="lineNum">    1206 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1207 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;I_MP_PlaySong: Error starting track: %s\n&quot;,</span>
+<span class="lineNum">    1208 </span><span class="lineNoCov">          0 :                 Mix_GetError());</span>
+<span class="lineNum">    1209 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1210 </span><span class="lineNoCov">          0 : }</span>
+<a name="1211"><span class="lineNum">    1211 </span>            : </a>
+<span class="lineNum">    1212 </span>            : static void I_MP_PauseSong(void)
+<span class="lineNum">    1213 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1214 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1215 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1216 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1217 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1218 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1219 </span><span class="lineNoCov">          0 :     Mix_PauseMusic();</span>
+<span class="lineNum">    1220 </span><span class="lineNoCov">          0 : }</span>
+<a name="1221"><span class="lineNum">    1221 </span>            : </a>
+<span class="lineNum">    1222 </span>            : static void I_MP_ResumeSong(void)
+<span class="lineNum">    1223 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1224 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1225 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1226 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1227 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1228 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1229 </span><span class="lineNoCov">          0 :     Mix_ResumeMusic();</span>
+<span class="lineNum">    1230 </span><span class="lineNoCov">          0 : }</span>
+<a name="1231"><span class="lineNum">    1231 </span>            : </a>
+<span class="lineNum">    1232 </span>            : static void I_MP_StopSong(void)
+<span class="lineNum">    1233 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1234 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1235 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1236 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1237 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1238 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1239 </span><span class="lineNoCov">          0 :     Mix_HaltMusic();</span>
+<span class="lineNum">    1240 </span><span class="lineNoCov">          0 :     current_track_music = NULL;</span>
+<span class="lineNum">    1241 </span><span class="lineNoCov">          0 : }</span>
+<a name="1242"><span class="lineNum">    1242 </span>            : </a>
+<span class="lineNum">    1243 </span>            : static void I_MP_UnRegisterSong(void *handle)
+<span class="lineNum">    1244 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1245 </span><span class="lineNoCov">          0 :     Mix_Music *music = (Mix_Music *) handle;</span>
+<span class="lineNum">    1246 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1247 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1248 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1249 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1250 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1251 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1252 </span><span class="lineNoCov">          0 :     if (handle == NULL)</span>
+<span class="lineNum">    1253 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1254 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">    1255 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1256 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1257 </span><span class="lineNoCov">          0 :     Mix_FreeMusic(music);</span>
+<span class="lineNum">    1258 </span><span class="lineNoCov">          0 : }</span>
+<a name="1259"><span class="lineNum">    1259 </span>            : </a>
+<span class="lineNum">    1260 </span>            : static void *I_MP_RegisterSong(void *data, int len)
+<span class="lineNum">    1261 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1262 </span><span class="lineNoCov">          0 :     const char *filename;</span>
+<span class="lineNum">    1263 </span><span class="lineNoCov">          0 :     Mix_Music *music;</span>
+<span class="lineNum">    1264 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1265 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1266 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1267 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">    1268 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1269 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1270 </span><span class="lineNoCov">          0 :     // See if we're substituting this MUS for a high-quality replacement.</span>
+<span class="lineNum">    1271 </span><span class="lineNoCov">          0 :     filename = GetSubstituteMusicFile(data, len);</span>
+<span class="lineNum">    1272 </span><span class="lineNoCov">          0 :     if (filename == NULL)</span>
+<span class="lineNum">    1273 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1274 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">    1275 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1276 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1277 </span><span class="lineNoCov">          0 :     music = Mix_LoadMUS(filename);</span>
+<span class="lineNum">    1278 </span><span class="lineNoCov">          0 :     if (music == NULL)</span>
+<span class="lineNum">    1279 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1280 </span><span class="lineNoCov">          0 :         // Fall through and play MIDI normally, but print an error</span>
+<span class="lineNum">    1281 </span><span class="lineNoCov">          0 :         // message.</span>
+<span class="lineNum">    1282 </span><span class="lineNoCov">          0 :         fprintf(stderr, &quot;Failed to load substitute music file: %s: %s\n&quot;,</span>
+<span class="lineNum">    1283 </span><span class="lineNoCov">          0 :                 filename, Mix_GetError());</span>
+<span class="lineNum">    1284 </span><span class="lineNoCov">          0 :         return NULL;</span>
+<span class="lineNum">    1285 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1286 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1287 </span><span class="lineNoCov">          0 :     // Read loop point metadata from the file so that we know where</span>
+<span class="lineNum">    1288 </span><span class="lineNoCov">          0 :     // to loop the music.</span>
+<span class="lineNum">    1289 </span><span class="lineNoCov">          0 :     ReadLoopPoints(filename, &amp;file_metadata);</span>
+<span class="lineNum">    1290 </span><span class="lineNoCov">          0 :     return music;</span>
+<span class="lineNum">    1291 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1292 </span>            : 
+<a name="1293"><span class="lineNum">    1293 </span>            : // Is the song playing?</a>
+<span class="lineNum">    1294 </span>            : static boolean I_MP_MusicIsPlaying(void)
+<span class="lineNum">    1295 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1296 </span><span class="lineNoCov">          0 :     if (!music_initialized)</span>
+<span class="lineNum">    1297 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1298 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">    1299 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1300 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1301 </span><span class="lineNoCov">          0 :     return Mix_PlayingMusic();</span>
+<span class="lineNum">    1302 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1303 </span>            : 
+<a name="1304"><span class="lineNum">    1304 </span>            : // Get position in substitute music track, in seconds since start of track.</a>
+<span class="lineNum">    1305 </span>            : static double GetMusicPosition(void)
+<span class="lineNum">    1306 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1307 </span><span class="lineNoCov">          0 :     unsigned int music_pos;</span>
+<span class="lineNum">    1308 </span><span class="lineNoCov">          0 :     int freq;</span>
+<span class="lineNum">    1309 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1310 </span><span class="lineNoCov">          0 :     Mix_QuerySpec(&amp;freq, NULL, NULL);</span>
+<span class="lineNum">    1311 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1312 </span><span class="lineNoCov">          0 :     SDL_LockAudio();</span>
+<span class="lineNum">    1313 </span><span class="lineNoCov">          0 :     music_pos = current_track_pos;</span>
+<span class="lineNum">    1314 </span><span class="lineNoCov">          0 :     SDL_UnlockAudio();</span>
+<span class="lineNum">    1315 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1316 </span><span class="lineNoCov">          0 :     return (double) music_pos / freq;</span>
+<span class="lineNum">    1317 </span><span class="lineNoCov">          0 : }</span>
+<a name="1318"><span class="lineNum">    1318 </span>            : </a>
+<span class="lineNum">    1319 </span>            : static void RestartCurrentTrack(void)
+<span class="lineNum">    1320 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1321 </span><span class="lineNoCov">          0 :     double start = (double) file_metadata.start_time</span>
+<span class="lineNum">    1322 </span><span class="lineNoCov">          0 :                  / file_metadata.samplerate_hz;</span>
+<span class="lineNum">    1323 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1324 </span><span class="lineNoCov">          0 :     // If the track finished we need to restart it.</span>
+<span class="lineNum">    1325 </span><span class="lineNoCov">          0 :     if (current_track_music != NULL)</span>
+<span class="lineNum">    1326 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1327 </span><span class="lineNoCov">          0 :         Mix_PlayMusic(current_track_music, 1);</span>
+<span class="lineNum">    1328 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1329 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1330 </span><span class="lineNoCov">          0 :     Mix_SetMusicPosition(start);</span>
+<span class="lineNum">    1331 </span><span class="lineNoCov">          0 :     SDL_LockAudio();</span>
+<span class="lineNum">    1332 </span><span class="lineNoCov">          0 :     current_track_pos = file_metadata.start_time;</span>
+<span class="lineNum">    1333 </span><span class="lineNoCov">          0 :     SDL_UnlockAudio();</span>
+<span class="lineNum">    1334 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1335 </span>            : 
+<span class="lineNum">    1336 </span>            : // Poll music position; if we have passed the loop point end position
+<a name="1337"><span class="lineNum">    1337 </span>            : // then we need to go back.</a>
+<span class="lineNum">    1338 </span>            : static void I_MP_PollMusic(void)
+<span class="lineNum">    1339 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1340 </span><span class="lineNoCov">          0 :     // When playing substitute tracks, loop tags only apply if we're playing</span>
+<span class="lineNum">    1341 </span><span class="lineNoCov">          0 :     // a looping track. Tracks like the title screen music have the loop</span>
+<span class="lineNum">    1342 </span><span class="lineNoCov">          0 :     // tags ignored.</span>
+<span class="lineNum">    1343 </span><span class="lineNoCov">          0 :     if (current_track_loop &amp;&amp; file_metadata.valid)</span>
+<span class="lineNum">    1344 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1345 </span><span class="lineNoCov">          0 :         double end = (double) file_metadata.end_time</span>
+<span class="lineNum">    1346 </span><span class="lineNoCov">          0 :                    / file_metadata.samplerate_hz;</span>
+<span class="lineNum">    1347 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1348 </span><span class="lineNoCov">          0 :         // If we have reached the loop end point then we have to take action.</span>
+<span class="lineNum">    1349 </span><span class="lineNoCov">          0 :         if (file_metadata.end_time &gt;= 0 &amp;&amp; GetMusicPosition() &gt;= end)</span>
+<span class="lineNum">    1350 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1351 </span><span class="lineNoCov">          0 :             RestartCurrentTrack();</span>
+<span class="lineNum">    1352 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1353 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1354 </span><span class="lineNoCov">          0 :         // Have we reached the actual end of track (not loop end)?</span>
+<span class="lineNum">    1355 </span><span class="lineNoCov">          0 :         if (!Mix_PlayingMusic())</span>
+<span class="lineNum">    1356 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1357 </span><span class="lineNoCov">          0 :             RestartCurrentTrack();</span>
+<span class="lineNum">    1358 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1359 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1360 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1361 </span>            : 
+<span class="lineNum">    1362 </span>            : music_module_t music_pack_module =
+<span class="lineNum">    1363 </span>            : {
+<span class="lineNum">    1364 </span>            :     NULL,
+<span class="lineNum">    1365 </span>            :     0,
+<span class="lineNum">    1366 </span>            :     I_MP_InitMusic,
+<span class="lineNum">    1367 </span>            :     I_MP_ShutdownMusic,
+<span class="lineNum">    1368 </span>            :     I_MP_SetMusicVolume,
+<span class="lineNum">    1369 </span>            :     I_MP_PauseSong,
+<span class="lineNum">    1370 </span>            :     I_MP_ResumeSong,
+<span class="lineNum">    1371 </span>            :     I_MP_RegisterSong,
+<span class="lineNum">    1372 </span>            :     I_MP_UnRegisterSong,
+<span class="lineNum">    1373 </span>            :     I_MP_PlaySong,
+<span class="lineNum">    1374 </span>            :     I_MP_StopSong,
+<span class="lineNum">    1375 </span>            :     I_MP_MusicIsPlaying,
+<span class="lineNum">    1376 </span>            :     I_MP_PollMusic,
+<span class="lineNum">    1377 </span>            : };
+<span class="lineNum">    1378 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

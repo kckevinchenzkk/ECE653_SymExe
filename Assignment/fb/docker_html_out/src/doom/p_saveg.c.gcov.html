@@ -1,0 +1,1964 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/p_saveg.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - p_saveg.c<span style="font-size: 80%;"> (source / <a href="p_saveg.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">1570</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">52</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      Archiving: SaveGame I/O.
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;dstrings.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;deh_main.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;i_system.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;z_zone.h&quot;
+<span class="lineNum">      27 </span>            : #include &quot;p_local.h&quot;
+<span class="lineNum">      28 </span>            : #include &quot;p_saveg.h&quot;
+<span class="lineNum">      29 </span>            : 
+<span class="lineNum">      30 </span>            : // State.
+<span class="lineNum">      31 </span>            : #include &quot;doomstat.h&quot;
+<span class="lineNum">      32 </span>            : #include &quot;g_game.h&quot;
+<span class="lineNum">      33 </span>            : #include &quot;m_misc.h&quot;
+<span class="lineNum">      34 </span>            : #include &quot;r_state.h&quot;
+<span class="lineNum">      35 </span>            : 
+<span class="lineNum">      36 </span>            : FILE *save_stream;
+<span class="lineNum">      37 </span>            : int savegamelength;
+<span class="lineNum">      38 </span>            : boolean savegame_error;
+<span class="lineNum">      39 </span>            : 
+<span class="lineNum">      40 </span>            : // Get the filename of a temporary file to write the savegame to.  After
+<span class="lineNum">      41 </span>            : // the file has been successfully saved, it will be renamed to the 
+<span class="lineNum">      42 </span>            : // real file.
+<a name="43"><span class="lineNum">      43 </span>            : </a>
+<span class="lineNum">      44 </span>            : char *P_TempSaveGameFile(void)
+<span class="lineNum">      45 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      46 </span><span class="lineNoCov">          0 :     static char *filename = NULL;</span>
+<span class="lineNum">      47 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      48 </span><span class="lineNoCov">          0 :     if (filename == NULL)</span>
+<span class="lineNum">      49 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      50 </span><span class="lineNoCov">          0 :         filename = M_StringJoin(savegamedir, &quot;temp.dsg&quot;, NULL);</span>
+<span class="lineNum">      51 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      53 </span><span class="lineNoCov">          0 :     return filename;</span>
+<span class="lineNum">      54 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">      55 </span>            : 
+<span class="lineNum">      56 </span>            : // Get the filename of the save game file to use for the specified slot.
+<a name="57"><span class="lineNum">      57 </span>            : </a>
+<span class="lineNum">      58 </span>            : char *P_SaveGameFile(int slot)
+<span class="lineNum">      59 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      60 </span><span class="lineNoCov">          0 :     static char *filename = NULL;</span>
+<span class="lineNum">      61 </span><span class="lineNoCov">          0 :     static size_t filename_size = 0;</span>
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 :     char basename[32];</span>
+<span class="lineNum">      63 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      64 </span><span class="lineNoCov">          0 :     if (filename == NULL)</span>
+<span class="lineNum">      65 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      66 </span><span class="lineNoCov">          0 :         filename_size = strlen(savegamedir) + 32;</span>
+<span class="lineNum">      67 </span><span class="lineNoCov">          0 :         filename = malloc(filename_size);</span>
+<span class="lineNum">      68 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      69 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      70 </span><span class="lineNoCov">          0 :     DEH_snprintf(basename, 32, SAVEGAMENAME &quot;%d.dsg&quot;, slot);</span>
+<span class="lineNum">      71 </span><span class="lineNoCov">          0 :     M_snprintf(filename, filename_size, &quot;%s%s&quot;, savegamedir, basename);</span>
+<span class="lineNum">      72 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      73 </span><span class="lineNoCov">          0 :     return filename;</span>
+<span class="lineNum">      74 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">      75 </span>            : 
+<span class="lineNum">      76 </span>            : // Endian-safe integer read/write functions
+<a name="77"><span class="lineNum">      77 </span>            : </a>
+<span class="lineNum">      78 </span>            : static byte saveg_read8(void)
+<span class="lineNum">      79 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      80 </span><span class="lineNoCov">          0 :     byte result = -1;</span>
+<span class="lineNum">      81 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      82 </span><span class="lineNoCov">          0 :     if (fread(&amp;result, 1, 1, save_stream) &lt; 1)</span>
+<span class="lineNum">      83 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">      84 </span><span class="lineNoCov">          0 :         if (!savegame_error)</span>
+<span class="lineNum">      85 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">      86 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;saveg_read8: Unexpected end of file while &quot;</span>
+<span class="lineNum">      87 </span><span class="lineNoCov">          0 :                             &quot;reading save game\n&quot;);</span>
+<span class="lineNum">      88 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      89 </span><span class="lineNoCov">          0 :             savegame_error = true;</span>
+<span class="lineNum">      90 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      92 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">      93 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 : }</span>
+<a name="95"><span class="lineNum">      95 </span>            : </a>
+<span class="lineNum">      96 </span>            : static void saveg_write8(byte value)
+<span class="lineNum">      97 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 :     if (fwrite(&amp;value, 1, 1, save_stream) &lt; 1)</span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     100 </span><span class="lineNoCov">          0 :         if (!savegame_error)</span>
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;saveg_write8: Error while writing save game\n&quot;);</span>
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     104 </span><span class="lineNoCov">          0 :             savegame_error = true;</span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 : }</span>
+<a name="108"><span class="lineNum">     108 </span>            : </a>
+<span class="lineNum">     109 </span>            : static short saveg_read16(void)
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :     int result;</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 :     result = saveg_read8();</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 :     result |= saveg_read8() &lt;&lt; 8;</span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 : }</span>
+<a name="118"><span class="lineNum">     118 </span>            : </a>
+<span class="lineNum">     119 </span>            : static void saveg_write16(short value)
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 :     saveg_write8(value &amp; 0xff);</span>
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 :     saveg_write8((value &gt;&gt; 8) &amp; 0xff);</span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 : }</span>
+<a name="124"><span class="lineNum">     124 </span>            : </a>
+<span class="lineNum">     125 </span>            : static int saveg_read32(void)
+<span class="lineNum">     126 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     127 </span><span class="lineNoCov">          0 :     int result;</span>
+<span class="lineNum">     128 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     129 </span><span class="lineNoCov">          0 :     result = saveg_read8();</span>
+<span class="lineNum">     130 </span><span class="lineNoCov">          0 :     result |= saveg_read8() &lt;&lt; 8;</span>
+<span class="lineNum">     131 </span><span class="lineNoCov">          0 :     result |= saveg_read8() &lt;&lt; 16;</span>
+<span class="lineNum">     132 </span><span class="lineNoCov">          0 :     result |= saveg_read8() &lt;&lt; 24;</span>
+<span class="lineNum">     133 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     134 </span><span class="lineNoCov">          0 :     return result;</span>
+<span class="lineNum">     135 </span><span class="lineNoCov">          0 : }</span>
+<a name="136"><span class="lineNum">     136 </span>            : </a>
+<span class="lineNum">     137 </span>            : static void saveg_write32(int value)
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 :     saveg_write8(value &amp; 0xff);</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 :     saveg_write8((value &gt;&gt; 8) &amp; 0xff);</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :     saveg_write8((value &gt;&gt; 16) &amp; 0xff);</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :     saveg_write8((value &gt;&gt; 24) &amp; 0xff);</span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     144 </span>            : 
+<span class="lineNum">     145 </span>            : // Pad to 4-byte boundaries
+<a name="146"><span class="lineNum">     146 </span>            : </a>
+<span class="lineNum">     147 </span>            : static void saveg_read_pad(void)
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :     unsigned long pos;</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 :     int padding;</span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :     pos = ftell(save_stream);</span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 :     padding = (4 - (pos &amp; 3)) &amp; 3;</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;padding; ++i)</span>
+<span class="lineNum">     158 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     159 </span><span class="lineNoCov">          0 :         saveg_read8();</span>
+<span class="lineNum">     160 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     161 </span><span class="lineNoCov">          0 : }</span>
+<a name="162"><span class="lineNum">     162 </span>            : </a>
+<span class="lineNum">     163 </span>            : static void saveg_write_pad(void)
+<span class="lineNum">     164 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     165 </span><span class="lineNoCov">          0 :     unsigned long pos;</span>
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 :     int padding;</span>
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 :     pos = ftell(save_stream);</span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 :     padding = (4 - (pos &amp; 3)) &amp; 3;</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     173 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;padding; ++i)</span>
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     175 </span><span class="lineNoCov">          0 :         saveg_write8(0);</span>
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     178 </span>            : 
+<span class="lineNum">     179 </span>            : 
+<span class="lineNum">     180 </span>            : // Pointers
+<a name="181"><span class="lineNum">     181 </span>            : </a>
+<span class="lineNum">     182 </span>            : static void *saveg_readp(void)
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 :     return (void *) (intptr_t) saveg_read32();</span>
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 : }</span>
+<a name="186"><span class="lineNum">     186 </span>            : </a>
+<span class="lineNum">     187 </span>            : static void saveg_writep(const void *p)
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 :     saveg_write32((intptr_t) p);</span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     191 </span>            : 
+<span class="lineNum">     192 </span>            : // Enum values are 32-bit integers.
+<span class="lineNum">     193 </span>            : 
+<span class="lineNum">     194 </span><span class="lineNoCov">          0 : #define saveg_read_enum saveg_read32</span>
+<span class="lineNum">     195 </span><span class="lineNoCov">          0 : #define saveg_write_enum saveg_write32</span>
+<span class="lineNum">     196 </span>            : 
+<span class="lineNum">     197 </span>            : //
+<span class="lineNum">     198 </span>            : // Structure read/write functions
+<span class="lineNum">     199 </span>            : //
+<span class="lineNum">     200 </span>            : 
+<span class="lineNum">     201 </span>            : //
+<span class="lineNum">     202 </span>            : // mapthing_t
+<span class="lineNum">     203 </span>            : //
+<a name="204"><span class="lineNum">     204 </span>            : </a>
+<span class="lineNum">     205 </span>            : static void saveg_read_mapthing_t(mapthing_t *str)
+<span class="lineNum">     206 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     207 </span><span class="lineNoCov">          0 :     // short x;</span>
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 :     str-&gt;x = saveg_read16();</span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 :     // short y;</span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :     str-&gt;y = saveg_read16();</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 :     // short angle;</span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 :     str-&gt;angle = saveg_read16();</span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :     // short type;</span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :     str-&gt;type = saveg_read16();</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :     // short options;</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 :     str-&gt;options = saveg_read16();</span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 : }</span>
+<a name="222"><span class="lineNum">     222 </span>            : </a>
+<span class="lineNum">     223 </span>            : static void saveg_write_mapthing_t(mapthing_t *str)
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 :     // short x;</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 :     saveg_write16(str-&gt;x);</span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 :     // short y;</span>
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 :     saveg_write16(str-&gt;y);</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :     // short angle;</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :     saveg_write16(str-&gt;angle);</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :     // short type;</span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 :     saveg_write16(str-&gt;type);</span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 :     // short options;</span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 :     saveg_write16(str-&gt;options);</span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     240 </span>            : 
+<span class="lineNum">     241 </span>            : //
+<span class="lineNum">     242 </span>            : // actionf_t
+<span class="lineNum">     243 </span>            : // 
+<a name="244"><span class="lineNum">     244 </span>            : </a>
+<span class="lineNum">     245 </span>            : static void saveg_read_actionf_t(actionf_t *str)
+<span class="lineNum">     246 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :     // actionf_p1 acp1;</span>
+<span class="lineNum">     248 </span><span class="lineNoCov">          0 :     str-&gt;acp1 = saveg_readp();</span>
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 : }</span>
+<a name="250"><span class="lineNum">     250 </span>            : </a>
+<span class="lineNum">     251 </span>            : static void saveg_write_actionf_t(actionf_t *str)
+<span class="lineNum">     252 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     253 </span><span class="lineNoCov">          0 :     // actionf_p1 acp1;</span>
+<span class="lineNum">     254 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;acp1);</span>
+<span class="lineNum">     255 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     256 </span>            : 
+<span class="lineNum">     257 </span>            : //
+<span class="lineNum">     258 </span>            : // think_t
+<span class="lineNum">     259 </span>            : //
+<span class="lineNum">     260 </span>            : // This is just an actionf_t.
+<span class="lineNum">     261 </span>            : //
+<span class="lineNum">     262 </span>            : 
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 : #define saveg_read_think_t saveg_read_actionf_t</span>
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 : #define saveg_write_think_t saveg_write_actionf_t</span>
+<span class="lineNum">     265 </span>            : 
+<span class="lineNum">     266 </span>            : //
+<span class="lineNum">     267 </span>            : // thinker_t
+<span class="lineNum">     268 </span>            : //
+<a name="269"><span class="lineNum">     269 </span>            : </a>
+<span class="lineNum">     270 </span>            : static void saveg_read_thinker_t(thinker_t *str)
+<span class="lineNum">     271 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     272 </span><span class="lineNoCov">          0 :     // struct thinker_s* prev;</span>
+<span class="lineNum">     273 </span><span class="lineNoCov">          0 :     str-&gt;prev = saveg_readp();</span>
+<span class="lineNum">     274 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     275 </span><span class="lineNoCov">          0 :     // struct thinker_s* next;</span>
+<span class="lineNum">     276 </span><span class="lineNoCov">          0 :     str-&gt;next = saveg_readp();</span>
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 :     // think_t function;</span>
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 :     saveg_read_think_t(&amp;str-&gt;function);</span>
+<span class="lineNum">     280 </span><span class="lineNoCov">          0 : }</span>
+<a name="281"><span class="lineNum">     281 </span>            : </a>
+<span class="lineNum">     282 </span>            : static void saveg_write_thinker_t(thinker_t *str)
+<span class="lineNum">     283 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 :     // struct thinker_s* prev;</span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;prev);</span>
+<span class="lineNum">     286 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 :     // struct thinker_s* next;</span>
+<span class="lineNum">     288 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;next);</span>
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 :     // think_t function;</span>
+<span class="lineNum">     291 </span><span class="lineNoCov">          0 :     saveg_write_think_t(&amp;str-&gt;function);</span>
+<span class="lineNum">     292 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     293 </span>            : 
+<span class="lineNum">     294 </span>            : //
+<span class="lineNum">     295 </span>            : // mobj_t
+<span class="lineNum">     296 </span>            : //
+<a name="297"><span class="lineNum">     297 </span>            : </a>
+<span class="lineNum">     298 </span>            : static void saveg_read_mobj_t(mobj_t *str)
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :     int pl;</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 :     saveg_read_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 :     // fixed_t x;</span>
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 :     str-&gt;x = saveg_read32();</span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     308 </span><span class="lineNoCov">          0 :     // fixed_t y;</span>
+<span class="lineNum">     309 </span><span class="lineNoCov">          0 :     str-&gt;y = saveg_read32();</span>
+<span class="lineNum">     310 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :     // fixed_t z;</span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :     str-&gt;z = saveg_read32();</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :     // struct mobj_s* snext;</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :     str-&gt;snext = saveg_readp();</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     317 </span><span class="lineNoCov">          0 :     // struct mobj_s* sprev;</span>
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 :     str-&gt;sprev = saveg_readp();</span>
+<span class="lineNum">     319 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     320 </span><span class="lineNoCov">          0 :     // angle_t angle;</span>
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 :     str-&gt;angle = saveg_read32();</span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 :     // spritenum_t sprite;</span>
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 :     str-&gt;sprite = saveg_read_enum();</span>
+<span class="lineNum">     325 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 :     // int frame;</span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 :     str-&gt;frame = saveg_read32();</span>
+<span class="lineNum">     328 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 :     // struct mobj_s* bnext;</span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 :     str-&gt;bnext = saveg_readp();</span>
+<span class="lineNum">     331 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     332 </span><span class="lineNoCov">          0 :     // struct mobj_s* bprev;</span>
+<span class="lineNum">     333 </span><span class="lineNoCov">          0 :     str-&gt;bprev = saveg_readp();</span>
+<span class="lineNum">     334 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     335 </span><span class="lineNoCov">          0 :     // struct subsector_s* subsector;</span>
+<span class="lineNum">     336 </span><span class="lineNoCov">          0 :     str-&gt;subsector = saveg_readp();</span>
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :     // fixed_t floorz;</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 :     str-&gt;floorz = saveg_read32();</span>
+<span class="lineNum">     340 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 :     // fixed_t ceilingz;</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 :     str-&gt;ceilingz = saveg_read32();</span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 :     // fixed_t radius;</span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 :     str-&gt;radius = saveg_read32();</span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :     // fixed_t height;</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :     str-&gt;height = saveg_read32();</span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :     // fixed_t momx;</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 :     str-&gt;momx = saveg_read32();</span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 :     // fixed_t momy;</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :     str-&gt;momy = saveg_read32();</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :     // fixed_t momz;</span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :     str-&gt;momz = saveg_read32();</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     359 </span><span class="lineNoCov">          0 :     // int validcount;</span>
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 :     str-&gt;validcount = saveg_read32();</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 :     // mobjtype_t type;</span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :     str-&gt;type = saveg_read_enum();</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :     // mobjinfo_t* info;</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :     str-&gt;info = saveg_readp();</span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 :     // int tics;</span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :     str-&gt;tics = saveg_read32();</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     371 </span><span class="lineNoCov">          0 :     // state_t* state;</span>
+<span class="lineNum">     372 </span><span class="lineNoCov">          0 :     str-&gt;state = &amp;states[saveg_read32()];</span>
+<span class="lineNum">     373 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     374 </span><span class="lineNoCov">          0 :     // int flags;</span>
+<span class="lineNum">     375 </span><span class="lineNoCov">          0 :     str-&gt;flags = saveg_read32();</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :     // int health;</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :     str-&gt;health = saveg_read32();</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :     // int movedir;</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 :     str-&gt;movedir = saveg_read32();</span>
+<span class="lineNum">     382 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     383 </span><span class="lineNoCov">          0 :     // int movecount;</span>
+<span class="lineNum">     384 </span><span class="lineNoCov">          0 :     str-&gt;movecount = saveg_read32();</span>
+<span class="lineNum">     385 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     386 </span><span class="lineNoCov">          0 :     // struct mobj_s* target;</span>
+<span class="lineNum">     387 </span><span class="lineNoCov">          0 :     str-&gt;target = saveg_readp();</span>
+<span class="lineNum">     388 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     389 </span><span class="lineNoCov">          0 :     // int reactiontime;</span>
+<span class="lineNum">     390 </span><span class="lineNoCov">          0 :     str-&gt;reactiontime = saveg_read32();</span>
+<span class="lineNum">     391 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     392 </span><span class="lineNoCov">          0 :     // int threshold;</span>
+<span class="lineNum">     393 </span><span class="lineNoCov">          0 :     str-&gt;threshold = saveg_read32();</span>
+<span class="lineNum">     394 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     395 </span><span class="lineNoCov">          0 :     // struct player_s* player;</span>
+<span class="lineNum">     396 </span><span class="lineNoCov">          0 :     pl = saveg_read32();</span>
+<span class="lineNum">     397 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     398 </span><span class="lineNoCov">          0 :     if (pl &gt; 0)</span>
+<span class="lineNum">     399 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     400 </span><span class="lineNoCov">          0 :         str-&gt;player = &amp;players[pl - 1];</span>
+<span class="lineNum">     401 </span><span class="lineNoCov">          0 :         str-&gt;player-&gt;mo = str;</span>
+<span class="lineNum">     402 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     403 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     404 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 :         str-&gt;player = NULL;</span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 :     // int lastlook;</span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :     str-&gt;lastlook = saveg_read32();</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 :     // mapthing_t spawnpoint;</span>
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 :     saveg_read_mapthing_t(&amp;str-&gt;spawnpoint);</span>
+<span class="lineNum">     413 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     414 </span><span class="lineNoCov">          0 :     // struct mobj_s* tracer;</span>
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 :     str-&gt;tracer = saveg_readp();</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 : }</span>
+<a name="417"><span class="lineNum">     417 </span>            : </a>
+<span class="lineNum">     418 </span>            : static void saveg_write_mobj_t(mobj_t *str)
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 :     saveg_write_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     423 </span><span class="lineNoCov">          0 :     // fixed_t x;</span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;x);</span>
+<span class="lineNum">     425 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 :     // fixed_t y;</span>
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;y);</span>
+<span class="lineNum">     428 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     429 </span><span class="lineNoCov">          0 :     // fixed_t z;</span>
+<span class="lineNum">     430 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;z);</span>
+<span class="lineNum">     431 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     432 </span><span class="lineNoCov">          0 :     // struct mobj_s* snext;</span>
+<span class="lineNum">     433 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;snext);</span>
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     435 </span><span class="lineNoCov">          0 :     // struct mobj_s* sprev;</span>
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;sprev);</span>
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 :     // angle_t angle;</span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;angle);</span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 :     // spritenum_t sprite;</span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;sprite);</span>
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 :     // int frame;</span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;frame);</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :     // struct mobj_s* bnext;</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;bnext);</span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 :     // struct mobj_s* bprev;</span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;bprev);</span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 :     // struct subsector_s* subsector;</span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;subsector);</span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :     // fixed_t floorz;</span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;floorz);</span>
+<span class="lineNum">     458 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     459 </span><span class="lineNoCov">          0 :     // fixed_t ceilingz;</span>
+<span class="lineNum">     460 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;ceilingz);</span>
+<span class="lineNum">     461 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     462 </span><span class="lineNoCov">          0 :     // fixed_t radius;</span>
+<span class="lineNum">     463 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;radius);</span>
+<span class="lineNum">     464 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     465 </span><span class="lineNoCov">          0 :     // fixed_t height;</span>
+<span class="lineNum">     466 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;height);</span>
+<span class="lineNum">     467 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     468 </span><span class="lineNoCov">          0 :     // fixed_t momx;</span>
+<span class="lineNum">     469 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;momx);</span>
+<span class="lineNum">     470 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     471 </span><span class="lineNoCov">          0 :     // fixed_t momy;</span>
+<span class="lineNum">     472 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;momy);</span>
+<span class="lineNum">     473 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     474 </span><span class="lineNoCov">          0 :     // fixed_t momz;</span>
+<span class="lineNum">     475 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;momz);</span>
+<span class="lineNum">     476 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     477 </span><span class="lineNoCov">          0 :     // int validcount;</span>
+<span class="lineNum">     478 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;validcount);</span>
+<span class="lineNum">     479 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     480 </span><span class="lineNoCov">          0 :     // mobjtype_t type;</span>
+<span class="lineNum">     481 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;type);</span>
+<span class="lineNum">     482 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 :     // mobjinfo_t* info;</span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;info);</span>
+<span class="lineNum">     485 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     486 </span><span class="lineNoCov">          0 :     // int tics;</span>
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;tics);</span>
+<span class="lineNum">     488 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :     // state_t* state;</span>
+<span class="lineNum">     490 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;state - states);</span>
+<span class="lineNum">     491 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     492 </span><span class="lineNoCov">          0 :     // int flags;</span>
+<span class="lineNum">     493 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;flags);</span>
+<span class="lineNum">     494 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     495 </span><span class="lineNoCov">          0 :     // int health;</span>
+<span class="lineNum">     496 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;health);</span>
+<span class="lineNum">     497 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     498 </span><span class="lineNoCov">          0 :     // int movedir;</span>
+<span class="lineNum">     499 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;movedir);</span>
+<span class="lineNum">     500 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     501 </span><span class="lineNoCov">          0 :     // int movecount;</span>
+<span class="lineNum">     502 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;movecount);</span>
+<span class="lineNum">     503 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     504 </span><span class="lineNoCov">          0 :     // struct mobj_s* target;</span>
+<span class="lineNum">     505 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;target);</span>
+<span class="lineNum">     506 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     507 </span><span class="lineNoCov">          0 :     // int reactiontime;</span>
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;reactiontime);</span>
+<span class="lineNum">     509 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     510 </span><span class="lineNoCov">          0 :     // int threshold;</span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;threshold);</span>
+<span class="lineNum">     512 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     513 </span><span class="lineNoCov">          0 :     // struct player_s* player;</span>
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 :     if (str-&gt;player)</span>
+<span class="lineNum">     515 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     516 </span><span class="lineNoCov">          0 :         saveg_write32(str-&gt;player - players + 1);</span>
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     518 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     520 </span><span class="lineNoCov">          0 :         saveg_write32(0);</span>
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     522 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 :     // int lastlook;</span>
+<span class="lineNum">     524 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;lastlook);</span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 :     // mapthing_t spawnpoint;</span>
+<span class="lineNum">     527 </span><span class="lineNoCov">          0 :     saveg_write_mapthing_t(&amp;str-&gt;spawnpoint);</span>
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     529 </span><span class="lineNoCov">          0 :     // struct mobj_s* tracer;</span>
+<span class="lineNum">     530 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;tracer);</span>
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     532 </span>            : 
+<span class="lineNum">     533 </span>            : 
+<span class="lineNum">     534 </span>            : //
+<span class="lineNum">     535 </span>            : // ticcmd_t
+<span class="lineNum">     536 </span>            : //
+<a name="537"><span class="lineNum">     537 </span>            : </a>
+<span class="lineNum">     538 </span>            : static void saveg_read_ticcmd_t(ticcmd_t *str)
+<span class="lineNum">     539 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     540 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     541 </span><span class="lineNoCov">          0 :     // signed char forwardmove;</span>
+<span class="lineNum">     542 </span><span class="lineNoCov">          0 :     str-&gt;forwardmove = saveg_read8();</span>
+<span class="lineNum">     543 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     544 </span><span class="lineNoCov">          0 :     // signed char sidemove;</span>
+<span class="lineNum">     545 </span><span class="lineNoCov">          0 :     str-&gt;sidemove = saveg_read8();</span>
+<span class="lineNum">     546 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     547 </span><span class="lineNoCov">          0 :     // short angleturn;</span>
+<span class="lineNum">     548 </span><span class="lineNoCov">          0 :     str-&gt;angleturn = saveg_read16();</span>
+<span class="lineNum">     549 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     550 </span><span class="lineNoCov">          0 :     // short consistancy;</span>
+<span class="lineNum">     551 </span><span class="lineNoCov">          0 :     str-&gt;consistancy = saveg_read16();</span>
+<span class="lineNum">     552 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     553 </span><span class="lineNoCov">          0 :     // byte chatchar;</span>
+<span class="lineNum">     554 </span><span class="lineNoCov">          0 :     str-&gt;chatchar = saveg_read8();</span>
+<span class="lineNum">     555 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     556 </span><span class="lineNoCov">          0 :     // byte buttons;</span>
+<span class="lineNum">     557 </span><span class="lineNoCov">          0 :     str-&gt;buttons = saveg_read8();</span>
+<span class="lineNum">     558 </span><span class="lineNoCov">          0 : }</span>
+<a name="559"><span class="lineNum">     559 </span>            : </a>
+<span class="lineNum">     560 </span>            : static void saveg_write_ticcmd_t(ticcmd_t *str)
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     562 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     563 </span><span class="lineNoCov">          0 :     // signed char forwardmove;</span>
+<span class="lineNum">     564 </span><span class="lineNoCov">          0 :     saveg_write8(str-&gt;forwardmove);</span>
+<span class="lineNum">     565 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     566 </span><span class="lineNoCov">          0 :     // signed char sidemove;</span>
+<span class="lineNum">     567 </span><span class="lineNoCov">          0 :     saveg_write8(str-&gt;sidemove);</span>
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     569 </span><span class="lineNoCov">          0 :     // short angleturn;</span>
+<span class="lineNum">     570 </span><span class="lineNoCov">          0 :     saveg_write16(str-&gt;angleturn);</span>
+<span class="lineNum">     571 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     572 </span><span class="lineNoCov">          0 :     // short consistancy;</span>
+<span class="lineNum">     573 </span><span class="lineNoCov">          0 :     saveg_write16(str-&gt;consistancy);</span>
+<span class="lineNum">     574 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 :     // byte chatchar;</span>
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :     saveg_write8(str-&gt;chatchar);</span>
+<span class="lineNum">     577 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :     // byte buttons;</span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :     saveg_write8(str-&gt;buttons);</span>
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     581 </span>            : 
+<span class="lineNum">     582 </span>            : //
+<span class="lineNum">     583 </span>            : // pspdef_t
+<span class="lineNum">     584 </span>            : //
+<a name="585"><span class="lineNum">     585 </span>            : </a>
+<span class="lineNum">     586 </span>            : static void saveg_read_pspdef_t(pspdef_t *str)
+<span class="lineNum">     587 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     588 </span><span class="lineNoCov">          0 :     int state;</span>
+<span class="lineNum">     589 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     590 </span><span class="lineNoCov">          0 :     // state_t* state;</span>
+<span class="lineNum">     591 </span><span class="lineNoCov">          0 :     state = saveg_read32();</span>
+<span class="lineNum">     592 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     593 </span><span class="lineNoCov">          0 :     if (state &gt; 0)</span>
+<span class="lineNum">     594 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     595 </span><span class="lineNoCov">          0 :         str-&gt;state = &amp;states[state];</span>
+<span class="lineNum">     596 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     597 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     598 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     599 </span><span class="lineNoCov">          0 :         str-&gt;state = NULL;</span>
+<span class="lineNum">     600 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     601 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     602 </span><span class="lineNoCov">          0 :     // int tics;</span>
+<span class="lineNum">     603 </span><span class="lineNoCov">          0 :     str-&gt;tics = saveg_read32();</span>
+<span class="lineNum">     604 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     605 </span><span class="lineNoCov">          0 :     // fixed_t sx;</span>
+<span class="lineNum">     606 </span><span class="lineNoCov">          0 :     str-&gt;sx = saveg_read32();</span>
+<span class="lineNum">     607 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     608 </span><span class="lineNoCov">          0 :     // fixed_t sy;</span>
+<span class="lineNum">     609 </span><span class="lineNoCov">          0 :     str-&gt;sy = saveg_read32();</span>
+<span class="lineNum">     610 </span><span class="lineNoCov">          0 : }</span>
+<a name="611"><span class="lineNum">     611 </span>            : </a>
+<span class="lineNum">     612 </span>            : static void saveg_write_pspdef_t(pspdef_t *str)
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     614 </span><span class="lineNoCov">          0 :     // state_t* state;</span>
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 :     if (str-&gt;state)</span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 :         saveg_write32(str-&gt;state - states);</span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     620 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     621 </span><span class="lineNoCov">          0 :         saveg_write32(0);</span>
+<span class="lineNum">     622 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     624 </span><span class="lineNoCov">          0 :     // int tics;</span>
+<span class="lineNum">     625 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;tics);</span>
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 :     // fixed_t sx;</span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;sx);</span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 :     // fixed_t sy;</span>
+<span class="lineNum">     631 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;sy);</span>
+<span class="lineNum">     632 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     633 </span>            : 
+<span class="lineNum">     634 </span>            : //
+<span class="lineNum">     635 </span>            : // player_t
+<span class="lineNum">     636 </span>            : //
+<a name="637"><span class="lineNum">     637 </span>            : </a>
+<span class="lineNum">     638 </span>            : static void saveg_read_player_t(player_t *str)
+<span class="lineNum">     639 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     640 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     641 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     642 </span><span class="lineNoCov">          0 :     // mobj_t* mo;</span>
+<span class="lineNum">     643 </span><span class="lineNoCov">          0 :     str-&gt;mo = saveg_readp();</span>
+<span class="lineNum">     644 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     645 </span><span class="lineNoCov">          0 :     // playerstate_t playerstate;</span>
+<span class="lineNum">     646 </span><span class="lineNoCov">          0 :     str-&gt;playerstate = saveg_read_enum();</span>
+<span class="lineNum">     647 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     648 </span><span class="lineNoCov">          0 :     // ticcmd_t cmd;</span>
+<span class="lineNum">     649 </span><span class="lineNoCov">          0 :     saveg_read_ticcmd_t(&amp;str-&gt;cmd);</span>
+<span class="lineNum">     650 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     651 </span><span class="lineNoCov">          0 :     // fixed_t viewz;</span>
+<span class="lineNum">     652 </span><span class="lineNoCov">          0 :     str-&gt;viewz = saveg_read32();</span>
+<span class="lineNum">     653 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     654 </span><span class="lineNoCov">          0 :     // fixed_t viewheight;</span>
+<span class="lineNum">     655 </span><span class="lineNoCov">          0 :     str-&gt;viewheight = saveg_read32();</span>
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 :     // fixed_t deltaviewheight;</span>
+<span class="lineNum">     658 </span><span class="lineNoCov">          0 :     str-&gt;deltaviewheight = saveg_read32();</span>
+<span class="lineNum">     659 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     660 </span><span class="lineNoCov">          0 :     // fixed_t bob;</span>
+<span class="lineNum">     661 </span><span class="lineNoCov">          0 :     str-&gt;bob = saveg_read32();</span>
+<span class="lineNum">     662 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     663 </span><span class="lineNoCov">          0 :     // int health;</span>
+<span class="lineNum">     664 </span><span class="lineNoCov">          0 :     str-&gt;health = saveg_read32();</span>
+<span class="lineNum">     665 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     666 </span><span class="lineNoCov">          0 :     // int armorpoints;</span>
+<span class="lineNum">     667 </span><span class="lineNoCov">          0 :     str-&gt;armorpoints = saveg_read32();</span>
+<span class="lineNum">     668 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     669 </span><span class="lineNoCov">          0 :     // int armortype;</span>
+<span class="lineNum">     670 </span><span class="lineNoCov">          0 :     str-&gt;armortype = saveg_read32();</span>
+<span class="lineNum">     671 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     672 </span><span class="lineNoCov">          0 :     // int powers[NUMPOWERS];</span>
+<span class="lineNum">     673 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMPOWERS; ++i)</span>
+<span class="lineNum">     674 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     675 </span><span class="lineNoCov">          0 :         str-&gt;powers[i] = saveg_read32();</span>
+<span class="lineNum">     676 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     677 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     678 </span><span class="lineNoCov">          0 :     // boolean cards[NUMCARDS];</span>
+<span class="lineNum">     679 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMCARDS; ++i)</span>
+<span class="lineNum">     680 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     681 </span><span class="lineNoCov">          0 :         str-&gt;cards[i] = saveg_read32();</span>
+<span class="lineNum">     682 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     683 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     684 </span><span class="lineNoCov">          0 :     // boolean backpack;</span>
+<span class="lineNum">     685 </span><span class="lineNoCov">          0 :     str-&gt;backpack = saveg_read32();</span>
+<span class="lineNum">     686 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     687 </span><span class="lineNoCov">          0 :     // int frags[MAXPLAYERS];</span>
+<span class="lineNum">     688 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;MAXPLAYERS; ++i)</span>
+<span class="lineNum">     689 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     690 </span><span class="lineNoCov">          0 :         str-&gt;frags[i] = saveg_read32();</span>
+<span class="lineNum">     691 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     692 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     693 </span><span class="lineNoCov">          0 :     // weapontype_t readyweapon;</span>
+<span class="lineNum">     694 </span><span class="lineNoCov">          0 :     str-&gt;readyweapon = saveg_read_enum();</span>
+<span class="lineNum">     695 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     696 </span><span class="lineNoCov">          0 :     // weapontype_t pendingweapon;</span>
+<span class="lineNum">     697 </span><span class="lineNoCov">          0 :     str-&gt;pendingweapon = saveg_read_enum();</span>
+<span class="lineNum">     698 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     699 </span><span class="lineNoCov">          0 :     // boolean weaponowned[NUMWEAPONS];</span>
+<span class="lineNum">     700 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMWEAPONS; ++i)</span>
+<span class="lineNum">     701 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     702 </span><span class="lineNoCov">          0 :         str-&gt;weaponowned[i] = saveg_read32();</span>
+<span class="lineNum">     703 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     704 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     705 </span><span class="lineNoCov">          0 :     // int ammo[NUMAMMO];</span>
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMAMMO; ++i)</span>
+<span class="lineNum">     707 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     708 </span><span class="lineNoCov">          0 :         str-&gt;ammo[i] = saveg_read32();</span>
+<span class="lineNum">     709 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     710 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     711 </span><span class="lineNoCov">          0 :     // int maxammo[NUMAMMO];</span>
+<span class="lineNum">     712 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMAMMO; ++i)</span>
+<span class="lineNum">     713 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     714 </span><span class="lineNoCov">          0 :         str-&gt;maxammo[i] = saveg_read32();</span>
+<span class="lineNum">     715 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     716 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     717 </span><span class="lineNoCov">          0 :     // int attackdown;</span>
+<span class="lineNum">     718 </span><span class="lineNoCov">          0 :     str-&gt;attackdown = saveg_read32();</span>
+<span class="lineNum">     719 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     720 </span><span class="lineNoCov">          0 :     // int usedown;</span>
+<span class="lineNum">     721 </span><span class="lineNoCov">          0 :     str-&gt;usedown = saveg_read32();</span>
+<span class="lineNum">     722 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     723 </span><span class="lineNoCov">          0 :     // int cheats;</span>
+<span class="lineNum">     724 </span><span class="lineNoCov">          0 :     str-&gt;cheats = saveg_read32();</span>
+<span class="lineNum">     725 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     726 </span><span class="lineNoCov">          0 :     // int refire;</span>
+<span class="lineNum">     727 </span><span class="lineNoCov">          0 :     str-&gt;refire = saveg_read32();</span>
+<span class="lineNum">     728 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     729 </span><span class="lineNoCov">          0 :     // int killcount;</span>
+<span class="lineNum">     730 </span><span class="lineNoCov">          0 :     str-&gt;killcount = saveg_read32();</span>
+<span class="lineNum">     731 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     732 </span><span class="lineNoCov">          0 :     // int itemcount;</span>
+<span class="lineNum">     733 </span><span class="lineNoCov">          0 :     str-&gt;itemcount = saveg_read32();</span>
+<span class="lineNum">     734 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     735 </span><span class="lineNoCov">          0 :     // int secretcount;</span>
+<span class="lineNum">     736 </span><span class="lineNoCov">          0 :     str-&gt;secretcount = saveg_read32();</span>
+<span class="lineNum">     737 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     738 </span><span class="lineNoCov">          0 :     // char* message;</span>
+<span class="lineNum">     739 </span><span class="lineNoCov">          0 :     str-&gt;message = saveg_readp();</span>
+<span class="lineNum">     740 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     741 </span><span class="lineNoCov">          0 :     // int damagecount;</span>
+<span class="lineNum">     742 </span><span class="lineNoCov">          0 :     str-&gt;damagecount = saveg_read32();</span>
+<span class="lineNum">     743 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     744 </span><span class="lineNoCov">          0 :     // int bonuscount;</span>
+<span class="lineNum">     745 </span><span class="lineNoCov">          0 :     str-&gt;bonuscount = saveg_read32();</span>
+<span class="lineNum">     746 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     747 </span><span class="lineNoCov">          0 :     // mobj_t* attacker;</span>
+<span class="lineNum">     748 </span><span class="lineNoCov">          0 :     str-&gt;attacker = saveg_readp();</span>
+<span class="lineNum">     749 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     750 </span><span class="lineNoCov">          0 :     // int extralight;</span>
+<span class="lineNum">     751 </span><span class="lineNoCov">          0 :     str-&gt;extralight = saveg_read32();</span>
+<span class="lineNum">     752 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     753 </span><span class="lineNoCov">          0 :     // int fixedcolormap;</span>
+<span class="lineNum">     754 </span><span class="lineNoCov">          0 :     str-&gt;fixedcolormap = saveg_read32();</span>
+<span class="lineNum">     755 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     756 </span><span class="lineNoCov">          0 :     // int colormap;</span>
+<span class="lineNum">     757 </span><span class="lineNoCov">          0 :     str-&gt;colormap = saveg_read32();</span>
+<span class="lineNum">     758 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     759 </span><span class="lineNoCov">          0 :     // pspdef_t psprites[NUMPSPRITES];</span>
+<span class="lineNum">     760 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMPSPRITES; ++i)</span>
+<span class="lineNum">     761 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     762 </span><span class="lineNoCov">          0 :         saveg_read_pspdef_t(&amp;str-&gt;psprites[i]);</span>
+<span class="lineNum">     763 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     764 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     765 </span><span class="lineNoCov">          0 :     // boolean didsecret;</span>
+<span class="lineNum">     766 </span><span class="lineNoCov">          0 :     str-&gt;didsecret = saveg_read32();</span>
+<span class="lineNum">     767 </span><span class="lineNoCov">          0 : }</span>
+<a name="768"><span class="lineNum">     768 </span>            : </a>
+<span class="lineNum">     769 </span>            : static void saveg_write_player_t(player_t *str)
+<span class="lineNum">     770 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     771 </span><span class="lineNoCov">          0 :     int i;</span>
+<span class="lineNum">     772 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     773 </span><span class="lineNoCov">          0 :     // mobj_t* mo;</span>
+<span class="lineNum">     774 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;mo);</span>
+<span class="lineNum">     775 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     776 </span><span class="lineNoCov">          0 :     // playerstate_t playerstate;</span>
+<span class="lineNum">     777 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;playerstate);</span>
+<span class="lineNum">     778 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     779 </span><span class="lineNoCov">          0 :     // ticcmd_t cmd;</span>
+<span class="lineNum">     780 </span><span class="lineNoCov">          0 :     saveg_write_ticcmd_t(&amp;str-&gt;cmd);</span>
+<span class="lineNum">     781 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     782 </span><span class="lineNoCov">          0 :     // fixed_t viewz;</span>
+<span class="lineNum">     783 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;viewz);</span>
+<span class="lineNum">     784 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     785 </span><span class="lineNoCov">          0 :     // fixed_t viewheight;</span>
+<span class="lineNum">     786 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;viewheight);</span>
+<span class="lineNum">     787 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     788 </span><span class="lineNoCov">          0 :     // fixed_t deltaviewheight;</span>
+<span class="lineNum">     789 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;deltaviewheight);</span>
+<span class="lineNum">     790 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     791 </span><span class="lineNoCov">          0 :     // fixed_t bob;</span>
+<span class="lineNum">     792 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;bob);</span>
+<span class="lineNum">     793 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     794 </span><span class="lineNoCov">          0 :     // int health;</span>
+<span class="lineNum">     795 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;health);</span>
+<span class="lineNum">     796 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     797 </span><span class="lineNoCov">          0 :     // int armorpoints;</span>
+<span class="lineNum">     798 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;armorpoints);</span>
+<span class="lineNum">     799 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     800 </span><span class="lineNoCov">          0 :     // int armortype;</span>
+<span class="lineNum">     801 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;armortype);</span>
+<span class="lineNum">     802 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     803 </span><span class="lineNoCov">          0 :     // int powers[NUMPOWERS];</span>
+<span class="lineNum">     804 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMPOWERS; ++i)</span>
+<span class="lineNum">     805 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     806 </span><span class="lineNoCov">          0 :         saveg_write32(str-&gt;powers[i]);</span>
+<span class="lineNum">     807 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     808 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     809 </span><span class="lineNoCov">          0 :     // boolean cards[NUMCARDS];</span>
+<span class="lineNum">     810 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMCARDS; ++i)</span>
+<span class="lineNum">     811 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     812 </span><span class="lineNoCov">          0 :         saveg_write32(str-&gt;cards[i]);</span>
+<span class="lineNum">     813 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     814 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     815 </span><span class="lineNoCov">          0 :     // boolean backpack;</span>
+<span class="lineNum">     816 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;backpack);</span>
+<span class="lineNum">     817 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     818 </span><span class="lineNoCov">          0 :     // int frags[MAXPLAYERS];</span>
+<span class="lineNum">     819 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;MAXPLAYERS; ++i)</span>
+<span class="lineNum">     820 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     821 </span><span class="lineNoCov">          0 :         saveg_write32(str-&gt;frags[i]);</span>
+<span class="lineNum">     822 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     823 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     824 </span><span class="lineNoCov">          0 :     // weapontype_t readyweapon;</span>
+<span class="lineNum">     825 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;readyweapon);</span>
+<span class="lineNum">     826 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     827 </span><span class="lineNoCov">          0 :     // weapontype_t pendingweapon;</span>
+<span class="lineNum">     828 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;pendingweapon);</span>
+<span class="lineNum">     829 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     830 </span><span class="lineNoCov">          0 :     // boolean weaponowned[NUMWEAPONS];</span>
+<span class="lineNum">     831 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMWEAPONS; ++i)</span>
+<span class="lineNum">     832 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     833 </span><span class="lineNoCov">          0 :         saveg_write32(str-&gt;weaponowned[i]);</span>
+<span class="lineNum">     834 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     835 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     836 </span><span class="lineNoCov">          0 :     // int ammo[NUMAMMO];</span>
+<span class="lineNum">     837 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMAMMO; ++i)</span>
+<span class="lineNum">     838 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     839 </span><span class="lineNoCov">          0 :         saveg_write32(str-&gt;ammo[i]);</span>
+<span class="lineNum">     840 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     841 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     842 </span><span class="lineNoCov">          0 :     // int maxammo[NUMAMMO];</span>
+<span class="lineNum">     843 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMAMMO; ++i)</span>
+<span class="lineNum">     844 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     845 </span><span class="lineNoCov">          0 :         saveg_write32(str-&gt;maxammo[i]);</span>
+<span class="lineNum">     846 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     847 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     848 </span><span class="lineNoCov">          0 :     // int attackdown;</span>
+<span class="lineNum">     849 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;attackdown);</span>
+<span class="lineNum">     850 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     851 </span><span class="lineNoCov">          0 :     // int usedown;</span>
+<span class="lineNum">     852 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;usedown);</span>
+<span class="lineNum">     853 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     854 </span><span class="lineNoCov">          0 :     // int cheats;</span>
+<span class="lineNum">     855 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;cheats);</span>
+<span class="lineNum">     856 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     857 </span><span class="lineNoCov">          0 :     // int refire;</span>
+<span class="lineNum">     858 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;refire);</span>
+<span class="lineNum">     859 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     860 </span><span class="lineNoCov">          0 :     // int killcount;</span>
+<span class="lineNum">     861 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;killcount);</span>
+<span class="lineNum">     862 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     863 </span><span class="lineNoCov">          0 :     // int itemcount;</span>
+<span class="lineNum">     864 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;itemcount);</span>
+<span class="lineNum">     865 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     866 </span><span class="lineNoCov">          0 :     // int secretcount;</span>
+<span class="lineNum">     867 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;secretcount);</span>
+<span class="lineNum">     868 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     869 </span><span class="lineNoCov">          0 :     // char* message;</span>
+<span class="lineNum">     870 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;message);</span>
+<span class="lineNum">     871 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     872 </span><span class="lineNoCov">          0 :     // int damagecount;</span>
+<span class="lineNum">     873 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;damagecount);</span>
+<span class="lineNum">     874 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     875 </span><span class="lineNoCov">          0 :     // int bonuscount;</span>
+<span class="lineNum">     876 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;bonuscount);</span>
+<span class="lineNum">     877 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     878 </span><span class="lineNoCov">          0 :     // mobj_t* attacker;</span>
+<span class="lineNum">     879 </span><span class="lineNoCov">          0 :     saveg_writep(str-&gt;attacker);</span>
+<span class="lineNum">     880 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     881 </span><span class="lineNoCov">          0 :     // int extralight;</span>
+<span class="lineNum">     882 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;extralight);</span>
+<span class="lineNum">     883 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     884 </span><span class="lineNoCov">          0 :     // int fixedcolormap;</span>
+<span class="lineNum">     885 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;fixedcolormap);</span>
+<span class="lineNum">     886 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     887 </span><span class="lineNoCov">          0 :     // int colormap;</span>
+<span class="lineNum">     888 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;colormap);</span>
+<span class="lineNum">     889 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     890 </span><span class="lineNoCov">          0 :     // pspdef_t psprites[NUMPSPRITES];</span>
+<span class="lineNum">     891 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;NUMPSPRITES; ++i)</span>
+<span class="lineNum">     892 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     893 </span><span class="lineNoCov">          0 :         saveg_write_pspdef_t(&amp;str-&gt;psprites[i]);</span>
+<span class="lineNum">     894 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     895 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     896 </span><span class="lineNoCov">          0 :     // boolean didsecret;</span>
+<span class="lineNum">     897 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;didsecret);</span>
+<span class="lineNum">     898 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     899 </span>            : 
+<span class="lineNum">     900 </span>            : 
+<span class="lineNum">     901 </span>            : //
+<span class="lineNum">     902 </span>            : // ceiling_t
+<span class="lineNum">     903 </span>            : //
+<a name="904"><span class="lineNum">     904 </span>            : </a>
+<span class="lineNum">     905 </span>            : static void saveg_read_ceiling_t(ceiling_t *str)
+<span class="lineNum">     906 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     907 </span><span class="lineNoCov">          0 :     int sector;</span>
+<span class="lineNum">     908 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     909 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">     910 </span><span class="lineNoCov">          0 :     saveg_read_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">     911 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     912 </span><span class="lineNoCov">          0 :     // ceiling_e type;</span>
+<span class="lineNum">     913 </span><span class="lineNoCov">          0 :     str-&gt;type = saveg_read_enum();</span>
+<span class="lineNum">     914 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     915 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">     916 </span><span class="lineNoCov">          0 :     sector = saveg_read32();</span>
+<span class="lineNum">     917 </span><span class="lineNoCov">          0 :     str-&gt;sector = &amp;sectors[sector];</span>
+<span class="lineNum">     918 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     919 </span><span class="lineNoCov">          0 :     // fixed_t bottomheight;</span>
+<span class="lineNum">     920 </span><span class="lineNoCov">          0 :     str-&gt;bottomheight = saveg_read32();</span>
+<span class="lineNum">     921 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     922 </span><span class="lineNoCov">          0 :     // fixed_t topheight;</span>
+<span class="lineNum">     923 </span><span class="lineNoCov">          0 :     str-&gt;topheight = saveg_read32();</span>
+<span class="lineNum">     924 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     925 </span><span class="lineNoCov">          0 :     // fixed_t speed;</span>
+<span class="lineNum">     926 </span><span class="lineNoCov">          0 :     str-&gt;speed = saveg_read32();</span>
+<span class="lineNum">     927 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     928 </span><span class="lineNoCov">          0 :     // boolean crush;</span>
+<span class="lineNum">     929 </span><span class="lineNoCov">          0 :     str-&gt;crush = saveg_read32();</span>
+<span class="lineNum">     930 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     931 </span><span class="lineNoCov">          0 :     // int direction;</span>
+<span class="lineNum">     932 </span><span class="lineNoCov">          0 :     str-&gt;direction = saveg_read32();</span>
+<span class="lineNum">     933 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     934 </span><span class="lineNoCov">          0 :     // int tag;</span>
+<span class="lineNum">     935 </span><span class="lineNoCov">          0 :     str-&gt;tag = saveg_read32();</span>
+<span class="lineNum">     936 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     937 </span><span class="lineNoCov">          0 :     // int olddirection;</span>
+<span class="lineNum">     938 </span><span class="lineNoCov">          0 :     str-&gt;olddirection = saveg_read32();</span>
+<span class="lineNum">     939 </span><span class="lineNoCov">          0 : }</span>
+<a name="940"><span class="lineNum">     940 </span>            : </a>
+<span class="lineNum">     941 </span>            : static void saveg_write_ceiling_t(ceiling_t *str)
+<span class="lineNum">     942 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     943 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">     944 </span><span class="lineNoCov">          0 :     saveg_write_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">     945 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     946 </span><span class="lineNoCov">          0 :     // ceiling_e type;</span>
+<span class="lineNum">     947 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;type);</span>
+<span class="lineNum">     948 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     949 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">     950 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;sector - sectors);</span>
+<span class="lineNum">     951 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     952 </span><span class="lineNoCov">          0 :     // fixed_t bottomheight;</span>
+<span class="lineNum">     953 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;bottomheight);</span>
+<span class="lineNum">     954 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     955 </span><span class="lineNoCov">          0 :     // fixed_t topheight;</span>
+<span class="lineNum">     956 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;topheight);</span>
+<span class="lineNum">     957 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     958 </span><span class="lineNoCov">          0 :     // fixed_t speed;</span>
+<span class="lineNum">     959 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;speed);</span>
+<span class="lineNum">     960 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     961 </span><span class="lineNoCov">          0 :     // boolean crush;</span>
+<span class="lineNum">     962 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;crush);</span>
+<span class="lineNum">     963 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     964 </span><span class="lineNoCov">          0 :     // int direction;</span>
+<span class="lineNum">     965 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;direction);</span>
+<span class="lineNum">     966 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     967 </span><span class="lineNoCov">          0 :     // int tag;</span>
+<span class="lineNum">     968 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;tag);</span>
+<span class="lineNum">     969 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     970 </span><span class="lineNoCov">          0 :     // int olddirection;</span>
+<span class="lineNum">     971 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;olddirection);</span>
+<span class="lineNum">     972 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     973 </span>            : 
+<span class="lineNum">     974 </span>            : //
+<span class="lineNum">     975 </span>            : // vldoor_t
+<span class="lineNum">     976 </span>            : //
+<a name="977"><span class="lineNum">     977 </span>            : </a>
+<span class="lineNum">     978 </span>            : static void saveg_read_vldoor_t(vldoor_t *str)
+<span class="lineNum">     979 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     980 </span><span class="lineNoCov">          0 :     int sector;</span>
+<span class="lineNum">     981 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     982 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">     983 </span><span class="lineNoCov">          0 :     saveg_read_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">     984 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     985 </span><span class="lineNoCov">          0 :     // vldoor_e type;</span>
+<span class="lineNum">     986 </span><span class="lineNoCov">          0 :     str-&gt;type = saveg_read_enum();</span>
+<span class="lineNum">     987 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     988 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">     989 </span><span class="lineNoCov">          0 :     sector = saveg_read32();</span>
+<span class="lineNum">     990 </span><span class="lineNoCov">          0 :     str-&gt;sector = &amp;sectors[sector];</span>
+<span class="lineNum">     991 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     992 </span><span class="lineNoCov">          0 :     // fixed_t topheight;</span>
+<span class="lineNum">     993 </span><span class="lineNoCov">          0 :     str-&gt;topheight = saveg_read32();</span>
+<span class="lineNum">     994 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     995 </span><span class="lineNoCov">          0 :     // fixed_t speed;</span>
+<span class="lineNum">     996 </span><span class="lineNoCov">          0 :     str-&gt;speed = saveg_read32();</span>
+<span class="lineNum">     997 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     998 </span><span class="lineNoCov">          0 :     // int direction;</span>
+<span class="lineNum">     999 </span><span class="lineNoCov">          0 :     str-&gt;direction = saveg_read32();</span>
+<span class="lineNum">    1000 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1001 </span><span class="lineNoCov">          0 :     // int topwait;</span>
+<span class="lineNum">    1002 </span><span class="lineNoCov">          0 :     str-&gt;topwait = saveg_read32();</span>
+<span class="lineNum">    1003 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1004 </span><span class="lineNoCov">          0 :     // int topcountdown;</span>
+<span class="lineNum">    1005 </span><span class="lineNoCov">          0 :     str-&gt;topcountdown = saveg_read32();</span>
+<span class="lineNum">    1006 </span><span class="lineNoCov">          0 : }</span>
+<a name="1007"><span class="lineNum">    1007 </span>            : </a>
+<span class="lineNum">    1008 </span>            : static void saveg_write_vldoor_t(vldoor_t *str)
+<span class="lineNum">    1009 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1010 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1011 </span><span class="lineNoCov">          0 :     saveg_write_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1012 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1013 </span><span class="lineNoCov">          0 :     // vldoor_e type;</span>
+<span class="lineNum">    1014 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;type);</span>
+<span class="lineNum">    1015 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1016 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1017 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;sector - sectors);</span>
+<span class="lineNum">    1018 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1019 </span><span class="lineNoCov">          0 :     // fixed_t topheight;</span>
+<span class="lineNum">    1020 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;topheight);</span>
+<span class="lineNum">    1021 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1022 </span><span class="lineNoCov">          0 :     // fixed_t speed;</span>
+<span class="lineNum">    1023 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;speed);</span>
+<span class="lineNum">    1024 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1025 </span><span class="lineNoCov">          0 :     // int direction;</span>
+<span class="lineNum">    1026 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;direction);</span>
+<span class="lineNum">    1027 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1028 </span><span class="lineNoCov">          0 :     // int topwait;</span>
+<span class="lineNum">    1029 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;topwait);</span>
+<span class="lineNum">    1030 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1031 </span><span class="lineNoCov">          0 :     // int topcountdown;</span>
+<span class="lineNum">    1032 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;topcountdown);</span>
+<span class="lineNum">    1033 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1034 </span>            : 
+<span class="lineNum">    1035 </span>            : //
+<span class="lineNum">    1036 </span>            : // floormove_t
+<span class="lineNum">    1037 </span>            : //
+<a name="1038"><span class="lineNum">    1038 </span>            : </a>
+<span class="lineNum">    1039 </span>            : static void saveg_read_floormove_t(floormove_t *str)
+<span class="lineNum">    1040 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1041 </span><span class="lineNoCov">          0 :     int sector;</span>
+<span class="lineNum">    1042 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1043 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1044 </span><span class="lineNoCov">          0 :     saveg_read_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1045 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1046 </span><span class="lineNoCov">          0 :     // floor_e type;</span>
+<span class="lineNum">    1047 </span><span class="lineNoCov">          0 :     str-&gt;type = saveg_read_enum();</span>
+<span class="lineNum">    1048 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1049 </span><span class="lineNoCov">          0 :     // boolean crush;</span>
+<span class="lineNum">    1050 </span><span class="lineNoCov">          0 :     str-&gt;crush = saveg_read32();</span>
+<span class="lineNum">    1051 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1052 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1053 </span><span class="lineNoCov">          0 :     sector = saveg_read32();</span>
+<span class="lineNum">    1054 </span><span class="lineNoCov">          0 :     str-&gt;sector = &amp;sectors[sector];</span>
+<span class="lineNum">    1055 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1056 </span><span class="lineNoCov">          0 :     // int direction;</span>
+<span class="lineNum">    1057 </span><span class="lineNoCov">          0 :     str-&gt;direction = saveg_read32();</span>
+<span class="lineNum">    1058 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1059 </span><span class="lineNoCov">          0 :     // int newspecial;</span>
+<span class="lineNum">    1060 </span><span class="lineNoCov">          0 :     str-&gt;newspecial = saveg_read32();</span>
+<span class="lineNum">    1061 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1062 </span><span class="lineNoCov">          0 :     // short texture;</span>
+<span class="lineNum">    1063 </span><span class="lineNoCov">          0 :     str-&gt;texture = saveg_read16();</span>
+<span class="lineNum">    1064 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1065 </span><span class="lineNoCov">          0 :     // fixed_t floordestheight;</span>
+<span class="lineNum">    1066 </span><span class="lineNoCov">          0 :     str-&gt;floordestheight = saveg_read32();</span>
+<span class="lineNum">    1067 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1068 </span><span class="lineNoCov">          0 :     // fixed_t speed;</span>
+<span class="lineNum">    1069 </span><span class="lineNoCov">          0 :     str-&gt;speed = saveg_read32();</span>
+<span class="lineNum">    1070 </span><span class="lineNoCov">          0 : }</span>
+<a name="1071"><span class="lineNum">    1071 </span>            : </a>
+<span class="lineNum">    1072 </span>            : static void saveg_write_floormove_t(floormove_t *str)
+<span class="lineNum">    1073 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1074 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1075 </span><span class="lineNoCov">          0 :     saveg_write_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1076 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1077 </span><span class="lineNoCov">          0 :     // floor_e type;</span>
+<span class="lineNum">    1078 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;type);</span>
+<span class="lineNum">    1079 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1080 </span><span class="lineNoCov">          0 :     // boolean crush;</span>
+<span class="lineNum">    1081 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;crush);</span>
+<span class="lineNum">    1082 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1083 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1084 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;sector - sectors);</span>
+<span class="lineNum">    1085 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1086 </span><span class="lineNoCov">          0 :     // int direction;</span>
+<span class="lineNum">    1087 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;direction);</span>
+<span class="lineNum">    1088 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1089 </span><span class="lineNoCov">          0 :     // int newspecial;</span>
+<span class="lineNum">    1090 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;newspecial);</span>
+<span class="lineNum">    1091 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1092 </span><span class="lineNoCov">          0 :     // short texture;</span>
+<span class="lineNum">    1093 </span><span class="lineNoCov">          0 :     saveg_write16(str-&gt;texture);</span>
+<span class="lineNum">    1094 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1095 </span><span class="lineNoCov">          0 :     // fixed_t floordestheight;</span>
+<span class="lineNum">    1096 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;floordestheight);</span>
+<span class="lineNum">    1097 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1098 </span><span class="lineNoCov">          0 :     // fixed_t speed;</span>
+<span class="lineNum">    1099 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;speed);</span>
+<span class="lineNum">    1100 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1101 </span>            : 
+<span class="lineNum">    1102 </span>            : //
+<span class="lineNum">    1103 </span>            : // plat_t
+<span class="lineNum">    1104 </span>            : //
+<a name="1105"><span class="lineNum">    1105 </span>            : </a>
+<span class="lineNum">    1106 </span>            : static void saveg_read_plat_t(plat_t *str)
+<span class="lineNum">    1107 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1108 </span><span class="lineNoCov">          0 :     int sector;</span>
+<span class="lineNum">    1109 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1110 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1111 </span><span class="lineNoCov">          0 :     saveg_read_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1112 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1113 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1114 </span><span class="lineNoCov">          0 :     sector = saveg_read32();</span>
+<span class="lineNum">    1115 </span><span class="lineNoCov">          0 :     str-&gt;sector = &amp;sectors[sector];</span>
+<span class="lineNum">    1116 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1117 </span><span class="lineNoCov">          0 :     // fixed_t speed;</span>
+<span class="lineNum">    1118 </span><span class="lineNoCov">          0 :     str-&gt;speed = saveg_read32();</span>
+<span class="lineNum">    1119 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1120 </span><span class="lineNoCov">          0 :     // fixed_t low;</span>
+<span class="lineNum">    1121 </span><span class="lineNoCov">          0 :     str-&gt;low = saveg_read32();</span>
+<span class="lineNum">    1122 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1123 </span><span class="lineNoCov">          0 :     // fixed_t high;</span>
+<span class="lineNum">    1124 </span><span class="lineNoCov">          0 :     str-&gt;high = saveg_read32();</span>
+<span class="lineNum">    1125 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1126 </span><span class="lineNoCov">          0 :     // int wait;</span>
+<span class="lineNum">    1127 </span><span class="lineNoCov">          0 :     str-&gt;wait = saveg_read32();</span>
+<span class="lineNum">    1128 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1129 </span><span class="lineNoCov">          0 :     // int count;</span>
+<span class="lineNum">    1130 </span><span class="lineNoCov">          0 :     str-&gt;count = saveg_read32();</span>
+<span class="lineNum">    1131 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1132 </span><span class="lineNoCov">          0 :     // plat_e status;</span>
+<span class="lineNum">    1133 </span><span class="lineNoCov">          0 :     str-&gt;status = saveg_read_enum();</span>
+<span class="lineNum">    1134 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1135 </span><span class="lineNoCov">          0 :     // plat_e oldstatus;</span>
+<span class="lineNum">    1136 </span><span class="lineNoCov">          0 :     str-&gt;oldstatus = saveg_read_enum();</span>
+<span class="lineNum">    1137 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1138 </span><span class="lineNoCov">          0 :     // boolean crush;</span>
+<span class="lineNum">    1139 </span><span class="lineNoCov">          0 :     str-&gt;crush = saveg_read32();</span>
+<span class="lineNum">    1140 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1141 </span><span class="lineNoCov">          0 :     // int tag;</span>
+<span class="lineNum">    1142 </span><span class="lineNoCov">          0 :     str-&gt;tag = saveg_read32();</span>
+<span class="lineNum">    1143 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1144 </span><span class="lineNoCov">          0 :     // plattype_e type;</span>
+<span class="lineNum">    1145 </span><span class="lineNoCov">          0 :     str-&gt;type = saveg_read_enum();</span>
+<span class="lineNum">    1146 </span><span class="lineNoCov">          0 : }</span>
+<a name="1147"><span class="lineNum">    1147 </span>            : </a>
+<span class="lineNum">    1148 </span>            : static void saveg_write_plat_t(plat_t *str)
+<span class="lineNum">    1149 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1150 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1151 </span><span class="lineNoCov">          0 :     saveg_write_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1152 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1153 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1154 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;sector - sectors);</span>
+<span class="lineNum">    1155 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1156 </span><span class="lineNoCov">          0 :     // fixed_t speed;</span>
+<span class="lineNum">    1157 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;speed);</span>
+<span class="lineNum">    1158 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1159 </span><span class="lineNoCov">          0 :     // fixed_t low;</span>
+<span class="lineNum">    1160 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;low);</span>
+<span class="lineNum">    1161 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1162 </span><span class="lineNoCov">          0 :     // fixed_t high;</span>
+<span class="lineNum">    1163 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;high);</span>
+<span class="lineNum">    1164 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1165 </span><span class="lineNoCov">          0 :     // int wait;</span>
+<span class="lineNum">    1166 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;wait);</span>
+<span class="lineNum">    1167 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1168 </span><span class="lineNoCov">          0 :     // int count;</span>
+<span class="lineNum">    1169 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;count);</span>
+<span class="lineNum">    1170 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1171 </span><span class="lineNoCov">          0 :     // plat_e status;</span>
+<span class="lineNum">    1172 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;status);</span>
+<span class="lineNum">    1173 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1174 </span><span class="lineNoCov">          0 :     // plat_e oldstatus;</span>
+<span class="lineNum">    1175 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;oldstatus);</span>
+<span class="lineNum">    1176 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1177 </span><span class="lineNoCov">          0 :     // boolean crush;</span>
+<span class="lineNum">    1178 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;crush);</span>
+<span class="lineNum">    1179 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1180 </span><span class="lineNoCov">          0 :     // int tag;</span>
+<span class="lineNum">    1181 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;tag);</span>
+<span class="lineNum">    1182 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1183 </span><span class="lineNoCov">          0 :     // plattype_e type;</span>
+<span class="lineNum">    1184 </span><span class="lineNoCov">          0 :     saveg_write_enum(str-&gt;type);</span>
+<span class="lineNum">    1185 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1186 </span>            : 
+<span class="lineNum">    1187 </span>            : //
+<span class="lineNum">    1188 </span>            : // lightflash_t
+<span class="lineNum">    1189 </span>            : //
+<a name="1190"><span class="lineNum">    1190 </span>            : </a>
+<span class="lineNum">    1191 </span>            : static void saveg_read_lightflash_t(lightflash_t *str)
+<span class="lineNum">    1192 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1193 </span><span class="lineNoCov">          0 :     int sector;</span>
+<span class="lineNum">    1194 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1195 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1196 </span><span class="lineNoCov">          0 :     saveg_read_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1197 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1198 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1199 </span><span class="lineNoCov">          0 :     sector = saveg_read32();</span>
+<span class="lineNum">    1200 </span><span class="lineNoCov">          0 :     str-&gt;sector = &amp;sectors[sector];</span>
+<span class="lineNum">    1201 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1202 </span><span class="lineNoCov">          0 :     // int count;</span>
+<span class="lineNum">    1203 </span><span class="lineNoCov">          0 :     str-&gt;count = saveg_read32();</span>
+<span class="lineNum">    1204 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1205 </span><span class="lineNoCov">          0 :     // int maxlight;</span>
+<span class="lineNum">    1206 </span><span class="lineNoCov">          0 :     str-&gt;maxlight = saveg_read32();</span>
+<span class="lineNum">    1207 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1208 </span><span class="lineNoCov">          0 :     // int minlight;</span>
+<span class="lineNum">    1209 </span><span class="lineNoCov">          0 :     str-&gt;minlight = saveg_read32();</span>
+<span class="lineNum">    1210 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1211 </span><span class="lineNoCov">          0 :     // int maxtime;</span>
+<span class="lineNum">    1212 </span><span class="lineNoCov">          0 :     str-&gt;maxtime = saveg_read32();</span>
+<span class="lineNum">    1213 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1214 </span><span class="lineNoCov">          0 :     // int mintime;</span>
+<span class="lineNum">    1215 </span><span class="lineNoCov">          0 :     str-&gt;mintime = saveg_read32();</span>
+<span class="lineNum">    1216 </span><span class="lineNoCov">          0 : }</span>
+<a name="1217"><span class="lineNum">    1217 </span>            : </a>
+<span class="lineNum">    1218 </span>            : static void saveg_write_lightflash_t(lightflash_t *str)
+<span class="lineNum">    1219 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1220 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1221 </span><span class="lineNoCov">          0 :     saveg_write_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1222 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1223 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1224 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;sector - sectors);</span>
+<span class="lineNum">    1225 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1226 </span><span class="lineNoCov">          0 :     // int count;</span>
+<span class="lineNum">    1227 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;count);</span>
+<span class="lineNum">    1228 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1229 </span><span class="lineNoCov">          0 :     // int maxlight;</span>
+<span class="lineNum">    1230 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;maxlight);</span>
+<span class="lineNum">    1231 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1232 </span><span class="lineNoCov">          0 :     // int minlight;</span>
+<span class="lineNum">    1233 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;minlight);</span>
+<span class="lineNum">    1234 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1235 </span><span class="lineNoCov">          0 :     // int maxtime;</span>
+<span class="lineNum">    1236 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;maxtime);</span>
+<span class="lineNum">    1237 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1238 </span><span class="lineNoCov">          0 :     // int mintime;</span>
+<span class="lineNum">    1239 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;mintime);</span>
+<span class="lineNum">    1240 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1241 </span>            : 
+<span class="lineNum">    1242 </span>            : //
+<span class="lineNum">    1243 </span>            : // strobe_t
+<span class="lineNum">    1244 </span>            : //
+<a name="1245"><span class="lineNum">    1245 </span>            : </a>
+<span class="lineNum">    1246 </span>            : static void saveg_read_strobe_t(strobe_t *str)
+<span class="lineNum">    1247 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1248 </span><span class="lineNoCov">          0 :     int sector;</span>
+<span class="lineNum">    1249 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1250 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1251 </span><span class="lineNoCov">          0 :     saveg_read_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1252 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1253 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1254 </span><span class="lineNoCov">          0 :     sector = saveg_read32();</span>
+<span class="lineNum">    1255 </span><span class="lineNoCov">          0 :     str-&gt;sector = &amp;sectors[sector];</span>
+<span class="lineNum">    1256 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1257 </span><span class="lineNoCov">          0 :     // int count;</span>
+<span class="lineNum">    1258 </span><span class="lineNoCov">          0 :     str-&gt;count = saveg_read32();</span>
+<span class="lineNum">    1259 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1260 </span><span class="lineNoCov">          0 :     // int minlight;</span>
+<span class="lineNum">    1261 </span><span class="lineNoCov">          0 :     str-&gt;minlight = saveg_read32();</span>
+<span class="lineNum">    1262 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1263 </span><span class="lineNoCov">          0 :     // int maxlight;</span>
+<span class="lineNum">    1264 </span><span class="lineNoCov">          0 :     str-&gt;maxlight = saveg_read32();</span>
+<span class="lineNum">    1265 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1266 </span><span class="lineNoCov">          0 :     // int darktime;</span>
+<span class="lineNum">    1267 </span><span class="lineNoCov">          0 :     str-&gt;darktime = saveg_read32();</span>
+<span class="lineNum">    1268 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1269 </span><span class="lineNoCov">          0 :     // int brighttime;</span>
+<span class="lineNum">    1270 </span><span class="lineNoCov">          0 :     str-&gt;brighttime = saveg_read32();</span>
+<span class="lineNum">    1271 </span><span class="lineNoCov">          0 : }</span>
+<a name="1272"><span class="lineNum">    1272 </span>            : </a>
+<span class="lineNum">    1273 </span>            : static void saveg_write_strobe_t(strobe_t *str)
+<span class="lineNum">    1274 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1275 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1276 </span><span class="lineNoCov">          0 :     saveg_write_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1277 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1278 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1279 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;sector - sectors);</span>
+<span class="lineNum">    1280 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1281 </span><span class="lineNoCov">          0 :     // int count;</span>
+<span class="lineNum">    1282 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;count);</span>
+<span class="lineNum">    1283 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1284 </span><span class="lineNoCov">          0 :     // int minlight;</span>
+<span class="lineNum">    1285 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;minlight);</span>
+<span class="lineNum">    1286 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1287 </span><span class="lineNoCov">          0 :     // int maxlight;</span>
+<span class="lineNum">    1288 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;maxlight);</span>
+<span class="lineNum">    1289 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1290 </span><span class="lineNoCov">          0 :     // int darktime;</span>
+<span class="lineNum">    1291 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;darktime);</span>
+<span class="lineNum">    1292 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1293 </span><span class="lineNoCov">          0 :     // int brighttime;</span>
+<span class="lineNum">    1294 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;brighttime);</span>
+<span class="lineNum">    1295 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1296 </span>            : 
+<span class="lineNum">    1297 </span>            : //
+<span class="lineNum">    1298 </span>            : // glow_t
+<span class="lineNum">    1299 </span>            : //
+<a name="1300"><span class="lineNum">    1300 </span>            : </a>
+<span class="lineNum">    1301 </span>            : static void saveg_read_glow_t(glow_t *str)
+<span class="lineNum">    1302 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1303 </span><span class="lineNoCov">          0 :     int sector;</span>
+<span class="lineNum">    1304 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1305 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1306 </span><span class="lineNoCov">          0 :     saveg_read_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1307 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1308 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1309 </span><span class="lineNoCov">          0 :     sector = saveg_read32();</span>
+<span class="lineNum">    1310 </span><span class="lineNoCov">          0 :     str-&gt;sector = &amp;sectors[sector];</span>
+<span class="lineNum">    1311 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1312 </span><span class="lineNoCov">          0 :     // int minlight;</span>
+<span class="lineNum">    1313 </span><span class="lineNoCov">          0 :     str-&gt;minlight = saveg_read32();</span>
+<span class="lineNum">    1314 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1315 </span><span class="lineNoCov">          0 :     // int maxlight;</span>
+<span class="lineNum">    1316 </span><span class="lineNoCov">          0 :     str-&gt;maxlight = saveg_read32();</span>
+<span class="lineNum">    1317 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1318 </span><span class="lineNoCov">          0 :     // int direction;</span>
+<span class="lineNum">    1319 </span><span class="lineNoCov">          0 :     str-&gt;direction = saveg_read32();</span>
+<span class="lineNum">    1320 </span><span class="lineNoCov">          0 : }</span>
+<a name="1321"><span class="lineNum">    1321 </span>            : </a>
+<span class="lineNum">    1322 </span>            : static void saveg_write_glow_t(glow_t *str)
+<span class="lineNum">    1323 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1324 </span><span class="lineNoCov">          0 :     // thinker_t thinker;</span>
+<span class="lineNum">    1325 </span><span class="lineNoCov">          0 :     saveg_write_thinker_t(&amp;str-&gt;thinker);</span>
+<span class="lineNum">    1326 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1327 </span><span class="lineNoCov">          0 :     // sector_t* sector;</span>
+<span class="lineNum">    1328 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;sector - sectors);</span>
+<span class="lineNum">    1329 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1330 </span><span class="lineNoCov">          0 :     // int minlight;</span>
+<span class="lineNum">    1331 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;minlight);</span>
+<span class="lineNum">    1332 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1333 </span><span class="lineNoCov">          0 :     // int maxlight;</span>
+<span class="lineNum">    1334 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;maxlight);</span>
+<span class="lineNum">    1335 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1336 </span><span class="lineNoCov">          0 :     // int direction;</span>
+<span class="lineNum">    1337 </span><span class="lineNoCov">          0 :     saveg_write32(str-&gt;direction);</span>
+<span class="lineNum">    1338 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1339 </span>            : 
+<span class="lineNum">    1340 </span>            : //
+<span class="lineNum">    1341 </span>            : // Write the header for a savegame
+<span class="lineNum">    1342 </span>            : //
+<a name="1343"><span class="lineNum">    1343 </span>            : </a>
+<span class="lineNum">    1344 </span>            : void P_WriteSaveGameHeader(char *description)
+<span class="lineNum">    1345 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1346 </span><span class="lineNoCov">          0 :     char name[VERSIONSIZE]; </span>
+<span class="lineNum">    1347 </span><span class="lineNoCov">          0 :     int i; </span>
+<span class="lineNum">    1348 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1349 </span><span class="lineNoCov">          0 :     for (i=0; description[i] != '\0'; ++i)</span>
+<span class="lineNum">    1350 </span><span class="lineNoCov">          0 :         saveg_write8(description[i]);</span>
+<span class="lineNum">    1351 </span><span class="lineNoCov">          0 :     for (; i&lt;SAVESTRINGSIZE; ++i)</span>
+<span class="lineNum">    1352 </span><span class="lineNoCov">          0 :         saveg_write8(0);</span>
+<span class="lineNum">    1353 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1354 </span><span class="lineNoCov">          0 :     memset(name, 0, sizeof(name));</span>
+<span class="lineNum">    1355 </span><span class="lineNoCov">          0 :     M_snprintf(name, sizeof(name), &quot;version %i&quot;, G_VanillaVersionCode());</span>
+<span class="lineNum">    1356 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1357 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;VERSIONSIZE; ++i)</span>
+<span class="lineNum">    1358 </span><span class="lineNoCov">          0 :         saveg_write8(name[i]);</span>
+<span class="lineNum">    1359 </span><span class="lineNoCov">          0 :          </span>
+<span class="lineNum">    1360 </span><span class="lineNoCov">          0 :     saveg_write8(gameskill);</span>
+<span class="lineNum">    1361 </span><span class="lineNoCov">          0 :     saveg_write8(gameepisode);</span>
+<span class="lineNum">    1362 </span><span class="lineNoCov">          0 :     saveg_write8(gamemap);</span>
+<span class="lineNum">    1363 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1364 </span><span class="lineNoCov">          0 :     for (i=0 ; i&lt;MAXPLAYERS ; i++) </span>
+<span class="lineNum">    1365 </span><span class="lineNoCov">          0 :         saveg_write8(playeringame[i]);</span>
+<span class="lineNum">    1366 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1367 </span><span class="lineNoCov">          0 :     saveg_write8((leveltime &gt;&gt; 16) &amp; 0xff);</span>
+<span class="lineNum">    1368 </span><span class="lineNoCov">          0 :     saveg_write8((leveltime &gt;&gt; 8) &amp; 0xff);</span>
+<span class="lineNum">    1369 </span><span class="lineNoCov">          0 :     saveg_write8(leveltime &amp; 0xff);</span>
+<span class="lineNum">    1370 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1371 </span>            : 
+<span class="lineNum">    1372 </span>            : // 
+<span class="lineNum">    1373 </span>            : // Read the header for a savegame
+<span class="lineNum">    1374 </span>            : //
+<a name="1375"><span class="lineNum">    1375 </span>            : </a>
+<span class="lineNum">    1376 </span>            : boolean P_ReadSaveGameHeader(void)
+<span class="lineNum">    1377 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1378 </span><span class="lineNoCov">          0 :     int  i; </span>
+<span class="lineNum">    1379 </span><span class="lineNoCov">          0 :     byte a, b, c; </span>
+<span class="lineNum">    1380 </span><span class="lineNoCov">          0 :     char vcheck[VERSIONSIZE]; </span>
+<span class="lineNum">    1381 </span><span class="lineNoCov">          0 :     char read_vcheck[VERSIONSIZE];</span>
+<span class="lineNum">    1382 </span><span class="lineNoCov">          0 :          </span>
+<span class="lineNum">    1383 </span><span class="lineNoCov">          0 :     // skip the description field </span>
+<span class="lineNum">    1384 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1385 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;SAVESTRINGSIZE; ++i)</span>
+<span class="lineNum">    1386 </span><span class="lineNoCov">          0 :         saveg_read8();</span>
+<span class="lineNum">    1387 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1388 </span><span class="lineNoCov">          0 :     for (i=0; i&lt;VERSIONSIZE; ++i)</span>
+<span class="lineNum">    1389 </span><span class="lineNoCov">          0 :         read_vcheck[i] = saveg_read8();</span>
+<span class="lineNum">    1390 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1391 </span><span class="lineNoCov">          0 :     memset(vcheck, 0, sizeof(vcheck));</span>
+<span class="lineNum">    1392 </span><span class="lineNoCov">          0 :     M_snprintf(vcheck, sizeof(vcheck), &quot;version %i&quot;, G_VanillaVersionCode());</span>
+<span class="lineNum">    1393 </span><span class="lineNoCov">          0 :     if (strcmp(read_vcheck, vcheck) != 0)</span>
+<span class="lineNum">    1394 </span><span class="lineNoCov">          0 :         return false;                           // bad version </span>
+<span class="lineNum">    1395 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1396 </span><span class="lineNoCov">          0 :     gameskill = saveg_read8();</span>
+<span class="lineNum">    1397 </span><span class="lineNoCov">          0 :     gameepisode = saveg_read8();</span>
+<span class="lineNum">    1398 </span><span class="lineNoCov">          0 :     gamemap = saveg_read8();</span>
+<span class="lineNum">    1399 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1400 </span><span class="lineNoCov">          0 :     for (i=0 ; i&lt;MAXPLAYERS ; i++) </span>
+<span class="lineNum">    1401 </span><span class="lineNoCov">          0 :         playeringame[i] = saveg_read8();</span>
+<span class="lineNum">    1402 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1403 </span><span class="lineNoCov">          0 :     // get the times </span>
+<span class="lineNum">    1404 </span><span class="lineNoCov">          0 :     a = saveg_read8();</span>
+<span class="lineNum">    1405 </span><span class="lineNoCov">          0 :     b = saveg_read8();</span>
+<span class="lineNum">    1406 </span><span class="lineNoCov">          0 :     c = saveg_read8();</span>
+<span class="lineNum">    1407 </span><span class="lineNoCov">          0 :     leveltime = (a&lt;&lt;16) + (b&lt;&lt;8) + c; </span>
+<span class="lineNum">    1408 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1409 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">    1410 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1411 </span>            : 
+<span class="lineNum">    1412 </span>            : //
+<span class="lineNum">    1413 </span>            : // Read the end of file marker.  Returns true if read successfully.
+<span class="lineNum">    1414 </span>            : // 
+<a name="1415"><span class="lineNum">    1415 </span>            : </a>
+<span class="lineNum">    1416 </span>            : boolean P_ReadSaveGameEOF(void)
+<span class="lineNum">    1417 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1418 </span><span class="lineNoCov">          0 :     int value;</span>
+<span class="lineNum">    1419 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1420 </span><span class="lineNoCov">          0 :     value = saveg_read8();</span>
+<span class="lineNum">    1421 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1422 </span><span class="lineNoCov">          0 :     return value == SAVEGAME_EOF;</span>
+<span class="lineNum">    1423 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1424 </span>            : 
+<span class="lineNum">    1425 </span>            : //
+<span class="lineNum">    1426 </span>            : // Write the end of file marker
+<span class="lineNum">    1427 </span>            : //
+<a name="1428"><span class="lineNum">    1428 </span>            : </a>
+<span class="lineNum">    1429 </span>            : void P_WriteSaveGameEOF(void)
+<span class="lineNum">    1430 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1431 </span><span class="lineNoCov">          0 :     saveg_write8(SAVEGAME_EOF);</span>
+<span class="lineNum">    1432 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1433 </span>            : 
+<span class="lineNum">    1434 </span>            : //
+<span class="lineNum">    1435 </span>            : // P_ArchivePlayers
+<a name="1436"><span class="lineNum">    1436 </span>            : //</a>
+<span class="lineNum">    1437 </span>            : void P_ArchivePlayers (void)
+<span class="lineNum">    1438 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1439 </span><span class="lineNoCov">          0 :     int         i;</span>
+<span class="lineNum">    1440 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">    1441 </span><span class="lineNoCov">          0 :     for (i=0 ; i&lt;MAXPLAYERS ; i++)</span>
+<span class="lineNum">    1442 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1443 </span><span class="lineNoCov">          0 :         if (!playeringame[i])</span>
+<span class="lineNum">    1444 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1445 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1446 </span><span class="lineNoCov">          0 :         saveg_write_pad();</span>
+<span class="lineNum">    1447 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1448 </span><span class="lineNoCov">          0 :         saveg_write_player_t(&amp;players[i]);</span>
+<span class="lineNum">    1449 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1450 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1451 </span>            : 
+<span class="lineNum">    1452 </span>            : 
+<span class="lineNum">    1453 </span>            : 
+<span class="lineNum">    1454 </span>            : //
+<span class="lineNum">    1455 </span>            : // P_UnArchivePlayers
+<a name="1456"><span class="lineNum">    1456 </span>            : //</a>
+<span class="lineNum">    1457 </span>            : void P_UnArchivePlayers (void)
+<span class="lineNum">    1458 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1459 </span><span class="lineNoCov">          0 :     int         i;</span>
+<span class="lineNum">    1460 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1461 </span><span class="lineNoCov">          0 :     for (i=0 ; i&lt;MAXPLAYERS ; i++)</span>
+<span class="lineNum">    1462 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1463 </span><span class="lineNoCov">          0 :         if (!playeringame[i])</span>
+<span class="lineNum">    1464 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1465 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1466 </span><span class="lineNoCov">          0 :         saveg_read_pad();</span>
+<span class="lineNum">    1467 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1468 </span><span class="lineNoCov">          0 :         saveg_read_player_t(&amp;players[i]);</span>
+<span class="lineNum">    1469 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1470 </span><span class="lineNoCov">          0 :         // will be set when unarc thinker</span>
+<span class="lineNum">    1471 </span><span class="lineNoCov">          0 :         players[i].mo = NULL;   </span>
+<span class="lineNum">    1472 </span><span class="lineNoCov">          0 :         players[i].message = NULL;</span>
+<span class="lineNum">    1473 </span><span class="lineNoCov">          0 :         players[i].attacker = NULL;</span>
+<span class="lineNum">    1474 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1475 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1476 </span>            : 
+<span class="lineNum">    1477 </span>            : 
+<span class="lineNum">    1478 </span>            : //
+<span class="lineNum">    1479 </span>            : // P_ArchiveWorld
+<a name="1480"><span class="lineNum">    1480 </span>            : //</a>
+<span class="lineNum">    1481 </span>            : void P_ArchiveWorld (void)
+<span class="lineNum">    1482 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1483 </span><span class="lineNoCov">          0 :     int                 i;</span>
+<span class="lineNum">    1484 </span><span class="lineNoCov">          0 :     int                 j;</span>
+<span class="lineNum">    1485 </span><span class="lineNoCov">          0 :     sector_t*           sec;</span>
+<span class="lineNum">    1486 </span><span class="lineNoCov">          0 :     line_t*             li;</span>
+<span class="lineNum">    1487 </span><span class="lineNoCov">          0 :     side_t*             si;</span>
+<span class="lineNum">    1488 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1489 </span><span class="lineNoCov">          0 :     // do sectors</span>
+<span class="lineNum">    1490 </span><span class="lineNoCov">          0 :     for (i=0, sec = sectors ; i&lt;numsectors ; i++,sec++)</span>
+<span class="lineNum">    1491 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1492 </span><span class="lineNoCov">          0 :         saveg_write16(sec-&gt;floorheight &gt;&gt; FRACBITS);</span>
+<span class="lineNum">    1493 </span><span class="lineNoCov">          0 :         saveg_write16(sec-&gt;ceilingheight &gt;&gt; FRACBITS);</span>
+<span class="lineNum">    1494 </span><span class="lineNoCov">          0 :         saveg_write16(sec-&gt;floorpic);</span>
+<span class="lineNum">    1495 </span><span class="lineNoCov">          0 :         saveg_write16(sec-&gt;ceilingpic);</span>
+<span class="lineNum">    1496 </span><span class="lineNoCov">          0 :         saveg_write16(sec-&gt;lightlevel);</span>
+<span class="lineNum">    1497 </span><span class="lineNoCov">          0 :         saveg_write16(sec-&gt;special);         // needed?</span>
+<span class="lineNum">    1498 </span><span class="lineNoCov">          0 :         saveg_write16(sec-&gt;tag);             // needed?</span>
+<span class="lineNum">    1499 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1500 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1501 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1502 </span><span class="lineNoCov">          0 :     // do lines</span>
+<span class="lineNum">    1503 </span><span class="lineNoCov">          0 :     for (i=0, li = lines ; i&lt;numlines ; i++,li++)</span>
+<span class="lineNum">    1504 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1505 </span><span class="lineNoCov">          0 :         saveg_write16(li-&gt;flags);</span>
+<span class="lineNum">    1506 </span><span class="lineNoCov">          0 :         saveg_write16(li-&gt;special);</span>
+<span class="lineNum">    1507 </span><span class="lineNoCov">          0 :         saveg_write16(li-&gt;tag);</span>
+<span class="lineNum">    1508 </span><span class="lineNoCov">          0 :         for (j=0 ; j&lt;2 ; j++)</span>
+<span class="lineNum">    1509 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1510 </span><span class="lineNoCov">          0 :             if (li-&gt;sidenum[j] == -1)</span>
+<span class="lineNum">    1511 </span><span class="lineNoCov">          0 :                 continue;</span>
+<span class="lineNum">    1512 </span><span class="lineNoCov">          0 :             </span>
+<span class="lineNum">    1513 </span><span class="lineNoCov">          0 :             si = &amp;sides[li-&gt;sidenum[j]];</span>
+<span class="lineNum">    1514 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1515 </span><span class="lineNoCov">          0 :             saveg_write16(si-&gt;textureoffset &gt;&gt; FRACBITS);</span>
+<span class="lineNum">    1516 </span><span class="lineNoCov">          0 :             saveg_write16(si-&gt;rowoffset &gt;&gt; FRACBITS);</span>
+<span class="lineNum">    1517 </span><span class="lineNoCov">          0 :             saveg_write16(si-&gt;toptexture);</span>
+<span class="lineNum">    1518 </span><span class="lineNoCov">          0 :             saveg_write16(si-&gt;bottomtexture);</span>
+<span class="lineNum">    1519 </span><span class="lineNoCov">          0 :             saveg_write16(si-&gt;midtexture);   </span>
+<span class="lineNum">    1520 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1521 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1522 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1523 </span>            : 
+<span class="lineNum">    1524 </span>            : 
+<span class="lineNum">    1525 </span>            : 
+<span class="lineNum">    1526 </span>            : //
+<span class="lineNum">    1527 </span>            : // P_UnArchiveWorld
+<a name="1528"><span class="lineNum">    1528 </span>            : //</a>
+<span class="lineNum">    1529 </span>            : void P_UnArchiveWorld (void)
+<span class="lineNum">    1530 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1531 </span><span class="lineNoCov">          0 :     int                 i;</span>
+<span class="lineNum">    1532 </span><span class="lineNoCov">          0 :     int                 j;</span>
+<span class="lineNum">    1533 </span><span class="lineNoCov">          0 :     sector_t*           sec;</span>
+<span class="lineNum">    1534 </span><span class="lineNoCov">          0 :     line_t*             li;</span>
+<span class="lineNum">    1535 </span><span class="lineNoCov">          0 :     side_t*             si;</span>
+<span class="lineNum">    1536 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1537 </span><span class="lineNoCov">          0 :     // do sectors</span>
+<span class="lineNum">    1538 </span><span class="lineNoCov">          0 :     for (i=0, sec = sectors ; i&lt;numsectors ; i++,sec++)</span>
+<span class="lineNum">    1539 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1540 </span><span class="lineNoCov">          0 :         sec-&gt;floorheight = saveg_read16() &lt;&lt; FRACBITS;</span>
+<span class="lineNum">    1541 </span><span class="lineNoCov">          0 :         sec-&gt;ceilingheight = saveg_read16() &lt;&lt; FRACBITS;</span>
+<span class="lineNum">    1542 </span><span class="lineNoCov">          0 :         sec-&gt;floorpic = saveg_read16();</span>
+<span class="lineNum">    1543 </span><span class="lineNoCov">          0 :         sec-&gt;ceilingpic = saveg_read16();</span>
+<span class="lineNum">    1544 </span><span class="lineNoCov">          0 :         sec-&gt;lightlevel = saveg_read16();</span>
+<span class="lineNum">    1545 </span><span class="lineNoCov">          0 :         sec-&gt;special = saveg_read16();               // needed?</span>
+<span class="lineNum">    1546 </span><span class="lineNoCov">          0 :         sec-&gt;tag = saveg_read16();           // needed?</span>
+<span class="lineNum">    1547 </span><span class="lineNoCov">          0 :         sec-&gt;specialdata = 0;</span>
+<span class="lineNum">    1548 </span><span class="lineNoCov">          0 :         sec-&gt;soundtarget = 0;</span>
+<span class="lineNum">    1549 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1550 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1551 </span><span class="lineNoCov">          0 :     // do lines</span>
+<span class="lineNum">    1552 </span><span class="lineNoCov">          0 :     for (i=0, li = lines ; i&lt;numlines ; i++,li++)</span>
+<span class="lineNum">    1553 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1554 </span><span class="lineNoCov">          0 :         li-&gt;flags = saveg_read16();</span>
+<span class="lineNum">    1555 </span><span class="lineNoCov">          0 :         li-&gt;special = saveg_read16();</span>
+<span class="lineNum">    1556 </span><span class="lineNoCov">          0 :         li-&gt;tag = saveg_read16();</span>
+<span class="lineNum">    1557 </span><span class="lineNoCov">          0 :         for (j=0 ; j&lt;2 ; j++)</span>
+<span class="lineNum">    1558 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1559 </span><span class="lineNoCov">          0 :             if (li-&gt;sidenum[j] == -1)</span>
+<span class="lineNum">    1560 </span><span class="lineNoCov">          0 :                 continue;</span>
+<span class="lineNum">    1561 </span><span class="lineNoCov">          0 :             si = &amp;sides[li-&gt;sidenum[j]];</span>
+<span class="lineNum">    1562 </span><span class="lineNoCov">          0 :             si-&gt;textureoffset = saveg_read16() &lt;&lt; FRACBITS;</span>
+<span class="lineNum">    1563 </span><span class="lineNoCov">          0 :             si-&gt;rowoffset = saveg_read16() &lt;&lt; FRACBITS;</span>
+<span class="lineNum">    1564 </span><span class="lineNoCov">          0 :             si-&gt;toptexture = saveg_read16();</span>
+<span class="lineNum">    1565 </span><span class="lineNoCov">          0 :             si-&gt;bottomtexture = saveg_read16();</span>
+<span class="lineNum">    1566 </span><span class="lineNoCov">          0 :             si-&gt;midtexture = saveg_read16();</span>
+<span class="lineNum">    1567 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1568 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1569 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1570 </span>            : 
+<span class="lineNum">    1571 </span>            : 
+<span class="lineNum">    1572 </span>            : 
+<span class="lineNum">    1573 </span>            : 
+<span class="lineNum">    1574 </span>            : 
+<span class="lineNum">    1575 </span>            : //
+<span class="lineNum">    1576 </span>            : // Thinkers
+<span class="lineNum">    1577 </span>            : //
+<span class="lineNum">    1578 </span>            : typedef enum
+<span class="lineNum">    1579 </span>            : {
+<span class="lineNum">    1580 </span>            :     tc_end,
+<span class="lineNum">    1581 </span>            :     tc_mobj
+<span class="lineNum">    1582 </span>            : 
+<span class="lineNum">    1583 </span>            : } thinkerclass_t;
+<span class="lineNum">    1584 </span>            : 
+<span class="lineNum">    1585 </span>            : 
+<span class="lineNum">    1586 </span>            : //
+<span class="lineNum">    1587 </span>            : // P_ArchiveThinkers
+<a name="1588"><span class="lineNum">    1588 </span>            : //</a>
+<span class="lineNum">    1589 </span>            : void P_ArchiveThinkers (void)
+<span class="lineNum">    1590 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1591 </span><span class="lineNoCov">          0 :     thinker_t*          th;</span>
+<span class="lineNum">    1592 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1593 </span><span class="lineNoCov">          0 :     // save off the current thinkers</span>
+<span class="lineNum">    1594 </span><span class="lineNoCov">          0 :     for (th = thinkercap.next ; th != &amp;thinkercap ; th=th-&gt;next)</span>
+<span class="lineNum">    1595 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1596 </span><span class="lineNoCov">          0 :         if (th-&gt;function.acp1 == (actionf_p1)P_MobjThinker)</span>
+<span class="lineNum">    1597 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1598 </span><span class="lineNoCov">          0 :             saveg_write8(tc_mobj);</span>
+<span class="lineNum">    1599 </span><span class="lineNoCov">          0 :             saveg_write_pad();</span>
+<span class="lineNum">    1600 </span><span class="lineNoCov">          0 :             saveg_write_mobj_t((mobj_t *) th);</span>
+<span class="lineNum">    1601 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1602 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1603 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1604 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">    1605 </span><span class="lineNoCov">          0 :         // I_Error (&quot;P_ArchiveThinkers: Unknown thinker function&quot;);</span>
+<span class="lineNum">    1606 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1607 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1608 </span><span class="lineNoCov">          0 :     // add a terminating marker</span>
+<span class="lineNum">    1609 </span><span class="lineNoCov">          0 :     saveg_write8(tc_end);</span>
+<span class="lineNum">    1610 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1611 </span>            : 
+<span class="lineNum">    1612 </span>            : 
+<span class="lineNum">    1613 </span>            : 
+<span class="lineNum">    1614 </span>            : //
+<span class="lineNum">    1615 </span>            : // P_UnArchiveThinkers
+<a name="1616"><span class="lineNum">    1616 </span>            : //</a>
+<span class="lineNum">    1617 </span>            : void P_UnArchiveThinkers (void)
+<span class="lineNum">    1618 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1619 </span><span class="lineNoCov">          0 :     byte                tclass;</span>
+<span class="lineNum">    1620 </span><span class="lineNoCov">          0 :     thinker_t*          currentthinker;</span>
+<span class="lineNum">    1621 </span><span class="lineNoCov">          0 :     thinker_t*          next;</span>
+<span class="lineNum">    1622 </span><span class="lineNoCov">          0 :     mobj_t*             mobj;</span>
+<span class="lineNum">    1623 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1624 </span><span class="lineNoCov">          0 :     // remove all the current thinkers</span>
+<span class="lineNum">    1625 </span><span class="lineNoCov">          0 :     currentthinker = thinkercap.next;</span>
+<span class="lineNum">    1626 </span><span class="lineNoCov">          0 :     while (currentthinker != &amp;thinkercap)</span>
+<span class="lineNum">    1627 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1628 </span><span class="lineNoCov">          0 :         next = currentthinker-&gt;next;</span>
+<span class="lineNum">    1629 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1630 </span><span class="lineNoCov">          0 :         if (currentthinker-&gt;function.acp1 == (actionf_p1)P_MobjThinker)</span>
+<span class="lineNum">    1631 </span><span class="lineNoCov">          0 :             P_RemoveMobj ((mobj_t *)currentthinker);</span>
+<span class="lineNum">    1632 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">    1633 </span><span class="lineNoCov">          0 :             Z_Free (currentthinker);</span>
+<span class="lineNum">    1634 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1635 </span><span class="lineNoCov">          0 :         currentthinker = next;</span>
+<span class="lineNum">    1636 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1637 </span><span class="lineNoCov">          0 :     P_InitThinkers ();</span>
+<span class="lineNum">    1638 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1639 </span><span class="lineNoCov">          0 :     // read in saved thinkers</span>
+<span class="lineNum">    1640 </span><span class="lineNoCov">          0 :     while (1)</span>
+<span class="lineNum">    1641 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1642 </span><span class="lineNoCov">          0 :         tclass = saveg_read8();</span>
+<span class="lineNum">    1643 </span><span class="lineNoCov">          0 :         switch (tclass)</span>
+<span class="lineNum">    1644 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1645 </span><span class="lineNoCov">          0 :           case tc_end:</span>
+<span class="lineNum">    1646 </span><span class="lineNoCov">          0 :             return;     // end of list</span>
+<span class="lineNum">    1647 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">    1648 </span><span class="lineNoCov">          0 :           case tc_mobj:</span>
+<span class="lineNum">    1649 </span><span class="lineNoCov">          0 :             saveg_read_pad();</span>
+<span class="lineNum">    1650 </span><span class="lineNoCov">          0 :             mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);</span>
+<span class="lineNum">    1651 </span><span class="lineNoCov">          0 :             saveg_read_mobj_t(mobj);</span>
+<span class="lineNum">    1652 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1653 </span><span class="lineNoCov">          0 :             mobj-&gt;target = NULL;</span>
+<span class="lineNum">    1654 </span><span class="lineNoCov">          0 :             mobj-&gt;tracer = NULL;</span>
+<span class="lineNum">    1655 </span><span class="lineNoCov">          0 :             P_SetThingPosition (mobj);</span>
+<span class="lineNum">    1656 </span><span class="lineNoCov">          0 :             mobj-&gt;info = &amp;mobjinfo[mobj-&gt;type];</span>
+<span class="lineNum">    1657 </span><span class="lineNoCov">          0 :             mobj-&gt;floorz = mobj-&gt;subsector-&gt;sector-&gt;floorheight;</span>
+<span class="lineNum">    1658 </span><span class="lineNoCov">          0 :             mobj-&gt;ceilingz = mobj-&gt;subsector-&gt;sector-&gt;ceilingheight;</span>
+<span class="lineNum">    1659 </span><span class="lineNoCov">          0 :             mobj-&gt;thinker.function.acp1 = (actionf_p1)P_MobjThinker;</span>
+<span class="lineNum">    1660 </span><span class="lineNoCov">          0 :             P_AddThinker (&amp;mobj-&gt;thinker);</span>
+<span class="lineNum">    1661 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1662 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1663 </span><span class="lineNoCov">          0 :           default:</span>
+<span class="lineNum">    1664 </span><span class="lineNoCov">          0 :             I_Error (&quot;Unknown tclass %i in savegame&quot;,tclass);</span>
+<span class="lineNum">    1665 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1666 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1667 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1668 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1669 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1670 </span>            : 
+<span class="lineNum">    1671 </span>            : 
+<span class="lineNum">    1672 </span>            : //
+<span class="lineNum">    1673 </span>            : // P_ArchiveSpecials
+<span class="lineNum">    1674 </span>            : //
+<span class="lineNum">    1675 </span>            : enum
+<span class="lineNum">    1676 </span>            : {
+<span class="lineNum">    1677 </span>            :     tc_ceiling,
+<span class="lineNum">    1678 </span>            :     tc_door,
+<span class="lineNum">    1679 </span>            :     tc_floor,
+<span class="lineNum">    1680 </span>            :     tc_plat,
+<span class="lineNum">    1681 </span>            :     tc_flash,
+<span class="lineNum">    1682 </span>            :     tc_strobe,
+<span class="lineNum">    1683 </span>            :     tc_glow,
+<span class="lineNum">    1684 </span>            :     tc_endspecials
+<span class="lineNum">    1685 </span>            : 
+<span class="lineNum">    1686 </span>            : } specials_e;   
+<span class="lineNum">    1687 </span>            : 
+<span class="lineNum">    1688 </span>            : 
+<span class="lineNum">    1689 </span>            : 
+<span class="lineNum">    1690 </span>            : //
+<span class="lineNum">    1691 </span>            : // Things to handle:
+<span class="lineNum">    1692 </span>            : //
+<span class="lineNum">    1693 </span>            : // T_MoveCeiling, (ceiling_t: sector_t * swizzle), - active list
+<span class="lineNum">    1694 </span>            : // T_VerticalDoor, (vldoor_t: sector_t * swizzle),
+<span class="lineNum">    1695 </span>            : // T_MoveFloor, (floormove_t: sector_t * swizzle),
+<span class="lineNum">    1696 </span>            : // T_LightFlash, (lightflash_t: sector_t * swizzle),
+<span class="lineNum">    1697 </span>            : // T_StrobeFlash, (strobe_t: sector_t *),
+<span class="lineNum">    1698 </span>            : // T_Glow, (glow_t: sector_t *),
+<span class="lineNum">    1699 </span>            : // T_PlatRaise, (plat_t: sector_t *), - active list
+<a name="1700"><span class="lineNum">    1700 </span>            : //</a>
+<span class="lineNum">    1701 </span>            : void P_ArchiveSpecials (void)
+<span class="lineNum">    1702 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1703 </span><span class="lineNoCov">          0 :     thinker_t*          th;</span>
+<span class="lineNum">    1704 </span><span class="lineNoCov">          0 :     int                 i;</span>
+<span class="lineNum">    1705 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1706 </span><span class="lineNoCov">          0 :     // save off the current thinkers</span>
+<span class="lineNum">    1707 </span><span class="lineNoCov">          0 :     for (th = thinkercap.next ; th != &amp;thinkercap ; th=th-&gt;next)</span>
+<span class="lineNum">    1708 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1709 </span><span class="lineNoCov">          0 :         if (th-&gt;function.acv == (actionf_v)NULL)</span>
+<span class="lineNum">    1710 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1711 </span><span class="lineNoCov">          0 :             for (i = 0; i &lt; MAXCEILINGS;i++)</span>
+<span class="lineNum">    1712 </span><span class="lineNoCov">          0 :                 if (activeceilings[i] == (ceiling_t *)th)</span>
+<span class="lineNum">    1713 </span><span class="lineNoCov">          0 :                     break;</span>
+<span class="lineNum">    1714 </span><span class="lineNoCov">          0 :             </span>
+<span class="lineNum">    1715 </span><span class="lineNoCov">          0 :             if (i&lt;MAXCEILINGS)</span>
+<span class="lineNum">    1716 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">    1717 </span><span class="lineNoCov">          0 :                 saveg_write8(tc_ceiling);</span>
+<span class="lineNum">    1718 </span><span class="lineNoCov">          0 :                 saveg_write_pad();</span>
+<span class="lineNum">    1719 </span><span class="lineNoCov">          0 :                 saveg_write_ceiling_t((ceiling_t *) th);</span>
+<span class="lineNum">    1720 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">    1721 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1722 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1723 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">    1724 </span><span class="lineNoCov">          0 :         if (th-&gt;function.acp1 == (actionf_p1)T_MoveCeiling)</span>
+<span class="lineNum">    1725 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1726 </span><span class="lineNoCov">          0 :             saveg_write8(tc_ceiling);</span>
+<span class="lineNum">    1727 </span><span class="lineNoCov">          0 :             saveg_write_pad();</span>
+<span class="lineNum">    1728 </span><span class="lineNoCov">          0 :             saveg_write_ceiling_t((ceiling_t *) th);</span>
+<span class="lineNum">    1729 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1730 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1731 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">    1732 </span><span class="lineNoCov">          0 :         if (th-&gt;function.acp1 == (actionf_p1)T_VerticalDoor)</span>
+<span class="lineNum">    1733 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1734 </span><span class="lineNoCov">          0 :             saveg_write8(tc_door);</span>
+<span class="lineNum">    1735 </span><span class="lineNoCov">          0 :             saveg_write_pad();</span>
+<span class="lineNum">    1736 </span><span class="lineNoCov">          0 :             saveg_write_vldoor_t((vldoor_t *) th);</span>
+<span class="lineNum">    1737 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1738 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1739 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">    1740 </span><span class="lineNoCov">          0 :         if (th-&gt;function.acp1 == (actionf_p1)T_MoveFloor)</span>
+<span class="lineNum">    1741 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1742 </span><span class="lineNoCov">          0 :             saveg_write8(tc_floor);</span>
+<span class="lineNum">    1743 </span><span class="lineNoCov">          0 :             saveg_write_pad();</span>
+<span class="lineNum">    1744 </span><span class="lineNoCov">          0 :             saveg_write_floormove_t((floormove_t *) th);</span>
+<span class="lineNum">    1745 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1746 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1747 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">    1748 </span><span class="lineNoCov">          0 :         if (th-&gt;function.acp1 == (actionf_p1)T_PlatRaise)</span>
+<span class="lineNum">    1749 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1750 </span><span class="lineNoCov">          0 :             saveg_write8(tc_plat);</span>
+<span class="lineNum">    1751 </span><span class="lineNoCov">          0 :             saveg_write_pad();</span>
+<span class="lineNum">    1752 </span><span class="lineNoCov">          0 :             saveg_write_plat_t((plat_t *) th);</span>
+<span class="lineNum">    1753 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1754 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1755 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">    1756 </span><span class="lineNoCov">          0 :         if (th-&gt;function.acp1 == (actionf_p1)T_LightFlash)</span>
+<span class="lineNum">    1757 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1758 </span><span class="lineNoCov">          0 :             saveg_write8(tc_flash);</span>
+<span class="lineNum">    1759 </span><span class="lineNoCov">          0 :             saveg_write_pad();</span>
+<span class="lineNum">    1760 </span><span class="lineNoCov">          0 :             saveg_write_lightflash_t((lightflash_t *) th);</span>
+<span class="lineNum">    1761 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1762 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1763 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">    1764 </span><span class="lineNoCov">          0 :         if (th-&gt;function.acp1 == (actionf_p1)T_StrobeFlash)</span>
+<span class="lineNum">    1765 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1766 </span><span class="lineNoCov">          0 :             saveg_write8(tc_strobe);</span>
+<span class="lineNum">    1767 </span><span class="lineNoCov">          0 :             saveg_write_pad();</span>
+<span class="lineNum">    1768 </span><span class="lineNoCov">          0 :             saveg_write_strobe_t((strobe_t *) th);</span>
+<span class="lineNum">    1769 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1770 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1771 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">    1772 </span><span class="lineNoCov">          0 :         if (th-&gt;function.acp1 == (actionf_p1)T_Glow)</span>
+<span class="lineNum">    1773 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1774 </span><span class="lineNoCov">          0 :             saveg_write8(tc_glow);</span>
+<span class="lineNum">    1775 </span><span class="lineNoCov">          0 :             saveg_write_pad();</span>
+<span class="lineNum">    1776 </span><span class="lineNoCov">          0 :             saveg_write_glow_t((glow_t *) th);</span>
+<span class="lineNum">    1777 </span><span class="lineNoCov">          0 :             continue;</span>
+<span class="lineNum">    1778 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1779 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1780 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1781 </span><span class="lineNoCov">          0 :     // add a terminating marker</span>
+<span class="lineNum">    1782 </span><span class="lineNoCov">          0 :     saveg_write8(tc_endspecials);</span>
+<span class="lineNum">    1783 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1784 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1785 </span>            : 
+<span class="lineNum">    1786 </span>            : 
+<span class="lineNum">    1787 </span>            : //
+<span class="lineNum">    1788 </span>            : // P_UnArchiveSpecials
+<a name="1789"><span class="lineNum">    1789 </span>            : //</a>
+<span class="lineNum">    1790 </span>            : void P_UnArchiveSpecials (void)
+<span class="lineNum">    1791 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1792 </span><span class="lineNoCov">          0 :     byte                tclass;</span>
+<span class="lineNum">    1793 </span><span class="lineNoCov">          0 :     ceiling_t*          ceiling;</span>
+<span class="lineNum">    1794 </span><span class="lineNoCov">          0 :     vldoor_t*           door;</span>
+<span class="lineNum">    1795 </span><span class="lineNoCov">          0 :     floormove_t*        floor;</span>
+<span class="lineNum">    1796 </span><span class="lineNoCov">          0 :     plat_t*             plat;</span>
+<span class="lineNum">    1797 </span><span class="lineNoCov">          0 :     lightflash_t*       flash;</span>
+<span class="lineNum">    1798 </span><span class="lineNoCov">          0 :     strobe_t*           strobe;</span>
+<span class="lineNum">    1799 </span><span class="lineNoCov">          0 :     glow_t*             glow;</span>
+<span class="lineNum">    1800 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1801 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1802 </span><span class="lineNoCov">          0 :     // read in saved thinkers</span>
+<span class="lineNum">    1803 </span><span class="lineNoCov">          0 :     while (1)</span>
+<span class="lineNum">    1804 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1805 </span><span class="lineNoCov">          0 :         tclass = saveg_read8();</span>
+<span class="lineNum">    1806 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1807 </span><span class="lineNoCov">          0 :         switch (tclass)</span>
+<span class="lineNum">    1808 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1809 </span><span class="lineNoCov">          0 :           case tc_endspecials:</span>
+<span class="lineNum">    1810 </span><span class="lineNoCov">          0 :             return;     // end of list</span>
+<span class="lineNum">    1811 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">    1812 </span><span class="lineNoCov">          0 :           case tc_ceiling:</span>
+<span class="lineNum">    1813 </span><span class="lineNoCov">          0 :             saveg_read_pad();</span>
+<span class="lineNum">    1814 </span><span class="lineNoCov">          0 :             ceiling = Z_Malloc (sizeof(*ceiling), PU_LEVEL, NULL);</span>
+<span class="lineNum">    1815 </span><span class="lineNoCov">          0 :             saveg_read_ceiling_t(ceiling);</span>
+<span class="lineNum">    1816 </span><span class="lineNoCov">          0 :             ceiling-&gt;sector-&gt;specialdata = ceiling;</span>
+<span class="lineNum">    1817 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1818 </span><span class="lineNoCov">          0 :             if (ceiling-&gt;thinker.function.acp1)</span>
+<span class="lineNum">    1819 </span><span class="lineNoCov">          0 :                 ceiling-&gt;thinker.function.acp1 = (actionf_p1)T_MoveCeiling;</span>
+<span class="lineNum">    1820 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1821 </span><span class="lineNoCov">          0 :             P_AddThinker (&amp;ceiling-&gt;thinker);</span>
+<span class="lineNum">    1822 </span><span class="lineNoCov">          0 :             P_AddActiveCeiling(ceiling);</span>
+<span class="lineNum">    1823 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1824 </span><span class="lineNoCov">          0 :                                 </span>
+<span class="lineNum">    1825 </span><span class="lineNoCov">          0 :           case tc_door:</span>
+<span class="lineNum">    1826 </span><span class="lineNoCov">          0 :             saveg_read_pad();</span>
+<span class="lineNum">    1827 </span><span class="lineNoCov">          0 :             door = Z_Malloc (sizeof(*door), PU_LEVEL, NULL);</span>
+<span class="lineNum">    1828 </span><span class="lineNoCov">          0 :             saveg_read_vldoor_t(door);</span>
+<span class="lineNum">    1829 </span><span class="lineNoCov">          0 :             door-&gt;sector-&gt;specialdata = door;</span>
+<span class="lineNum">    1830 </span><span class="lineNoCov">          0 :             door-&gt;thinker.function.acp1 = (actionf_p1)T_VerticalDoor;</span>
+<span class="lineNum">    1831 </span><span class="lineNoCov">          0 :             P_AddThinker (&amp;door-&gt;thinker);</span>
+<span class="lineNum">    1832 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1833 </span><span class="lineNoCov">          0 :                                 </span>
+<span class="lineNum">    1834 </span><span class="lineNoCov">          0 :           case tc_floor:</span>
+<span class="lineNum">    1835 </span><span class="lineNoCov">          0 :             saveg_read_pad();</span>
+<span class="lineNum">    1836 </span><span class="lineNoCov">          0 :             floor = Z_Malloc (sizeof(*floor), PU_LEVEL, NULL);</span>
+<span class="lineNum">    1837 </span><span class="lineNoCov">          0 :             saveg_read_floormove_t(floor);</span>
+<span class="lineNum">    1838 </span><span class="lineNoCov">          0 :             floor-&gt;sector-&gt;specialdata = floor;</span>
+<span class="lineNum">    1839 </span><span class="lineNoCov">          0 :             floor-&gt;thinker.function.acp1 = (actionf_p1)T_MoveFloor;</span>
+<span class="lineNum">    1840 </span><span class="lineNoCov">          0 :             P_AddThinker (&amp;floor-&gt;thinker);</span>
+<span class="lineNum">    1841 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1842 </span><span class="lineNoCov">          0 :                                 </span>
+<span class="lineNum">    1843 </span><span class="lineNoCov">          0 :           case tc_plat:</span>
+<span class="lineNum">    1844 </span><span class="lineNoCov">          0 :             saveg_read_pad();</span>
+<span class="lineNum">    1845 </span><span class="lineNoCov">          0 :             plat = Z_Malloc (sizeof(*plat), PU_LEVEL, NULL);</span>
+<span class="lineNum">    1846 </span><span class="lineNoCov">          0 :             saveg_read_plat_t(plat);</span>
+<span class="lineNum">    1847 </span><span class="lineNoCov">          0 :             plat-&gt;sector-&gt;specialdata = plat;</span>
+<span class="lineNum">    1848 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1849 </span><span class="lineNoCov">          0 :             if (plat-&gt;thinker.function.acp1)</span>
+<span class="lineNum">    1850 </span><span class="lineNoCov">          0 :                 plat-&gt;thinker.function.acp1 = (actionf_p1)T_PlatRaise;</span>
+<span class="lineNum">    1851 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1852 </span><span class="lineNoCov">          0 :             P_AddThinker (&amp;plat-&gt;thinker);</span>
+<span class="lineNum">    1853 </span><span class="lineNoCov">          0 :             P_AddActivePlat(plat);</span>
+<span class="lineNum">    1854 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1855 </span><span class="lineNoCov">          0 :                                 </span>
+<span class="lineNum">    1856 </span><span class="lineNoCov">          0 :           case tc_flash:</span>
+<span class="lineNum">    1857 </span><span class="lineNoCov">          0 :             saveg_read_pad();</span>
+<span class="lineNum">    1858 </span><span class="lineNoCov">          0 :             flash = Z_Malloc (sizeof(*flash), PU_LEVEL, NULL);</span>
+<span class="lineNum">    1859 </span><span class="lineNoCov">          0 :             saveg_read_lightflash_t(flash);</span>
+<span class="lineNum">    1860 </span><span class="lineNoCov">          0 :             flash-&gt;thinker.function.acp1 = (actionf_p1)T_LightFlash;</span>
+<span class="lineNum">    1861 </span><span class="lineNoCov">          0 :             P_AddThinker (&amp;flash-&gt;thinker);</span>
+<span class="lineNum">    1862 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1863 </span><span class="lineNoCov">          0 :                                 </span>
+<span class="lineNum">    1864 </span><span class="lineNoCov">          0 :           case tc_strobe:</span>
+<span class="lineNum">    1865 </span><span class="lineNoCov">          0 :             saveg_read_pad();</span>
+<span class="lineNum">    1866 </span><span class="lineNoCov">          0 :             strobe = Z_Malloc (sizeof(*strobe), PU_LEVEL, NULL);</span>
+<span class="lineNum">    1867 </span><span class="lineNoCov">          0 :             saveg_read_strobe_t(strobe);</span>
+<span class="lineNum">    1868 </span><span class="lineNoCov">          0 :             strobe-&gt;thinker.function.acp1 = (actionf_p1)T_StrobeFlash;</span>
+<span class="lineNum">    1869 </span><span class="lineNoCov">          0 :             P_AddThinker (&amp;strobe-&gt;thinker);</span>
+<span class="lineNum">    1870 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1871 </span><span class="lineNoCov">          0 :                                 </span>
+<span class="lineNum">    1872 </span><span class="lineNoCov">          0 :           case tc_glow:</span>
+<span class="lineNum">    1873 </span><span class="lineNoCov">          0 :             saveg_read_pad();</span>
+<span class="lineNum">    1874 </span><span class="lineNoCov">          0 :             glow = Z_Malloc (sizeof(*glow), PU_LEVEL, NULL);</span>
+<span class="lineNum">    1875 </span><span class="lineNoCov">          0 :             saveg_read_glow_t(glow);</span>
+<span class="lineNum">    1876 </span><span class="lineNoCov">          0 :             glow-&gt;thinker.function.acp1 = (actionf_p1)T_Glow;</span>
+<span class="lineNum">    1877 </span><span class="lineNoCov">          0 :             P_AddThinker (&amp;glow-&gt;thinker);</span>
+<span class="lineNum">    1878 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1879 </span><span class="lineNoCov">          0 :                                 </span>
+<span class="lineNum">    1880 </span><span class="lineNoCov">          0 :           default:</span>
+<span class="lineNum">    1881 </span><span class="lineNoCov">          0 :             I_Error (&quot;P_UnarchiveSpecials:Unknown tclass %i &quot;</span>
+<span class="lineNum">    1882 </span><span class="lineNoCov">          0 :                      &quot;in savegame&quot;,tclass);</span>
+<span class="lineNum">    1883 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1884 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1885 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1886 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1887 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1888 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

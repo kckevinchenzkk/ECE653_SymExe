@@ -1,0 +1,230 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doomkeys.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - doomkeys.h<span style="font-size: 80%;"> (source / <a href="doomkeys.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">21</td>
+            <td class="headerCovTableEntryLo">4.8 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //       Key definitions
+<span class="lineNum">      17 </span>            : //
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            : #ifndef __DOOMKEYS__
+<span class="lineNum">      20 </span>            : #define __DOOMKEYS__
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span>            : //
+<span class="lineNum">      23 </span>            : // DOOM keyboard definition.
+<span class="lineNum">      24 </span>            : // This is the stuff configured by Setup.Exe.
+<span class="lineNum">      25 </span>            : // Most key data are simple ascii (uppercased).
+<span class="lineNum">      26 </span>            : //
+<span class="lineNum">      27 </span><span class="lineNoCov">          0 : #define KEY_RIGHTARROW  0xae</span>
+<span class="lineNum">      28 </span><span class="lineNoCov">          0 : #define KEY_LEFTARROW   0xac</span>
+<span class="lineNum">      29 </span><span class="lineNoCov">          0 : #define KEY_UPARROW     0xad</span>
+<span class="lineNum">      30 </span><span class="lineNoCov">          0 : #define KEY_DOWNARROW   0xaf</span>
+<span class="lineNum">      31 </span><span class="lineNoCov">          0 : #define KEY_ESCAPE      27</span>
+<span class="lineNum">      32 </span><span class="lineNoCov">          0 : #define KEY_ENTER       13</span>
+<span class="lineNum">      33 </span><span class="lineNoCov">          0 : #define KEY_TAB         9</span>
+<span class="lineNum">      34 </span><span class="lineNoCov">          0 : #define KEY_F1          (0x80+0x3b)</span>
+<span class="lineNum">      35 </span>            : #define KEY_F2          (0x80+0x3c)
+<span class="lineNum">      36 </span>            : #define KEY_F3          (0x80+0x3d)
+<span class="lineNum">      37 </span>            : #define KEY_F4          (0x80+0x3e)
+<span class="lineNum">      38 </span>            : #define KEY_F5          (0x80+0x3f)
+<span class="lineNum">      39 </span>            : #define KEY_F6          (0x80+0x40)
+<span class="lineNum">      40 </span>            : #define KEY_F7          (0x80+0x41)
+<span class="lineNum">      41 </span>            : #define KEY_F8          (0x80+0x42)
+<span class="lineNum">      42 </span>            : #define KEY_F9          (0x80+0x43)
+<span class="lineNum">      43 </span>            : #define KEY_F10         (0x80+0x44)
+<span class="lineNum">      44 </span>            : #define KEY_F11         (0x80+0x57)
+<span class="lineNum">      45 </span>            : #define KEY_F12         (0x80+0x58)
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span><span class="lineNoCov">          0 : #define KEY_BACKSPACE   0x7f</span>
+<span class="lineNum">      48 </span><span class="lineNoCov">          0 : #define KEY_PAUSE       0xff</span>
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span>            : #define KEY_EQUALS      0x3d
+<span class="lineNum">      51 </span>            : #define KEY_MINUS       0x2d
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span><span class="lineCov">    9054848 : #define KEY_RSHIFT      (0x80+0x36)</span>
+<span class="lineNum">      54 </span><span class="lineNoCov">          0 : #define KEY_RCTRL       (0x80+0x1d)</span>
+<span class="lineNum">      55 </span><span class="lineNoCov">          0 : #define KEY_RALT        (0x80+0x38)</span>
+<span class="lineNum">      56 </span>            : 
+<span class="lineNum">      57 </span><span class="lineNoCov">          0 : #define KEY_LALT        KEY_RALT</span>
+<span class="lineNum">      58 </span>            : 
+<span class="lineNum">      59 </span>            : // new keys:
+<span class="lineNum">      60 </span>            : 
+<span class="lineNum">      61 </span><span class="lineNoCov">          0 : #define KEY_CAPSLOCK    (0x80+0x3a)</span>
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 : #define KEY_NUMLOCK     (0x80+0x45)</span>
+<span class="lineNum">      63 </span><span class="lineNoCov">          0 : #define KEY_SCRLCK      (0x80+0x46)</span>
+<span class="lineNum">      64 </span>            : #define KEY_PRTSCR      (0x80+0x59)
+<span class="lineNum">      65 </span>            : 
+<span class="lineNum">      66 </span>            : #define KEY_HOME        (0x80+0x47)
+<span class="lineNum">      67 </span>            : #define KEY_END         (0x80+0x4f)
+<span class="lineNum">      68 </span><span class="lineNoCov">          0 : #define KEY_PGUP        (0x80+0x49)</span>
+<span class="lineNum">      69 </span><span class="lineNoCov">          0 : #define KEY_PGDN        (0x80+0x51)</span>
+<span class="lineNum">      70 </span><span class="lineNoCov">          0 : #define KEY_INS         (0x80+0x52)</span>
+<span class="lineNum">      71 </span><span class="lineNoCov">          0 : #define KEY_DEL         (0x80+0x53)</span>
+<span class="lineNum">      72 </span>            : 
+<span class="lineNum">      73 </span>            : #define KEYP_0          KEY_INS
+<span class="lineNum">      74 </span>            : #define KEYP_1          KEY_END
+<span class="lineNum">      75 </span>            : #define KEYP_2          KEY_DOWNARROW
+<span class="lineNum">      76 </span>            : #define KEYP_3          KEY_PGDN
+<span class="lineNum">      77 </span>            : #define KEYP_4          KEY_LEFTARROW
+<span class="lineNum">      78 </span>            : #define KEYP_5          (0x80+0x4c)
+<span class="lineNum">      79 </span>            : #define KEYP_6          KEY_RIGHTARROW
+<span class="lineNum">      80 </span>            : #define KEYP_7          KEY_HOME
+<span class="lineNum">      81 </span>            : #define KEYP_8          KEY_UPARROW
+<span class="lineNum">      82 </span>            : #define KEYP_9          KEY_PGUP
+<span class="lineNum">      83 </span>            : 
+<span class="lineNum">      84 </span>            : #define KEYP_DIVIDE     '/'
+<span class="lineNum">      85 </span>            : #define KEYP_PLUS       '+'
+<span class="lineNum">      86 </span>            : #define KEYP_MINUS      '-'
+<span class="lineNum">      87 </span>            : #define KEYP_MULTIPLY   '*'
+<span class="lineNum">      88 </span>            : #define KEYP_PERIOD     0
+<span class="lineNum">      89 </span>            : #define KEYP_EQUALS     KEY_EQUALS
+<span class="lineNum">      90 </span>            : #define KEYP_ENTER      KEY_ENTER
+<span class="lineNum">      91 </span>            : 
+<span class="lineNum">      92 </span>            : #define SCANCODE_TO_KEYS_ARRAY {                                            \
+<span class="lineNum">      93 </span>            :     0,   0,   0,   0,   'a',                                  /* 0-9 */     \
+<span class="lineNum">      94 </span>            :     'b', 'c', 'd', 'e', 'f',                                                \
+<span class="lineNum">      95 </span>            :     'g', 'h', 'i', 'j', 'k',                                  /* 10-19 */   \
+<span class="lineNum">      96 </span>            :     'l', 'm', 'n', 'o', 'p',                                                \
+<span class="lineNum">      97 </span>            :     'q', 'r', 's', 't', 'u',                                  /* 20-29 */   \
+<span class="lineNum">      98 </span>            :     'v', 'w', 'x', 'y', 'z',                                                \
+<span class="lineNum">      99 </span>            :     '1', '2', '3', '4', '5',                                  /* 30-39 */   \
+<span class="lineNum">     100 </span>            :     '6', '7', '8', '9', '0',                                                \
+<span class="lineNum">     101 </span>            :     KEY_ENTER, KEY_ESCAPE, KEY_BACKSPACE, KEY_TAB, ' ',       /* 40-49 */   \
+<span class="lineNum">     102 </span>            :     KEY_MINUS, KEY_EQUALS, '[', ']', '\\',                                  \
+<span class="lineNum">     103 </span>            :     0,   ';', '\'', '`', ',',                                 /* 50-59 */   \
+<span class="lineNum">     104 </span>            :     '.', '/', KEY_CAPSLOCK, KEY_F1, KEY_F2,                                 \
+<span class="lineNum">     105 </span>            :     KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7,                   /* 60-69 */   \
+<span class="lineNum">     106 </span>            :     KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_F12,                              \
+<span class="lineNum">     107 </span>            :     KEY_PRTSCR, KEY_SCRLCK, KEY_PAUSE, KEY_INS, KEY_HOME,     /* 70-79 */   \
+<span class="lineNum">     108 </span>            :     KEY_PGUP, KEY_DEL, KEY_END, KEY_PGDN, KEY_RIGHTARROW,                   \
+<span class="lineNum">     109 </span>            :     KEY_LEFTARROW, KEY_DOWNARROW, KEY_UPARROW,                /* 80-89 */   \
+<span class="lineNum">     110 </span>            :     KEY_NUMLOCK, KEYP_DIVIDE,                                               \
+<span class="lineNum">     111 </span>            :     KEYP_MULTIPLY, KEYP_MINUS, KEYP_PLUS, KEYP_ENTER, KEYP_1,               \
+<span class="lineNum">     112 </span>            :     KEYP_2, KEYP_3, KEYP_4, KEYP_5, KEYP_6,                   /* 90-99 */   \
+<span class="lineNum">     113 </span>            :     KEYP_7, KEYP_8, KEYP_9, KEYP_0, KEYP_PERIOD,                            \
+<span class="lineNum">     114 </span>            :     0, 0, 0, KEYP_EQUALS,                                     /* 100-103 */ \
+<span class="lineNum">     115 </span>            : }
+<span class="lineNum">     116 </span>            : 
+<span class="lineNum">     117 </span>            : // Default names for keys, to use in English or as fallback.
+<span class="lineNum">     118 </span>            : #define KEY_NAMES_ARRAY {                                            \
+<span class="lineNum">     119 </span>            :     { KEY_BACKSPACE,  &quot;BACKSP&quot; },   { KEY_TAB,        &quot;TAB&quot; },       \
+<span class="lineNum">     120 </span>            :     { KEY_INS,        &quot;INS&quot; },      { KEY_DEL,        &quot;DEL&quot; },       \
+<span class="lineNum">     121 </span>            :     { KEY_PGUP,       &quot;PGUP&quot; },     { KEY_PGDN,       &quot;PGDN&quot; },      \
+<span class="lineNum">     122 </span>            :     { KEY_ENTER,      &quot;ENTER&quot; },    { KEY_ESCAPE,     &quot;ESC&quot; },       \
+<span class="lineNum">     123 </span>            :     { KEY_F1,         &quot;F1&quot; },       { KEY_F2,         &quot;F2&quot; },        \
+<span class="lineNum">     124 </span>            :     { KEY_F3,         &quot;F3&quot; },       { KEY_F4,         &quot;F4&quot; },        \
+<span class="lineNum">     125 </span>            :     { KEY_F5,         &quot;F5&quot; },       { KEY_F6,         &quot;F6&quot; },        \
+<span class="lineNum">     126 </span>            :     { KEY_F7,         &quot;F7&quot; },       { KEY_F8,         &quot;F8&quot; },        \
+<span class="lineNum">     127 </span>            :     { KEY_F9,         &quot;F9&quot; },       { KEY_F10,        &quot;F10&quot; },       \
+<span class="lineNum">     128 </span>            :     { KEY_F11,        &quot;F11&quot; },      { KEY_F12,        &quot;F12&quot; },       \
+<span class="lineNum">     129 </span>            :     { KEY_HOME,       &quot;HOME&quot; },     { KEY_END,        &quot;END&quot; },       \
+<span class="lineNum">     130 </span>            :     { KEY_MINUS,      &quot;-&quot; },        { KEY_EQUALS,     &quot;=&quot; },         \
+<span class="lineNum">     131 </span>            :     { KEY_NUMLOCK,    &quot;NUMLCK&quot; },   { KEY_SCRLCK,     &quot;SCRLCK&quot; },    \
+<span class="lineNum">     132 </span>            :     { KEY_PAUSE,      &quot;PAUSE&quot; },    { KEY_PRTSCR,     &quot;PRTSC&quot; },     \
+<span class="lineNum">     133 </span>            :     { KEY_UPARROW,    &quot;UP&quot; },       { KEY_DOWNARROW,  &quot;DOWN&quot; },      \
+<span class="lineNum">     134 </span>            :     { KEY_LEFTARROW,  &quot;LEFT&quot; },     { KEY_RIGHTARROW, &quot;RIGHT&quot; },     \
+<span class="lineNum">     135 </span>            :     { KEY_RALT,       &quot;ALT&quot; },      { KEY_LALT,       &quot;ALT&quot; },       \
+<span class="lineNum">     136 </span>            :     { KEY_RSHIFT,     &quot;SHIFT&quot; },    { KEY_CAPSLOCK,   &quot;CAPS&quot; },      \
+<span class="lineNum">     137 </span>            :     { KEY_RCTRL,      &quot;CTRL&quot; },     { KEYP_5,         &quot;NUM5&quot; },      \
+<span class="lineNum">     138 </span>            :     { ' ',            &quot;SPACE&quot; },                                     \
+<span class="lineNum">     139 </span>            :     { 'a', &quot;A&quot; },   { 'b', &quot;B&quot; },   { 'c', &quot;C&quot; },   { 'd', &quot;D&quot; },    \
+<span class="lineNum">     140 </span>            :     { 'e', &quot;E&quot; },   { 'f', &quot;F&quot; },   { 'g', &quot;G&quot; },   { 'h', &quot;H&quot; },    \
+<span class="lineNum">     141 </span>            :     { 'i', &quot;I&quot; },   { 'j', &quot;J&quot; },   { 'k', &quot;K&quot; },   { 'l', &quot;L&quot; },    \
+<span class="lineNum">     142 </span>            :     { 'm', &quot;M&quot; },   { 'n', &quot;N&quot; },   { 'o', &quot;O&quot; },   { 'p', &quot;P&quot; },    \
+<span class="lineNum">     143 </span>            :     { 'q', &quot;Q&quot; },   { 'r', &quot;R&quot; },   { 's', &quot;S&quot; },   { 't', &quot;T&quot; },    \
+<span class="lineNum">     144 </span>            :     { 'u', &quot;U&quot; },   { 'v', &quot;V&quot; },   { 'w', &quot;W&quot; },   { 'x', &quot;X&quot; },    \
+<span class="lineNum">     145 </span>            :     { 'y', &quot;Y&quot; },   { 'z', &quot;Z&quot; },   { '0', &quot;0&quot; },   { '1', &quot;1&quot; },    \
+<span class="lineNum">     146 </span>            :     { '2', &quot;2&quot; },   { '3', &quot;3&quot; },   { '4', &quot;4&quot; },   { '5', &quot;5&quot; },    \
+<span class="lineNum">     147 </span>            :     { '6', &quot;6&quot; },   { '7', &quot;7&quot; },   { '8', &quot;8&quot; },   { '9', &quot;9&quot; },    \
+<span class="lineNum">     148 </span>            :     { '[', &quot;[&quot; },   { ']', &quot;]&quot; },   { ';', &quot;;&quot; },   { '`', &quot;`&quot; },    \
+<span class="lineNum">     149 </span>            :     { ',', &quot;,&quot; },   { '.', &quot;.&quot; },   { '/', &quot;/&quot; },   { '\\', &quot;\\&quot; },  \
+<span class="lineNum">     150 </span>            :     { '\'', &quot;\'&quot; },                                                  \
+<span class="lineNum">     151 </span>            : }
+<span class="lineNum">     152 </span>            : 
+<span class="lineNum">     153 </span>            : #endif          // __DOOMKEYS__
+<span class="lineNum">     154 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

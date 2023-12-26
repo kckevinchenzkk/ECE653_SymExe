@@ -1,0 +1,509 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/deh_str.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - deh_str.c<span style="font-size: 80%;"> (source / <a href="deh_str.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">278</td>
+            <td class="headerCovTableEntry">326</td>
+            <td class="headerCovTableEntryMed">85.3 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">14</td>
+            <td class="headerCovTableEntry">15</td>
+            <td class="headerCovTableEntryHi">93.3 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       3 </span>            : //
+<span class="lineNum">       4 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       5 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       6 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       7 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       8 </span>            : //
+<span class="lineNum">       9 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      10 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      11 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      12 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      13 </span>            : //
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // Parses Text substitution sections in dehacked files
+<span class="lineNum">      16 </span>            : //
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      19 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      20 </span>            : #include &lt;string.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;stdarg.h&gt;
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;doomtype.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;deh_str.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;m_misc.h&quot;
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : #include &quot;z_zone.h&quot;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : typedef struct 
+<span class="lineNum">      30 </span>            : {
+<span class="lineNum">      31 </span>            :     char *from_text;
+<span class="lineNum">      32 </span>            :     char *to_text;
+<span class="lineNum">      33 </span>            : } deh_substitution_t;
+<span class="lineNum">      34 </span>            : 
+<span class="lineNum">      35 </span>            : static deh_substitution_t **hash_table = NULL;
+<span class="lineNum">      36 </span>            : static int hash_table_entries;
+<span class="lineNum">      37 </span>            : static int hash_table_length = -1;
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span>            : // This is the algorithm used by glib
+<a name="40"><span class="lineNum">      40 </span>            : </a>
+<span class="lineNum">      41 </span>            : static unsigned int strhash(const char *s)
+<span class="lineNum">      42 </span><span class="lineCov">    8788788 : {</span>
+<span class="lineNum">      43 </span><span class="lineCov">    8788788 :     const char *p = s;</span>
+<span class="lineNum">      44 </span><span class="lineCov">    8788788 :     unsigned int h = *p;</span>
+<span class="lineNum">      45 </span><span class="lineCov">    8788788 :   </span>
+<span class="lineNum">      46 </span><span class="lineCov">    8788788 :     if (h)</span>
+<span class="lineNum">      47 </span><span class="lineCov">    8788788 :     {</span>
+<span class="lineNum">      48 </span><span class="lineCov">  197079208 :         for (p += 1; *p; p++)</span>
+<span class="lineNum">      49 </span><span class="lineCov">  188290420 :             h = (h &lt;&lt; 5) - h + *p;</span>
+<span class="lineNum">      50 </span><span class="lineCov">    8788788 :     }</span>
+<span class="lineNum">      51 </span><span class="lineCov">    8788788 : </span>
+<span class="lineNum">      52 </span><span class="lineCov">    8788788 :     return h;</span>
+<span class="lineNum">      53 </span><span class="lineCov">    8788788 : }</span>
+<a name="54"><span class="lineNum">      54 </span>            : </a>
+<span class="lineNum">      55 </span>            : static deh_substitution_t *SubstitutionForString(const char *s)
+<span class="lineNum">      56 </span><span class="lineCov">    8213298 : {</span>
+<span class="lineNum">      57 </span><span class="lineCov">    8213298 :     int entry;</span>
+<span class="lineNum">      58 </span><span class="lineCov">    8213298 : </span>
+<span class="lineNum">      59 </span><span class="lineCov">    8213298 :     // Fallback if we have not initialized the hash table yet</span>
+<span class="lineNum">      60 </span><span class="lineCov">    8213298 :     if (hash_table_length &lt; 0)</span>
+<span class="lineNum">      61 </span><span class="lineCov">      28350 :         return NULL;</span>
+<span class="lineNum">      62 </span><span class="lineCov">    8184948 : </span>
+<span class="lineNum">      63 </span><span class="lineCov">    8184948 :     entry = strhash(s) % hash_table_length;</span>
+<span class="lineNum">      64 </span><span class="lineCov">    8184948 : </span>
+<span class="lineNum">      65 </span><span class="lineCov">    9861136 :     while (hash_table[entry] != NULL)</span>
+<span class="lineNum">      66 </span><span class="lineCov">    8184948 :     {</span>
+<span class="lineNum">      67 </span><span class="lineCov">    5310522 :         if (!strcmp(hash_table[entry]-&gt;from_text, s))</span>
+<span class="lineNum">      68 </span><span class="lineCov">    3634334 :         {</span>
+<span class="lineNum">      69 </span><span class="lineCov">    3634334 :             // substitution found!</span>
+<span class="lineNum">      70 </span><span class="lineCov">    3634334 :             return hash_table[entry];</span>
+<span class="lineNum">      71 </span><span class="lineCov">    3634334 :         }</span>
+<span class="lineNum">      72 </span><span class="lineCov">    1676188 : </span>
+<span class="lineNum">      73 </span><span class="lineCov">    1676188 :         entry = (entry + 1) % hash_table_length;</span>
+<span class="lineNum">      74 </span><span class="lineCov">    1676188 :     }</span>
+<span class="lineNum">      75 </span><span class="lineCov">    8184948 : </span>
+<span class="lineNum">      76 </span><span class="lineCov">    8184948 :     // no substitution found</span>
+<span class="lineNum">      77 </span><span class="lineCov">    8184948 :     return NULL;</span>
+<span class="lineNum">      78 </span><span class="lineCov">    8184948 : }</span>
+<span class="lineNum">      79 </span>            : 
+<span class="lineNum">      80 </span>            : // Look up a string to see if it has been replaced with something else
+<span class="lineNum">      81 </span>            : // This will be used throughout the program to substitute text
+<a name="82"><span class="lineNum">      82 </span>            : </a>
+<span class="lineNum">      83 </span>            : const char *DEH_String(const char *s)
+<span class="lineNum">      84 </span><span class="lineCov">    4341304 : {</span>
+<span class="lineNum">      85 </span><span class="lineCov">    4341304 :     deh_substitution_t *subst;</span>
+<span class="lineNum">      86 </span><span class="lineCov">    4341304 : </span>
+<span class="lineNum">      87 </span><span class="lineCov">    4341304 :     subst = SubstitutionForString(s);</span>
+<span class="lineNum">      88 </span><span class="lineCov">    4341304 : </span>
+<span class="lineNum">      89 </span><span class="lineCov">    4341304 :     if (subst != NULL)</span>
+<span class="lineNum">      90 </span><span class="lineCov">    4341304 :     {</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 :         return subst-&gt;to_text;</span>
+<span class="lineNum">      92 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">      93 </span><span class="lineCov">    4341304 :     else</span>
+<span class="lineNum">      94 </span><span class="lineCov">    4341304 :     {</span>
+<span class="lineNum">      95 </span><span class="lineCov">    4341304 :         return s;</span>
+<span class="lineNum">      96 </span><span class="lineCov">    4341304 :     }</span>
+<span class="lineNum">      97 </span><span class="lineCov">    4341304 : }</span>
+<a name="98"><span class="lineNum">      98 </span>            : </a>
+<span class="lineNum">      99 </span>            : static void InitHashTable(void)
+<span class="lineNum">     100 </span><span class="lineCov">       1020 : {</span>
+<span class="lineNum">     101 </span><span class="lineCov">       1020 :     // init hash table</span>
+<span class="lineNum">     102 </span><span class="lineCov">       1020 :     </span>
+<span class="lineNum">     103 </span><span class="lineCov">       1020 :     hash_table_entries = 0;</span>
+<span class="lineNum">     104 </span><span class="lineCov">       1020 :     hash_table_length = 16;</span>
+<span class="lineNum">     105 </span><span class="lineCov">       1020 :     hash_table = Z_Malloc(sizeof(deh_substitution_t *) * hash_table_length,</span>
+<span class="lineNum">     106 </span><span class="lineCov">       1020 :                           PU_STATIC, NULL);</span>
+<span class="lineNum">     107 </span><span class="lineCov">       1020 :     memset(hash_table, 0, sizeof(deh_substitution_t *) * hash_table_length);</span>
+<span class="lineNum">     108 </span><span class="lineCov">       1020 : }</span>
+<span class="lineNum">     109 </span>            : 
+<span class="lineNum">     110 </span>            : static void DEH_AddToHashtable(deh_substitution_t *sub);
+<a name="111"><span class="lineNum">     111 </span>            : </a>
+<span class="lineNum">     112 </span>            : static void IncreaseHashtable(void)
+<span class="lineNum">     113 </span><span class="lineCov">       6120 : {</span>
+<span class="lineNum">     114 </span><span class="lineCov">       6120 :     deh_substitution_t **old_table;</span>
+<span class="lineNum">     115 </span><span class="lineCov">       6120 :     int old_table_length;</span>
+<span class="lineNum">     116 </span><span class="lineCov">       6120 :     int i;</span>
+<span class="lineNum">     117 </span><span class="lineCov">       6120 :     </span>
+<span class="lineNum">     118 </span><span class="lineCov">       6120 :     // save the old table</span>
+<span class="lineNum">     119 </span><span class="lineCov">       6120 : </span>
+<span class="lineNum">     120 </span><span class="lineCov">       6120 :     old_table = hash_table;</span>
+<span class="lineNum">     121 </span><span class="lineCov">       6120 :     old_table_length = hash_table_length;</span>
+<span class="lineNum">     122 </span><span class="lineCov">       6120 :     </span>
+<span class="lineNum">     123 </span><span class="lineCov">       6120 :     // double the size </span>
+<span class="lineNum">     124 </span><span class="lineCov">       6120 : </span>
+<span class="lineNum">     125 </span><span class="lineCov">       6120 :     hash_table_length *= 2;</span>
+<span class="lineNum">     126 </span><span class="lineCov">       6120 :     hash_table = Z_Malloc(sizeof(deh_substitution_t *) * hash_table_length,</span>
+<span class="lineNum">     127 </span><span class="lineCov">       6120 :                           PU_STATIC, NULL);</span>
+<span class="lineNum">     128 </span><span class="lineCov">       6120 :     memset(hash_table, 0, sizeof(deh_substitution_t *) * hash_table_length);</span>
+<span class="lineNum">     129 </span><span class="lineCov">       6120 : </span>
+<span class="lineNum">     130 </span><span class="lineCov">       6120 :     // go through the old table and insert all the old entries</span>
+<span class="lineNum">     131 </span><span class="lineCov">       6120 : </span>
+<span class="lineNum">     132 </span><span class="lineCov">    1034280 :     for (i=0; i&lt;old_table_length; ++i)</span>
+<span class="lineNum">     133 </span><span class="lineCov">    1028160 :     {</span>
+<span class="lineNum">     134 </span><span class="lineCov">    1028160 :         if (old_table[i] != NULL)</span>
+<span class="lineNum">     135 </span><span class="lineCov">    1028160 :         {</span>
+<span class="lineNum">     136 </span><span class="lineCov">     366180 :             DEH_AddToHashtable(old_table[i]);</span>
+<span class="lineNum">     137 </span><span class="lineCov">     366180 :         }</span>
+<span class="lineNum">     138 </span><span class="lineCov">    1028160 :     }</span>
+<span class="lineNum">     139 </span><span class="lineCov">       6120 : </span>
+<span class="lineNum">     140 </span><span class="lineCov">       6120 :     // free the old table</span>
+<span class="lineNum">     141 </span><span class="lineCov">       6120 : </span>
+<span class="lineNum">     142 </span><span class="lineCov">       6120 :     Z_Free(old_table);</span>
+<span class="lineNum">     143 </span><span class="lineCov">       6120 : }</span>
+<a name="144"><span class="lineNum">     144 </span>            : </a>
+<span class="lineNum">     145 </span>            : static void DEH_AddToHashtable(deh_substitution_t *sub)
+<span class="lineNum">     146 </span><span class="lineCov">     603840 : {</span>
+<span class="lineNum">     147 </span><span class="lineCov">     603840 :     int entry;</span>
+<span class="lineNum">     148 </span><span class="lineCov">     603840 : </span>
+<span class="lineNum">     149 </span><span class="lineCov">     603840 :     // if the hash table is more than 60% full, increase its size</span>
+<span class="lineNum">     150 </span><span class="lineCov">     603840 : </span>
+<span class="lineNum">     151 </span><span class="lineCov">     603840 :     if ((hash_table_entries * 10) / hash_table_length &gt; 6)</span>
+<span class="lineNum">     152 </span><span class="lineCov">       6120 :     {</span>
+<span class="lineNum">     153 </span><span class="lineCov">       6120 :         IncreaseHashtable();</span>
+<span class="lineNum">     154 </span><span class="lineCov">       6120 :     }</span>
+<span class="lineNum">     155 </span><span class="lineCov">     603840 : </span>
+<span class="lineNum">     156 </span><span class="lineCov">     603840 :     // find where to insert it</span>
+<span class="lineNum">     157 </span><span class="lineCov">     603840 :     entry = strhash(sub-&gt;from_text) % hash_table_length;</span>
+<span class="lineNum">     158 </span><span class="lineCov">     603840 : </span>
+<span class="lineNum">     159 </span><span class="lineCov">     732360 :     while (hash_table[entry] != NULL)</span>
+<span class="lineNum">     160 </span><span class="lineCov">     603840 :     {</span>
+<span class="lineNum">     161 </span><span class="lineCov">     128520 :         entry = (entry + 1) % hash_table_length;</span>
+<span class="lineNum">     162 </span><span class="lineCov">     128520 :     }</span>
+<span class="lineNum">     163 </span><span class="lineCov">     603840 : </span>
+<span class="lineNum">     164 </span><span class="lineCov">     603840 :     hash_table[entry] = sub;</span>
+<span class="lineNum">     165 </span><span class="lineCov">     603840 :     ++hash_table_entries;</span>
+<span class="lineNum">     166 </span><span class="lineCov">     603840 : }</span>
+<a name="167"><span class="lineNum">     167 </span>            : </a>
+<span class="lineNum">     168 </span>            : void DEH_AddStringReplacement(const char *from_text, const char *to_text)
+<span class="lineNum">     169 </span><span class="lineCov">    3871994 : {</span>
+<span class="lineNum">     170 </span><span class="lineCov">    3871994 :     deh_substitution_t *sub;</span>
+<span class="lineNum">     171 </span><span class="lineCov">    3871994 :     size_t len;</span>
+<span class="lineNum">     172 </span><span class="lineCov">    3871994 : </span>
+<span class="lineNum">     173 </span><span class="lineCov">    3871994 :     // Initialize the hash table if this is the first time</span>
+<span class="lineNum">     174 </span><span class="lineCov">    3871994 :     if (hash_table_length &lt; 0)</span>
+<span class="lineNum">     175 </span><span class="lineCov">       1020 :     {</span>
+<span class="lineNum">     176 </span><span class="lineCov">       1020 :         InitHashTable();</span>
+<span class="lineNum">     177 </span><span class="lineCov">       1020 :     }</span>
+<span class="lineNum">     178 </span><span class="lineCov">    3871994 : </span>
+<span class="lineNum">     179 </span><span class="lineCov">    3871994 :     // Check to see if there is an existing substitution already in place.</span>
+<span class="lineNum">     180 </span><span class="lineCov">    3871994 :     sub = SubstitutionForString(from_text);</span>
+<span class="lineNum">     181 </span><span class="lineCov">    3871994 : </span>
+<span class="lineNum">     182 </span><span class="lineCov">    3871994 :     if (sub != NULL)</span>
+<span class="lineNum">     183 </span><span class="lineCov">    3871994 :     {</span>
+<span class="lineNum">     184 </span><span class="lineCov">    3634334 :         Z_Free(sub-&gt;to_text);</span>
+<span class="lineNum">     185 </span><span class="lineCov">    3634334 : </span>
+<span class="lineNum">     186 </span><span class="lineCov">    3634334 :         len = strlen(to_text) + 1;</span>
+<span class="lineNum">     187 </span><span class="lineCov">    3634334 :         sub-&gt;to_text = Z_Malloc(len, PU_STATIC, NULL);</span>
+<span class="lineNum">     188 </span><span class="lineCov">    3634334 :         memcpy(sub-&gt;to_text, to_text, len);</span>
+<span class="lineNum">     189 </span><span class="lineCov">    3634334 :     }</span>
+<span class="lineNum">     190 </span><span class="lineCov">     237660 :     else</span>
+<span class="lineNum">     191 </span><span class="lineCov">     237660 :     {</span>
+<span class="lineNum">     192 </span><span class="lineCov">     237660 :         // We need to allocate a new substitution.</span>
+<span class="lineNum">     193 </span><span class="lineCov">     237660 :         sub = Z_Malloc(sizeof(*sub), PU_STATIC, 0);</span>
+<span class="lineNum">     194 </span><span class="lineCov">     237660 : </span>
+<span class="lineNum">     195 </span><span class="lineCov">     237660 :         // We need to create our own duplicates of the provided strings.</span>
+<span class="lineNum">     196 </span><span class="lineCov">     237660 :         len = strlen(from_text) + 1;</span>
+<span class="lineNum">     197 </span><span class="lineCov">     237660 :         sub-&gt;from_text = Z_Malloc(len, PU_STATIC, NULL);</span>
+<span class="lineNum">     198 </span><span class="lineCov">     237660 :         memcpy(sub-&gt;from_text, from_text, len);</span>
+<span class="lineNum">     199 </span><span class="lineCov">     237660 : </span>
+<span class="lineNum">     200 </span><span class="lineCov">     237660 :         len = strlen(to_text) + 1;</span>
+<span class="lineNum">     201 </span><span class="lineCov">     237660 :         sub-&gt;to_text = Z_Malloc(len, PU_STATIC, NULL);</span>
+<span class="lineNum">     202 </span><span class="lineCov">     237660 :         memcpy(sub-&gt;to_text, to_text, len);</span>
+<span class="lineNum">     203 </span><span class="lineCov">     237660 : </span>
+<span class="lineNum">     204 </span><span class="lineCov">     237660 :         DEH_AddToHashtable(sub);</span>
+<span class="lineNum">     205 </span><span class="lineCov">     237660 :     }</span>
+<span class="lineNum">     206 </span><span class="lineCov">    3871994 : }</span>
+<span class="lineNum">     207 </span>            : 
+<span class="lineNum">     208 </span>            : typedef enum
+<span class="lineNum">     209 </span>            : {
+<span class="lineNum">     210 </span>            :     FORMAT_ARG_INVALID,
+<span class="lineNum">     211 </span>            :     FORMAT_ARG_INT,
+<span class="lineNum">     212 </span>            :     FORMAT_ARG_FLOAT,
+<span class="lineNum">     213 </span>            :     FORMAT_ARG_CHAR,
+<span class="lineNum">     214 </span>            :     FORMAT_ARG_STRING,
+<span class="lineNum">     215 </span>            :     FORMAT_ARG_PTR,
+<span class="lineNum">     216 </span>            :     FORMAT_ARG_SAVE_POS
+<span class="lineNum">     217 </span>            : } format_arg_t;
+<span class="lineNum">     218 </span>            : 
+<span class="lineNum">     219 </span>            : // Get the type of a format argument.
+<span class="lineNum">     220 </span>            : // We can mix-and-match different format arguments as long as they
+<span class="lineNum">     221 </span>            : // are for the same data type.
+<a name="222"><span class="lineNum">     222 </span>            : </a>
+<span class="lineNum">     223 </span>            : static format_arg_t FormatArgumentType(char c)
+<span class="lineNum">     224 </span><span class="lineCov">      62862 : {</span>
+<span class="lineNum">     225 </span><span class="lineCov">      62862 :     switch (c)</span>
+<span class="lineNum">     226 </span><span class="lineCov">      62862 :     {</span>
+<span class="lineNum">     227 </span><span class="lineCov">      29396 :         case 'd': case 'i': case 'o': case 'u': case 'x': case 'X':</span>
+<span class="lineNum">     228 </span><span class="lineCov">      29396 :             return FORMAT_ARG_INT;</span>
+<span class="lineNum">     229 </span><span class="lineCov">      29396 : </span>
+<span class="lineNum">     230 </span><span class="lineCov">      29396 :         case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':</span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :         case 'a': case 'A':</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :             return FORMAT_ARG_FLOAT;</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :         case 'c': case 'C':</span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 :             return FORMAT_ARG_CHAR;</span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     237 </span><span class="lineCov">      33466 :         case 's': case 'S':</span>
+<span class="lineNum">     238 </span><span class="lineCov">      33466 :             return FORMAT_ARG_STRING;</span>
+<span class="lineNum">     239 </span><span class="lineCov">      33466 : </span>
+<span class="lineNum">     240 </span><span class="lineCov">      33466 :         case 'p':</span>
+<span class="lineNum">     241 </span><span class="lineNoCov">          0 :             return FORMAT_ARG_PTR;</span>
+<span class="lineNum">     242 </span><span class="lineCov">      33466 : </span>
+<span class="lineNum">     243 </span><span class="lineCov">      33466 :         case 'n':</span>
+<span class="lineNum">     244 </span><span class="lineNoCov">          0 :             return FORMAT_ARG_SAVE_POS;</span>
+<span class="lineNum">     245 </span><span class="lineCov">      33466 : </span>
+<span class="lineNum">     246 </span><span class="lineCov">      33466 :         default:</span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :             return FORMAT_ARG_INVALID;</span>
+<span class="lineNum">     248 </span><span class="lineCov">      62862 :     }</span>
+<span class="lineNum">     249 </span><span class="lineCov">      62862 : }</span>
+<span class="lineNum">     250 </span>            : 
+<span class="lineNum">     251 </span>            : // Given the specified string, get the type of the first format
+<span class="lineNum">     252 </span>            : // string encountered.
+<a name="253"><span class="lineNum">     253 </span>            : </a>
+<span class="lineNum">     254 </span>            : static format_arg_t NextFormatArgument(const char **str)
+<span class="lineNum">     255 </span><span class="lineCov">     482514 : {</span>
+<span class="lineNum">     256 </span><span class="lineCov">     482514 :     format_arg_t argtype;</span>
+<span class="lineNum">     257 </span><span class="lineCov">     482514 : </span>
+<span class="lineNum">     258 </span><span class="lineCov">     482514 :     // Search for the '%' starting the next string.</span>
+<span class="lineNum">     259 </span><span class="lineCov">     482514 : </span>
+<span class="lineNum">     260 </span><span class="lineCov">   12566990 :     while (**str != '\0')</span>
+<span class="lineNum">     261 </span><span class="lineCov">   12147338 :     {</span>
+<span class="lineNum">     262 </span><span class="lineCov">   12147338 :         if (**str == '%')</span>
+<span class="lineNum">     263 </span><span class="lineCov">      62862 :         {</span>
+<span class="lineNum">     264 </span><span class="lineCov">      62862 :             ++*str;</span>
+<span class="lineNum">     265 </span><span class="lineCov">      62862 : </span>
+<span class="lineNum">     266 </span><span class="lineCov">      62862 :             // Don't stop for double-%s.</span>
+<span class="lineNum">     267 </span><span class="lineCov">      62862 : </span>
+<span class="lineNum">     268 </span><span class="lineCov">      62862 :             if (**str != '%')</span>
+<span class="lineNum">     269 </span><span class="lineCov">      62862 :             {</span>
+<span class="lineNum">     270 </span><span class="lineCov">      62862 :                 break;</span>
+<span class="lineNum">     271 </span><span class="lineCov">      62862 :             }</span>
+<span class="lineNum">     272 </span><span class="lineCov">   12084476 :         }</span>
+<span class="lineNum">     273 </span><span class="lineCov">   12084476 : </span>
+<span class="lineNum">     274 </span><span class="lineCov">   12084476 :         ++*str;</span>
+<span class="lineNum">     275 </span><span class="lineCov">   12084476 :     }</span>
+<span class="lineNum">     276 </span><span class="lineCov">     482514 : </span>
+<span class="lineNum">     277 </span><span class="lineCov">     482514 :     // Find the type of the format string.</span>
+<span class="lineNum">     278 </span><span class="lineCov">     482514 : </span>
+<span class="lineNum">     279 </span><span class="lineCov">     482514 :     while (**str != '\0')</span>
+<span class="lineNum">     280 </span><span class="lineCov">      62862 :     {</span>
+<span class="lineNum">     281 </span><span class="lineCov">      62862 :         argtype = FormatArgumentType(**str);</span>
+<span class="lineNum">     282 </span><span class="lineCov">      62862 : </span>
+<span class="lineNum">     283 </span><span class="lineCov">      62862 :         if (argtype != FORMAT_ARG_INVALID)</span>
+<span class="lineNum">     284 </span><span class="lineCov">      62862 :         {</span>
+<span class="lineNum">     285 </span><span class="lineCov">      62862 :             ++*str;</span>
+<span class="lineNum">     286 </span><span class="lineCov">      62862 : </span>
+<span class="lineNum">     287 </span><span class="lineCov">      62862 :             return argtype;</span>
+<span class="lineNum">     288 </span><span class="lineCov">      62862 :         }</span>
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 :         ++*str;</span>
+<span class="lineNum">     291 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     292 </span><span class="lineCov">     482514 : </span>
+<span class="lineNum">     293 </span><span class="lineCov">     482514 :     // Stop searching, we have reached the end.</span>
+<span class="lineNum">     294 </span><span class="lineCov">     482514 : </span>
+<span class="lineNum">     295 </span><span class="lineCov">     482514 :     *str = NULL;</span>
+<span class="lineNum">     296 </span><span class="lineCov">     419652 : </span>
+<span class="lineNum">     297 </span><span class="lineCov">     419652 :     return FORMAT_ARG_INVALID;</span>
+<span class="lineNum">     298 </span><span class="lineCov">     482514 : }</span>
+<span class="lineNum">     299 </span>            : 
+<span class="lineNum">     300 </span>            : // Check if the specified argument type is a valid replacement for
+<span class="lineNum">     301 </span>            : // the original.
+<span class="lineNum">     302 </span>            : 
+<a name="303"><span class="lineNum">     303 </span>            : static boolean ValidArgumentReplacement(format_arg_t original,</a>
+<span class="lineNum">     304 </span>            :                                         format_arg_t replacement)
+<span class="lineNum">     305 </span><span class="lineCov">      31431 : {</span>
+<span class="lineNum">     306 </span><span class="lineCov">      31431 :     // In general, the original and replacement types should be</span>
+<span class="lineNum">     307 </span><span class="lineCov">      31431 :     // identical.  However, there are some cases where the replacement</span>
+<span class="lineNum">     308 </span><span class="lineCov">      31431 :     // is valid and the types don't match.</span>
+<span class="lineNum">     309 </span><span class="lineCov">      31431 : </span>
+<span class="lineNum">     310 </span><span class="lineCov">      31431 :     // Characters can be represented as ints.</span>
+<span class="lineNum">     311 </span><span class="lineCov">      31431 : </span>
+<span class="lineNum">     312 </span><span class="lineCov">      31431 :     if (original == FORMAT_ARG_CHAR &amp;&amp; replacement == FORMAT_ARG_INT)</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     316 </span><span class="lineCov">      31431 : </span>
+<span class="lineNum">     317 </span><span class="lineCov">      31431 :     // Strings are pointers.</span>
+<span class="lineNum">     318 </span><span class="lineCov">      31431 : </span>
+<span class="lineNum">     319 </span><span class="lineCov">      31431 :     if (original == FORMAT_ARG_STRING &amp;&amp; replacement == FORMAT_ARG_PTR)</span>
+<span class="lineNum">     320 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     323 </span><span class="lineCov">      31431 : </span>
+<span class="lineNum">     324 </span><span class="lineCov">      31431 :     return original == replacement;</span>
+<span class="lineNum">     325 </span><span class="lineCov">      31431 : }</span>
+<span class="lineNum">     326 </span>            : 
+<span class="lineNum">     327 </span>            : // Return true if the specified string contains no format arguments.
+<a name="328"><span class="lineNum">     328 </span>            : </a>
+<span class="lineNum">     329 </span>            : static boolean ValidFormatReplacement(const char *original, const char *replacement)
+<span class="lineNum">     330 </span><span class="lineCov">     209826 : {</span>
+<span class="lineNum">     331 </span><span class="lineCov">     209826 :     const char *rover1;</span>
+<span class="lineNum">     332 </span><span class="lineCov">     209826 :     const char *rover2;</span>
+<span class="lineNum">     333 </span><span class="lineCov">     209826 :     int argtype1, argtype2;</span>
+<span class="lineNum">     334 </span><span class="lineCov">     209826 : </span>
+<span class="lineNum">     335 </span><span class="lineCov">     209826 :     // Check each argument in turn and compare types.</span>
+<span class="lineNum">     336 </span><span class="lineCov">     209826 : </span>
+<span class="lineNum">     337 </span><span class="lineCov">     209826 :     rover1 = original; rover2 = replacement;</span>
+<span class="lineNum">     338 </span><span class="lineCov">     209826 : </span>
+<span class="lineNum">     339 </span><span class="lineCov">     209826 :     for (;;)</span>
+<span class="lineNum">     340 </span><span class="lineCov">     241257 :     {</span>
+<span class="lineNum">     341 </span><span class="lineCov">     241257 :         argtype1 = NextFormatArgument(&amp;rover1);</span>
+<span class="lineNum">     342 </span><span class="lineCov">     241257 :         argtype2 = NextFormatArgument(&amp;rover2);</span>
+<span class="lineNum">     343 </span><span class="lineCov">     241257 : </span>
+<span class="lineNum">     344 </span><span class="lineCov">     241257 :         if (argtype2 == FORMAT_ARG_INVALID)</span>
+<span class="lineNum">     345 </span><span class="lineCov">     209826 :         {</span>
+<span class="lineNum">     346 </span><span class="lineCov">     209826 :             // No more arguments left to read from the replacement string.</span>
+<span class="lineNum">     347 </span><span class="lineCov">     209826 : </span>
+<span class="lineNum">     348 </span><span class="lineCov">     209826 :             break;</span>
+<span class="lineNum">     349 </span><span class="lineCov">     209826 :         }</span>
+<span class="lineNum">     350 </span><span class="lineCov">      31431 :         else if (argtype1 == FORMAT_ARG_INVALID)</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 :             // Replacement string has more arguments than the original.</span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     356 </span><span class="lineCov">      31431 :         else if (!ValidArgumentReplacement(argtype1, argtype2))</span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 :             // Not a valid replacement argument.</span>
+<span class="lineNum">     359 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     362 </span><span class="lineCov">     241257 :     }</span>
+<span class="lineNum">     363 </span><span class="lineCov">     209826 : </span>
+<span class="lineNum">     364 </span><span class="lineCov">     209826 :     return true;</span>
+<span class="lineNum">     365 </span><span class="lineCov">     209826 : }</span>
+<span class="lineNum">     366 </span>            : 
+<span class="lineNum">     367 </span>            : // Get replacement format string, checking arguments.
+<a name="368"><span class="lineNum">     368 </span>            : </a>
+<span class="lineNum">     369 </span>            : static const char *FormatStringReplacement(const char *s)
+<span class="lineNum">     370 </span><span class="lineCov">     209826 : {</span>
+<span class="lineNum">     371 </span><span class="lineCov">     209826 :     const char *repl;</span>
+<span class="lineNum">     372 </span><span class="lineCov">     209826 : </span>
+<span class="lineNum">     373 </span><span class="lineCov">     209826 :     repl = DEH_String(s);</span>
+<span class="lineNum">     374 </span><span class="lineCov">     209826 : </span>
+<span class="lineNum">     375 </span><span class="lineCov">     209826 :     if (!ValidFormatReplacement(s, repl))</span>
+<span class="lineNum">     376 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :         printf(&quot;WARNING: Unsafe dehacked replacement provided for &quot;</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :                &quot;printf format string: %s\n&quot;, s);</span>
+<span class="lineNum">     379 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     380 </span><span class="lineNoCov">          0 :         return s;</span>
+<span class="lineNum">     381 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     382 </span><span class="lineCov">     209826 : </span>
+<span class="lineNum">     383 </span><span class="lineCov">     209826 :     return repl;</span>
+<span class="lineNum">     384 </span><span class="lineCov">     209826 : }</span>
+<span class="lineNum">     385 </span>            : 
+<span class="lineNum">     386 </span>            : // printf(), performing a replacement on the format string.
+<a name="387"><span class="lineNum">     387 </span>            : </a>
+<span class="lineNum">     388 </span>            : void DEH_printf(const char *fmt, ...)
+<span class="lineNum">     389 </span><span class="lineCov">     195128 : {</span>
+<span class="lineNum">     390 </span><span class="lineCov">     195128 :     va_list args;</span>
+<span class="lineNum">     391 </span><span class="lineCov">     195128 :     const char *repl;</span>
+<span class="lineNum">     392 </span><span class="lineCov">     195128 : </span>
+<span class="lineNum">     393 </span><span class="lineCov">     195128 :     repl = FormatStringReplacement(fmt);</span>
+<span class="lineNum">     394 </span><span class="lineCov">     195128 : </span>
+<span class="lineNum">     395 </span><span class="lineCov">     195128 :     va_start(args, fmt);</span>
+<span class="lineNum">     396 </span><span class="lineCov">     195128 : </span>
+<span class="lineNum">     397 </span><span class="lineCov">     195128 :     vprintf(repl, args);</span>
+<span class="lineNum">     398 </span><span class="lineCov">     195128 : </span>
+<span class="lineNum">     399 </span><span class="lineCov">     195128 :     va_end(args);</span>
+<span class="lineNum">     400 </span><span class="lineCov">     195128 : }</span>
+<span class="lineNum">     401 </span>            : 
+<span class="lineNum">     402 </span>            : // fprintf(), performing a replacement on the format string.
+<a name="403"><span class="lineNum">     403 </span>            : </a>
+<span class="lineNum">     404 </span>            : void DEH_fprintf(FILE *fstream, const char *fmt, ...)
+<span class="lineNum">     405 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 :     va_list args;</span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 :     const char *repl;</span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :     repl = FormatStringReplacement(fmt);</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 :     va_start(args, fmt);</span>
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     413 </span><span class="lineNoCov">          0 :     vfprintf(fstream, repl, args);</span>
+<span class="lineNum">     414 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 :     va_end(args);</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     417 </span>            : 
+<span class="lineNum">     418 </span>            : // snprintf(), performing a replacement on the format string.
+<a name="419"><span class="lineNum">     419 </span>            : </a>
+<span class="lineNum">     420 </span>            : void DEH_snprintf(char *buffer, size_t len, const char *fmt, ...)
+<span class="lineNum">     421 </span><span class="lineCov">      14698 : {</span>
+<span class="lineNum">     422 </span><span class="lineCov">      14698 :     va_list args;</span>
+<span class="lineNum">     423 </span><span class="lineCov">      14698 :     const char *repl;</span>
+<span class="lineNum">     424 </span><span class="lineCov">      14698 : </span>
+<span class="lineNum">     425 </span><span class="lineCov">      14698 :     repl = FormatStringReplacement(fmt);</span>
+<span class="lineNum">     426 </span><span class="lineCov">      14698 : </span>
+<span class="lineNum">     427 </span><span class="lineCov">      14698 :     va_start(args, fmt);</span>
+<span class="lineNum">     428 </span><span class="lineCov">      14698 : </span>
+<span class="lineNum">     429 </span><span class="lineCov">      14698 :     M_vsnprintf(buffer, len, repl, args);</span>
+<span class="lineNum">     430 </span><span class="lineCov">      14698 : </span>
+<span class="lineNum">     431 </span><span class="lineCov">      14698 :     va_end(args);</span>
+<span class="lineNum">     432 </span><span class="lineCov">      14698 : }</span>
+<span class="lineNum">     433 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

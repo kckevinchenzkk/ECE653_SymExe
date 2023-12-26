@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/z_zone.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - z_zone.h<span style="font-size: 80%;"> (source / <a href="z_zone.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      Zone Memory Allocation, perhaps NeXT ObjectiveC inspired.
+<span class="lineNum">      17 </span>            : //      Remark: this was the only stuff that, according
+<span class="lineNum">      18 </span>            : //       to John Carmack, might have been useful for
+<span class="lineNum">      19 </span>            : //       Quake.
+<span class="lineNum">      20 </span>            : //
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #ifndef __Z_ZONE__
+<span class="lineNum">      25 </span>            : #define __Z_ZONE__
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : //
+<span class="lineNum">      30 </span>            : // ZONE MEMORY
+<span class="lineNum">      31 </span>            : // PU - purge tags.
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : enum
+<span class="lineNum">      34 </span>            : {
+<span class="lineNum">      35 </span>            :     PU_STATIC = 1,                  // static entire execution time
+<span class="lineNum">      36 </span>            :     PU_SOUND,                       // static while playing
+<span class="lineNum">      37 </span>            :     PU_MUSIC,                       // static while playing
+<span class="lineNum">      38 </span>            :     PU_FREE,                        // a free block
+<span class="lineNum">      39 </span>            :     PU_LEVEL,                       // static until level exited
+<span class="lineNum">      40 </span>            :     PU_LEVSPEC,                     // a special thinker in a level
+<span class="lineNum">      41 </span>            :     
+<span class="lineNum">      42 </span>            :     // Tags &gt;= PU_PURGELEVEL are purgable whenever needed.
+<span class="lineNum">      43 </span>            : 
+<span class="lineNum">      44 </span>            :     PU_PURGELEVEL,
+<span class="lineNum">      45 </span>            :     PU_CACHE,
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span>            :     // Total number of different tag types
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            :     PU_NUM_TAGS
+<span class="lineNum">      50 </span>            : };
+<span class="lineNum">      51 </span>            :         
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span>            : void    Z_Init (void);
+<span class="lineNum">      54 </span>            : void*   Z_Malloc (int size, int tag, void *ptr);
+<span class="lineNum">      55 </span>            : void    Z_Free (void *ptr);
+<span class="lineNum">      56 </span>            : void    Z_FreeTags (int lowtag, int hightag);
+<span class="lineNum">      57 </span>            : void    Z_DumpHeap (int lowtag, int hightag);
+<span class="lineNum">      58 </span>            : void    Z_FileDumpHeap (FILE *f);
+<span class="lineNum">      59 </span>            : void    Z_CheckHeap (void);
+<span class="lineNum">      60 </span>            : void    Z_ChangeTag2 (void *ptr, int tag, const char *file, int line);
+<span class="lineNum">      61 </span>            : void    Z_ChangeUser(void *ptr, void **user);
+<span class="lineNum">      62 </span>            : int     Z_FreeMemory (void);
+<span class="lineNum">      63 </span>            : unsigned int Z_ZoneSize(void);
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span>            : //
+<span class="lineNum">      66 </span>            : // This is used to get the local FILE:LINE info from CPP
+<span class="lineNum">      67 </span>            : // prior to really call the function in question.
+<span class="lineNum">      68 </span>            : //
+<span class="lineNum">      69 </span>            : #define Z_ChangeTag(p,t)                                       \
+<span class="lineNum">      70 </span><span class="lineCov">   32131350 :     Z_ChangeTag2((p), (t), __FILE__, __LINE__)</span>
+<span class="lineNum">      71 </span>            : 
+<span class="lineNum">      72 </span>            : 
+<span class="lineNum">      73 </span>            : #endif
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -1,0 +1,1525 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - src_report.info - src/doom/p_map.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/doom</a> - p_map.c<span style="font-size: 80%;"> (source / <a href="p_map.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">src_report.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">1078</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2023-10-28 00:51:25</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">21</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<span class="lineNum">       2 </span>            : // Copyright(C) 1993-1996 Id Software, Inc.
+<span class="lineNum">       3 </span>            : // Copyright(C) 2005-2014 Simon Howard, Andrey Budko
+<span class="lineNum">       4 </span>            : //
+<span class="lineNum">       5 </span>            : // This program is free software; you can redistribute it and/or
+<span class="lineNum">       6 </span>            : // modify it under the terms of the GNU General Public License
+<span class="lineNum">       7 </span>            : // as published by the Free Software Foundation; either version 2
+<span class="lineNum">       8 </span>            : // of the License, or (at your option) any later version.
+<span class="lineNum">       9 </span>            : //
+<span class="lineNum">      10 </span>            : // This program is distributed in the hope that it will be useful,
+<span class="lineNum">      11 </span>            : // but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      12 </span>            : // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      13 </span>            : // GNU General Public License for more details.
+<span class="lineNum">      14 </span>            : //
+<span class="lineNum">      15 </span>            : // DESCRIPTION:
+<span class="lineNum">      16 </span>            : //      Movement, collision handling.
+<span class="lineNum">      17 </span>            : //      Shooting and aiming.
+<span class="lineNum">      18 </span>            : //
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      21 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;deh_misc.h&quot;
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span>            : #include &quot;m_bbox.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;m_random.h&quot;
+<span class="lineNum">      27 </span>            : #include &quot;i_system.h&quot;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : #include &quot;doomdef.h&quot;
+<span class="lineNum">      30 </span>            : #include &quot;m_argv.h&quot;
+<span class="lineNum">      31 </span>            : #include &quot;m_misc.h&quot;
+<span class="lineNum">      32 </span>            : #include &quot;p_local.h&quot;
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span>            : #include &quot;s_sound.h&quot;
+<span class="lineNum">      35 </span>            : 
+<span class="lineNum">      36 </span>            : // State.
+<span class="lineNum">      37 </span>            : #include &quot;doomstat.h&quot;
+<span class="lineNum">      38 </span>            : #include &quot;r_state.h&quot;
+<span class="lineNum">      39 </span>            : // Data.
+<span class="lineNum">      40 </span>            : #include &quot;sounds.h&quot;
+<span class="lineNum">      41 </span>            : 
+<span class="lineNum">      42 </span>            : // Spechit overrun magic value.
+<span class="lineNum">      43 </span>            : //
+<span class="lineNum">      44 </span>            : // This is the value used by PrBoom-plus.  I think the value below is 
+<span class="lineNum">      45 </span>            : // actually better and works with more demos.  However, I think
+<span class="lineNum">      46 </span>            : // it's better for the spechits emulation to be compatible with
+<span class="lineNum">      47 </span>            : // PrBoom-plus, at least so that the big spechits emulation list
+<span class="lineNum">      48 </span>            : // on Doomworld can also be used with Chocolate Doom.
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span><span class="lineNoCov">          0 : #define DEFAULT_SPECHIT_MAGIC 0x01C09C98</span>
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span>            : // This is from a post by myk on the Doomworld forums, 
+<span class="lineNum">      53 </span>            : // outputted from entryway's spechit_magic generator for
+<span class="lineNum">      54 </span>            : // s205n546.lmp.  The _exact_ value of this isn't too
+<span class="lineNum">      55 </span>            : // important; as long as it is in the right general
+<span class="lineNum">      56 </span>            : // range, it will usually work.  Otherwise, we can use
+<span class="lineNum">      57 </span>            : // the generator (hacked doom2.exe) and provide it 
+<span class="lineNum">      58 </span>            : // with -spechit.
+<span class="lineNum">      59 </span>            : 
+<span class="lineNum">      60 </span>            : //#define DEFAULT_SPECHIT_MAGIC 0x84f968e8
+<span class="lineNum">      61 </span>            : 
+<span class="lineNum">      62 </span>            : 
+<span class="lineNum">      63 </span>            : fixed_t         tmbbox[4];
+<span class="lineNum">      64 </span>            : mobj_t*         tmthing;
+<span class="lineNum">      65 </span>            : int             tmflags;
+<span class="lineNum">      66 </span>            : fixed_t         tmx;
+<span class="lineNum">      67 </span>            : fixed_t         tmy;
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : 
+<span class="lineNum">      70 </span>            : // If &quot;floatok&quot; true, move would be ok
+<span class="lineNum">      71 </span>            : // if within &quot;tmfloorz - tmceilingz&quot;.
+<span class="lineNum">      72 </span>            : boolean         floatok;
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span>            : fixed_t         tmfloorz;
+<span class="lineNum">      75 </span>            : fixed_t         tmceilingz;
+<span class="lineNum">      76 </span>            : fixed_t         tmdropoffz;
+<span class="lineNum">      77 </span>            : 
+<span class="lineNum">      78 </span>            : // keep track of the line that lowers the ceiling,
+<span class="lineNum">      79 </span>            : // so missiles don't explode against sky hack walls
+<span class="lineNum">      80 </span>            : line_t*         ceilingline;
+<span class="lineNum">      81 </span>            : 
+<span class="lineNum">      82 </span>            : // keep track of special lines as they are hit,
+<span class="lineNum">      83 </span>            : // but don't process them until the move is proven valid
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            : line_t*         spechit[MAXSPECIALCROSS];
+<span class="lineNum">      86 </span>            : int             numspechit;
+<span class="lineNum">      87 </span>            : 
+<span class="lineNum">      88 </span>            : 
+<span class="lineNum">      89 </span>            : 
+<span class="lineNum">      90 </span>            : //
+<span class="lineNum">      91 </span>            : // TELEPORT MOVE
+<span class="lineNum">      92 </span>            : // 
+<span class="lineNum">      93 </span>            : 
+<span class="lineNum">      94 </span>            : //
+<span class="lineNum">      95 </span>            : // PIT_StompThing
+<a name="96"><span class="lineNum">      96 </span>            : //</a>
+<span class="lineNum">      97 </span>            : boolean PIT_StompThing (mobj_t* thing)
+<span class="lineNum">      98 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">      99 </span><span class="lineNoCov">          0 :     fixed_t     blockdist;</span>
+<span class="lineNum">     100 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 :     if (!(thing-&gt;flags &amp; MF_SHOOTABLE) )</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     103 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     104 </span><span class="lineNoCov">          0 :     blockdist = thing-&gt;radius + tmthing-&gt;radius;</span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 :     if ( abs(thing-&gt;x - tmx) &gt;= blockdist</span>
+<span class="lineNum">     107 </span><span class="lineNoCov">          0 :          || abs(thing-&gt;y - tmy) &gt;= blockdist )</span>
+<span class="lineNum">     108 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     109 </span><span class="lineNoCov">          0 :         // didn't hit it</span>
+<span class="lineNum">     110 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     111 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     112 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 :     // don't clip against self</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 :     if (thing == tmthing)</span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     116 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     117 </span><span class="lineNoCov">          0 :     // monsters don't stomp things except on boss level</span>
+<span class="lineNum">     118 </span><span class="lineNoCov">          0 :     if ( !tmthing-&gt;player &amp;&amp; gamemap != 30)</span>
+<span class="lineNum">     119 </span><span class="lineNoCov">          0 :         return false;   </span>
+<span class="lineNum">     120 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     121 </span><span class="lineNoCov">          0 :     P_DamageMobj (thing, tmthing, tmthing, 10000);</span>
+<span class="lineNum">     122 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     123 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     124 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     125 </span>            : 
+<span class="lineNum">     126 </span>            : 
+<span class="lineNum">     127 </span>            : //
+<span class="lineNum">     128 </span>            : // P_TeleportMove
+<span class="lineNum">     129 </span>            : //
+<span class="lineNum">     130 </span>            : boolean
+<span class="lineNum">     131 </span>            : P_TeleportMove
+<span class="lineNum">     132 </span>            : ( mobj_t*       thing,
+<a name="133"><span class="lineNum">     133 </span>            :   fixed_t       x,</a>
+<span class="lineNum">     134 </span>            :   fixed_t       y )
+<span class="lineNum">     135 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     136 </span><span class="lineNoCov">          0 :     int                 xl;</span>
+<span class="lineNum">     137 </span><span class="lineNoCov">          0 :     int                 xh;</span>
+<span class="lineNum">     138 </span><span class="lineNoCov">          0 :     int                 yl;</span>
+<span class="lineNum">     139 </span><span class="lineNoCov">          0 :     int                 yh;</span>
+<span class="lineNum">     140 </span><span class="lineNoCov">          0 :     int                 bx;</span>
+<span class="lineNum">     141 </span><span class="lineNoCov">          0 :     int                 by;</span>
+<span class="lineNum">     142 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :     subsector_t*        newsubsec;</span>
+<span class="lineNum">     144 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     145 </span><span class="lineNoCov">          0 :     // kill anything occupying the position</span>
+<span class="lineNum">     146 </span><span class="lineNoCov">          0 :     tmthing = thing;</span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :     tmflags = thing-&gt;flags;</span>
+<span class="lineNum">     148 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     149 </span><span class="lineNoCov">          0 :     tmx = x;</span>
+<span class="lineNum">     150 </span><span class="lineNoCov">          0 :     tmy = y;</span>
+<span class="lineNum">     151 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     152 </span><span class="lineNoCov">          0 :     tmbbox[BOXTOP] = y + tmthing-&gt;radius;</span>
+<span class="lineNum">     153 </span><span class="lineNoCov">          0 :     tmbbox[BOXBOTTOM] = y - tmthing-&gt;radius;</span>
+<span class="lineNum">     154 </span><span class="lineNoCov">          0 :     tmbbox[BOXRIGHT] = x + tmthing-&gt;radius;</span>
+<span class="lineNum">     155 </span><span class="lineNoCov">          0 :     tmbbox[BOXLEFT] = x - tmthing-&gt;radius;</span>
+<span class="lineNum">     156 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     157 </span><span class="lineNoCov">          0 :     newsubsec = R_PointInSubsector (x,y);</span>
+<span class="lineNum">     158 </span><span class="lineNoCov">          0 :     ceilingline = NULL;</span>
+<span class="lineNum">     159 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     160 </span><span class="lineNoCov">          0 :     // The base floor/ceiling is from the subsector</span>
+<span class="lineNum">     161 </span><span class="lineNoCov">          0 :     // that contains the point.</span>
+<span class="lineNum">     162 </span><span class="lineNoCov">          0 :     // Any contacted lines the step closer together</span>
+<span class="lineNum">     163 </span><span class="lineNoCov">          0 :     // will adjust them.</span>
+<span class="lineNum">     164 </span><span class="lineNoCov">          0 :     tmfloorz = tmdropoffz = newsubsec-&gt;sector-&gt;floorheight;</span>
+<span class="lineNum">     165 </span><span class="lineNoCov">          0 :     tmceilingz = newsubsec-&gt;sector-&gt;ceilingheight;</span>
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     167 </span><span class="lineNoCov">          0 :     validcount++;</span>
+<span class="lineNum">     168 </span><span class="lineNoCov">          0 :     numspechit = 0;</span>
+<span class="lineNum">     169 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     170 </span><span class="lineNoCov">          0 :     // stomp on any things contacted</span>
+<span class="lineNum">     171 </span><span class="lineNoCov">          0 :     xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :     xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     173 </span><span class="lineNoCov">          0 :     yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     174 </span><span class="lineNoCov">          0 :     yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     175 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     176 </span><span class="lineNoCov">          0 :     for (bx=xl ; bx&lt;=xh ; bx++)</span>
+<span class="lineNum">     177 </span><span class="lineNoCov">          0 :         for (by=yl ; by&lt;=yh ; by++)</span>
+<span class="lineNum">     178 </span><span class="lineNoCov">          0 :             if (!P_BlockThingsIterator(bx,by,PIT_StompThing))</span>
+<span class="lineNum">     179 </span><span class="lineNoCov">          0 :                 return false;</span>
+<span class="lineNum">     180 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     181 </span><span class="lineNoCov">          0 :     // the move is ok,</span>
+<span class="lineNum">     182 </span><span class="lineNoCov">          0 :     // so link the thing into its new position</span>
+<span class="lineNum">     183 </span><span class="lineNoCov">          0 :     P_UnsetThingPosition (thing);</span>
+<span class="lineNum">     184 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     185 </span><span class="lineNoCov">          0 :     thing-&gt;floorz = tmfloorz;</span>
+<span class="lineNum">     186 </span><span class="lineNoCov">          0 :     thing-&gt;ceilingz = tmceilingz;    </span>
+<span class="lineNum">     187 </span><span class="lineNoCov">          0 :     thing-&gt;x = x;</span>
+<span class="lineNum">     188 </span><span class="lineNoCov">          0 :     thing-&gt;y = y;</span>
+<span class="lineNum">     189 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     190 </span><span class="lineNoCov">          0 :     P_SetThingPosition (thing);</span>
+<span class="lineNum">     191 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     192 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     193 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     194 </span>            : 
+<span class="lineNum">     195 </span>            : 
+<span class="lineNum">     196 </span>            : //
+<span class="lineNum">     197 </span>            : // MOVEMENT ITERATOR FUNCTIONS
+<span class="lineNum">     198 </span>            : //
+<span class="lineNum">     199 </span>            : 
+<span class="lineNum">     200 </span>            : static void SpechitOverrun(line_t *ld);
+<span class="lineNum">     201 </span>            : 
+<span class="lineNum">     202 </span>            : //
+<span class="lineNum">     203 </span>            : // PIT_CheckLine
+<span class="lineNum">     204 </span>            : // Adjusts tmfloorz and tmceilingz as lines are contacted
+<a name="205"><span class="lineNum">     205 </span>            : //</a>
+<span class="lineNum">     206 </span>            : boolean PIT_CheckLine (line_t* ld)
+<span class="lineNum">     207 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     208 </span><span class="lineNoCov">          0 :     if (tmbbox[BOXRIGHT] &lt;= ld-&gt;bbox[BOXLEFT]</span>
+<span class="lineNum">     209 </span><span class="lineNoCov">          0 :         || tmbbox[BOXLEFT] &gt;= ld-&gt;bbox[BOXRIGHT]</span>
+<span class="lineNum">     210 </span><span class="lineNoCov">          0 :         || tmbbox[BOXTOP] &lt;= ld-&gt;bbox[BOXBOTTOM]</span>
+<span class="lineNum">     211 </span><span class="lineNoCov">          0 :         || tmbbox[BOXBOTTOM] &gt;= ld-&gt;bbox[BOXTOP] )</span>
+<span class="lineNum">     212 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     213 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 :     if (P_BoxOnLineSide (tmbbox, ld) != -1)</span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     216 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     217 </span><span class="lineNoCov">          0 :     // A line has been hit</span>
+<span class="lineNum">     218 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     219 </span><span class="lineNoCov">          0 :     // The moving thing's destination position will cross</span>
+<span class="lineNum">     220 </span><span class="lineNoCov">          0 :     // the given line.</span>
+<span class="lineNum">     221 </span><span class="lineNoCov">          0 :     // If this should not be allowed, return false.</span>
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 :     // If the line is special, keep track of it</span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 :     // to process later if the move is proven ok.</span>
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 :     // NOTE: specials are NOT sorted by order,</span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 :     // so two special lines that are only 8 pixels apart</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 :     // could be crossed in either order.</span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     228 </span><span class="lineNoCov">          0 :     if (!ld-&gt;backsector)</span>
+<span class="lineNum">     229 </span><span class="lineNoCov">          0 :         return false;           // one sided line</span>
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     231 </span><span class="lineNoCov">          0 :     if (!(tmthing-&gt;flags &amp; MF_MISSILE) )</span>
+<span class="lineNum">     232 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     233 </span><span class="lineNoCov">          0 :         if ( ld-&gt;flags &amp; ML_BLOCKING )</span>
+<span class="lineNum">     234 </span><span class="lineNoCov">          0 :             return false;       // explicitly blocking everything</span>
+<span class="lineNum">     235 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     236 </span><span class="lineNoCov">          0 :         if ( !tmthing-&gt;player &amp;&amp; ld-&gt;flags &amp; ML_BLOCKMONSTERS )</span>
+<span class="lineNum">     237 </span><span class="lineNoCov">          0 :             return false;       // block monsters only</span>
+<span class="lineNum">     238 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     239 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     240 </span><span class="lineNoCov">          0 :     // set openrange, opentop, openbottom</span>
+<span class="lineNum">     241 </span><span class="lineNoCov">          0 :     P_LineOpening (ld); </span>
+<span class="lineNum">     242 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     243 </span><span class="lineNoCov">          0 :     // adjust floor / ceiling heights</span>
+<span class="lineNum">     244 </span><span class="lineNoCov">          0 :     if (opentop &lt; tmceilingz)</span>
+<span class="lineNum">     245 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     246 </span><span class="lineNoCov">          0 :         tmceilingz = opentop;</span>
+<span class="lineNum">     247 </span><span class="lineNoCov">          0 :         ceilingline = ld;</span>
+<span class="lineNum">     248 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     249 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     250 </span><span class="lineNoCov">          0 :     if (openbottom &gt; tmfloorz)</span>
+<span class="lineNum">     251 </span><span class="lineNoCov">          0 :         tmfloorz = openbottom;  </span>
+<span class="lineNum">     252 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     253 </span><span class="lineNoCov">          0 :     if (lowfloor &lt; tmdropoffz)</span>
+<span class="lineNum">     254 </span><span class="lineNoCov">          0 :         tmdropoffz = lowfloor;</span>
+<span class="lineNum">     255 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     256 </span><span class="lineNoCov">          0 :     // if contacted a special line, add it to the list</span>
+<span class="lineNum">     257 </span><span class="lineNoCov">          0 :     if (ld-&gt;special)</span>
+<span class="lineNum">     258 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     259 </span><span class="lineNoCov">          0 :         spechit[numspechit] = ld;</span>
+<span class="lineNum">     260 </span><span class="lineNoCov">          0 :         numspechit++;</span>
+<span class="lineNum">     261 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     262 </span><span class="lineNoCov">          0 :         // fraggle: spechits overrun emulation code from prboom-plus</span>
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 :         if (numspechit &gt; MAXSPECIALCROSS_ORIGINAL)</span>
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     265 </span><span class="lineNoCov">          0 :             SpechitOverrun(ld);</span>
+<span class="lineNum">     266 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     267 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     268 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     269 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     270 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     271 </span>            : 
+<span class="lineNum">     272 </span>            : //
+<span class="lineNum">     273 </span>            : // PIT_CheckThing
+<a name="274"><span class="lineNum">     274 </span>            : //</a>
+<span class="lineNum">     275 </span>            : boolean PIT_CheckThing (mobj_t* thing)
+<span class="lineNum">     276 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     277 </span><span class="lineNoCov">          0 :     fixed_t             blockdist;</span>
+<span class="lineNum">     278 </span><span class="lineNoCov">          0 :     boolean             solid;</span>
+<span class="lineNum">     279 </span><span class="lineNoCov">          0 :     int                 damage;</span>
+<span class="lineNum">     280 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     281 </span><span class="lineNoCov">          0 :     if (!(thing-&gt;flags &amp; (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE) ))</span>
+<span class="lineNum">     282 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     283 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 :     blockdist = thing-&gt;radius + tmthing-&gt;radius;</span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     286 </span><span class="lineNoCov">          0 :     if ( abs(thing-&gt;x - tmx) &gt;= blockdist</span>
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 :          || abs(thing-&gt;y - tmy) &gt;= blockdist )</span>
+<span class="lineNum">     288 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     289 </span><span class="lineNoCov">          0 :         // didn't hit it</span>
+<span class="lineNum">     290 </span><span class="lineNoCov">          0 :         return true;    </span>
+<span class="lineNum">     291 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     292 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     293 </span><span class="lineNoCov">          0 :     // don't clip against self</span>
+<span class="lineNum">     294 </span><span class="lineNoCov">          0 :     if (thing == tmthing)</span>
+<span class="lineNum">     295 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     296 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     297 </span><span class="lineNoCov">          0 :     // check for skulls slamming into things</span>
+<span class="lineNum">     298 </span><span class="lineNoCov">          0 :     if (tmthing-&gt;flags &amp; MF_SKULLFLY)</span>
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :         damage = ((P_Random()%8)+1)*tmthing-&gt;info-&gt;damage;</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 :         P_DamageMobj (thing, tmthing, tmthing, damage);</span>
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :         tmthing-&gt;flags &amp;= ~MF_SKULLFLY;</span>
+<span class="lineNum">     305 </span><span class="lineNoCov">          0 :         tmthing-&gt;momx = tmthing-&gt;momy = tmthing-&gt;momz = 0;</span>
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 :         P_SetMobjState (tmthing, tmthing-&gt;info-&gt;spawnstate);</span>
+<span class="lineNum">     308 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     309 </span><span class="lineNoCov">          0 :         return false;           // stop moving</span>
+<span class="lineNum">     310 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :     // missiles can hit other things</span>
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :     if (tmthing-&gt;flags &amp; MF_MISSILE)</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     316 </span><span class="lineNoCov">          0 :         // see if it went over / under</span>
+<span class="lineNum">     317 </span><span class="lineNoCov">          0 :         if (tmthing-&gt;z &gt; thing-&gt;z + thing-&gt;height)</span>
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 :             return true;                // overhead</span>
+<span class="lineNum">     319 </span><span class="lineNoCov">          0 :         if (tmthing-&gt;z+tmthing-&gt;height &lt; thing-&gt;z)</span>
+<span class="lineNum">     320 </span><span class="lineNoCov">          0 :             return true;                // underneath</span>
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :         if (tmthing-&gt;target </span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 :          &amp;&amp; (tmthing-&gt;target-&gt;type == thing-&gt;type || </span>
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 :             (tmthing-&gt;target-&gt;type == MT_KNIGHT &amp;&amp; thing-&gt;type == MT_BRUISER)||</span>
+<span class="lineNum">     325 </span><span class="lineNoCov">          0 :             (tmthing-&gt;target-&gt;type == MT_BRUISER &amp;&amp; thing-&gt;type == MT_KNIGHT) ) )</span>
+<span class="lineNum">     326 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     327 </span><span class="lineNoCov">          0 :             // Don't hit same species as originator.</span>
+<span class="lineNum">     328 </span><span class="lineNoCov">          0 :             if (thing == tmthing-&gt;target)</span>
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 :                 return true;</span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     331 </span><span class="lineNoCov">          0 :             // sdh: Add deh_species_infighting here.  We can override the</span>
+<span class="lineNum">     332 </span><span class="lineNoCov">          0 :             // &quot;monsters of the same species cant hurt each other&quot; behavior</span>
+<span class="lineNum">     333 </span><span class="lineNoCov">          0 :             // through dehacked patches</span>
+<span class="lineNum">     334 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     335 </span><span class="lineNoCov">          0 :             if (thing-&gt;type != MT_PLAYER &amp;&amp; !deh_species_infighting)</span>
+<span class="lineNum">     336 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     337 </span><span class="lineNoCov">          0 :                 // Explode, but do no damage.</span>
+<span class="lineNum">     338 </span><span class="lineNoCov">          0 :                 // Let players missile other players.</span>
+<span class="lineNum">     339 </span><span class="lineNoCov">          0 :                 return false;</span>
+<span class="lineNum">     340 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     341 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     342 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 :         if (! (thing-&gt;flags &amp; MF_SHOOTABLE) )</span>
+<span class="lineNum">     344 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     345 </span><span class="lineNoCov">          0 :             // didn't do any damage</span>
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 :             return !(thing-&gt;flags &amp; MF_SOLID);   </span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     349 </span><span class="lineNoCov">          0 :         // damage / explode</span>
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :         damage = ((P_Random()%8)+1)*tmthing-&gt;info-&gt;damage;</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 :         P_DamageMobj (thing, tmthing, tmthing-&gt;target, damage);</span>
+<span class="lineNum">     352 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 :         // don't traverse any more</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :         return false;                           </span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     356 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :     // check for special pickup</span>
+<span class="lineNum">     358 </span><span class="lineNoCov">          0 :     if (thing-&gt;flags &amp; MF_SPECIAL)</span>
+<span class="lineNum">     359 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 :         solid = (thing-&gt;flags &amp; MF_SOLID) != 0;</span>
+<span class="lineNum">     361 </span><span class="lineNoCov">          0 :         if (tmflags&amp;MF_PICKUP)</span>
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :             // can remove thing</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 :             P_TouchSpecialThing (thing, tmthing);</span>
+<span class="lineNum">     365 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :         return !solid;</span>
+<span class="lineNum">     367 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     368 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     369 </span><span class="lineNoCov">          0 :     return !(thing-&gt;flags &amp; MF_SOLID);</span>
+<span class="lineNum">     370 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     371 </span>            : 
+<span class="lineNum">     372 </span>            : 
+<span class="lineNum">     373 </span>            : //
+<span class="lineNum">     374 </span>            : // MOVEMENT CLIPPING
+<span class="lineNum">     375 </span>            : //
+<span class="lineNum">     376 </span>            : 
+<span class="lineNum">     377 </span>            : //
+<span class="lineNum">     378 </span>            : // P_CheckPosition
+<span class="lineNum">     379 </span>            : // This is purely informative, nothing is modified
+<span class="lineNum">     380 </span>            : // (except things picked up).
+<span class="lineNum">     381 </span>            : // 
+<span class="lineNum">     382 </span>            : // in:
+<span class="lineNum">     383 </span>            : //  a mobj_t (can be valid or invalid)
+<span class="lineNum">     384 </span>            : //  a position to be checked
+<span class="lineNum">     385 </span>            : //   (doesn't need to be related to the mobj_t-&gt;x,y)
+<span class="lineNum">     386 </span>            : //
+<span class="lineNum">     387 </span>            : // during:
+<span class="lineNum">     388 </span>            : //  special things are touched if MF_PICKUP
+<span class="lineNum">     389 </span>            : //  early out on solid lines?
+<span class="lineNum">     390 </span>            : //
+<span class="lineNum">     391 </span>            : // out:
+<span class="lineNum">     392 </span>            : //  newsubsec
+<span class="lineNum">     393 </span>            : //  floorz
+<span class="lineNum">     394 </span>            : //  ceilingz
+<span class="lineNum">     395 </span>            : //  tmdropoffz
+<span class="lineNum">     396 </span>            : //   the lowest point contacted
+<span class="lineNum">     397 </span>            : //   (monsters won't move to a dropoff)
+<span class="lineNum">     398 </span>            : //  speciallines[]
+<span class="lineNum">     399 </span>            : //  numspeciallines
+<span class="lineNum">     400 </span>            : //
+<span class="lineNum">     401 </span>            : boolean
+<span class="lineNum">     402 </span>            : P_CheckPosition
+<span class="lineNum">     403 </span>            : ( mobj_t*       thing,
+<a name="404"><span class="lineNum">     404 </span>            :   fixed_t       x,</a>
+<span class="lineNum">     405 </span>            :   fixed_t       y )
+<span class="lineNum">     406 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     407 </span><span class="lineNoCov">          0 :     int                 xl;</span>
+<span class="lineNum">     408 </span><span class="lineNoCov">          0 :     int                 xh;</span>
+<span class="lineNum">     409 </span><span class="lineNoCov">          0 :     int                 yl;</span>
+<span class="lineNum">     410 </span><span class="lineNoCov">          0 :     int                 yh;</span>
+<span class="lineNum">     411 </span><span class="lineNoCov">          0 :     int                 bx;</span>
+<span class="lineNum">     412 </span><span class="lineNoCov">          0 :     int                 by;</span>
+<span class="lineNum">     413 </span><span class="lineNoCov">          0 :     subsector_t*        newsubsec;</span>
+<span class="lineNum">     414 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     415 </span><span class="lineNoCov">          0 :     tmthing = thing;</span>
+<span class="lineNum">     416 </span><span class="lineNoCov">          0 :     tmflags = thing-&gt;flags;</span>
+<span class="lineNum">     417 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     418 </span><span class="lineNoCov">          0 :     tmx = x;</span>
+<span class="lineNum">     419 </span><span class="lineNoCov">          0 :     tmy = y;</span>
+<span class="lineNum">     420 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     421 </span><span class="lineNoCov">          0 :     tmbbox[BOXTOP] = y + tmthing-&gt;radius;</span>
+<span class="lineNum">     422 </span><span class="lineNoCov">          0 :     tmbbox[BOXBOTTOM] = y - tmthing-&gt;radius;</span>
+<span class="lineNum">     423 </span><span class="lineNoCov">          0 :     tmbbox[BOXRIGHT] = x + tmthing-&gt;radius;</span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :     tmbbox[BOXLEFT] = x - tmthing-&gt;radius;</span>
+<span class="lineNum">     425 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     426 </span><span class="lineNoCov">          0 :     newsubsec = R_PointInSubsector (x,y);</span>
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 :     ceilingline = NULL;</span>
+<span class="lineNum">     428 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     429 </span><span class="lineNoCov">          0 :     // The base floor / ceiling is from the subsector</span>
+<span class="lineNum">     430 </span><span class="lineNoCov">          0 :     // that contains the point.</span>
+<span class="lineNum">     431 </span><span class="lineNoCov">          0 :     // Any contacted lines the step closer together</span>
+<span class="lineNum">     432 </span><span class="lineNoCov">          0 :     // will adjust them.</span>
+<span class="lineNum">     433 </span><span class="lineNoCov">          0 :     tmfloorz = tmdropoffz = newsubsec-&gt;sector-&gt;floorheight;</span>
+<span class="lineNum">     434 </span><span class="lineNoCov">          0 :     tmceilingz = newsubsec-&gt;sector-&gt;ceilingheight;</span>
+<span class="lineNum">     435 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 :     validcount++;</span>
+<span class="lineNum">     437 </span><span class="lineNoCov">          0 :     numspechit = 0;</span>
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     439 </span><span class="lineNoCov">          0 :     if ( tmflags &amp; MF_NOCLIP )</span>
+<span class="lineNum">     440 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     441 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     442 </span><span class="lineNoCov">          0 :     // Check things first, possibly picking things up.</span>
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 :     // The bounding box is extended by MAXRADIUS</span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 :     // because mobj_ts are grouped into mapblocks</span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :     // based on their origin point, and can overlap</span>
+<span class="lineNum">     446 </span><span class="lineNoCov">          0 :     // into adjacent blocks by up to MAXRADIUS units.</span>
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :     xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 :     xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :     yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     450 </span><span class="lineNoCov">          0 :     yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     452 </span><span class="lineNoCov">          0 :     for (bx=xl ; bx&lt;=xh ; bx++)</span>
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 :         for (by=yl ; by&lt;=yh ; by++)</span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 :             if (!P_BlockThingsIterator(bx,by,PIT_CheckThing))</span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 :                 return false;</span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     457 </span><span class="lineNoCov">          0 :     // check lines</span>
+<span class="lineNum">     458 </span><span class="lineNoCov">          0 :     xl = (tmbbox[BOXLEFT] - bmaporgx)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     459 </span><span class="lineNoCov">          0 :     xh = (tmbbox[BOXRIGHT] - bmaporgx)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     460 </span><span class="lineNoCov">          0 :     yl = (tmbbox[BOXBOTTOM] - bmaporgy)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     461 </span><span class="lineNoCov">          0 :     yh = (tmbbox[BOXTOP] - bmaporgy)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">     462 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     463 </span><span class="lineNoCov">          0 :     for (bx=xl ; bx&lt;=xh ; bx++)</span>
+<span class="lineNum">     464 </span><span class="lineNoCov">          0 :         for (by=yl ; by&lt;=yh ; by++)</span>
+<span class="lineNum">     465 </span><span class="lineNoCov">          0 :             if (!P_BlockLinesIterator (bx,by,PIT_CheckLine))</span>
+<span class="lineNum">     466 </span><span class="lineNoCov">          0 :                 return false;</span>
+<span class="lineNum">     467 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     468 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     469 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     470 </span>            : 
+<span class="lineNum">     471 </span>            : 
+<span class="lineNum">     472 </span>            : //
+<span class="lineNum">     473 </span>            : // P_TryMove
+<span class="lineNum">     474 </span>            : // Attempt to move to a new position,
+<span class="lineNum">     475 </span>            : // crossing special lines unless MF_TELEPORT is set.
+<span class="lineNum">     476 </span>            : //
+<span class="lineNum">     477 </span>            : boolean
+<span class="lineNum">     478 </span>            : P_TryMove
+<span class="lineNum">     479 </span>            : ( mobj_t*       thing,
+<a name="480"><span class="lineNum">     480 </span>            :   fixed_t       x,</a>
+<span class="lineNum">     481 </span>            :   fixed_t       y )
+<span class="lineNum">     482 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     483 </span><span class="lineNoCov">          0 :     fixed_t     oldx;</span>
+<span class="lineNum">     484 </span><span class="lineNoCov">          0 :     fixed_t     oldy;</span>
+<span class="lineNum">     485 </span><span class="lineNoCov">          0 :     int         side;</span>
+<span class="lineNum">     486 </span><span class="lineNoCov">          0 :     int         oldside;</span>
+<span class="lineNum">     487 </span><span class="lineNoCov">          0 :     line_t*     ld;</span>
+<span class="lineNum">     488 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     489 </span><span class="lineNoCov">          0 :     floatok = false;</span>
+<span class="lineNum">     490 </span><span class="lineNoCov">          0 :     if (!P_CheckPosition (thing, x, y))</span>
+<span class="lineNum">     491 </span><span class="lineNoCov">          0 :         return false;           // solid wall or thing</span>
+<span class="lineNum">     492 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     493 </span><span class="lineNoCov">          0 :     if ( !(thing-&gt;flags &amp; MF_NOCLIP) )</span>
+<span class="lineNum">     494 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     495 </span><span class="lineNoCov">          0 :         if (tmceilingz - tmfloorz &lt; thing-&gt;height)</span>
+<span class="lineNum">     496 </span><span class="lineNoCov">          0 :             return false;       // doesn't fit</span>
+<span class="lineNum">     497 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     498 </span><span class="lineNoCov">          0 :         floatok = true;</span>
+<span class="lineNum">     499 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     500 </span><span class="lineNoCov">          0 :         if ( !(thing-&gt;flags&amp;MF_TELEPORT) </span>
+<span class="lineNum">     501 </span><span class="lineNoCov">          0 :              &amp;&amp;tmceilingz - thing-&gt;z &lt; thing-&gt;height)</span>
+<span class="lineNum">     502 </span><span class="lineNoCov">          0 :             return false;       // mobj must lower itself to fit</span>
+<span class="lineNum">     503 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     504 </span><span class="lineNoCov">          0 :         if ( !(thing-&gt;flags&amp;MF_TELEPORT)</span>
+<span class="lineNum">     505 </span><span class="lineNoCov">          0 :              &amp;&amp; tmfloorz - thing-&gt;z &gt; 24*FRACUNIT )</span>
+<span class="lineNum">     506 </span><span class="lineNoCov">          0 :             return false;       // too big a step up</span>
+<span class="lineNum">     507 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     508 </span><span class="lineNoCov">          0 :         if ( !(thing-&gt;flags&amp;(MF_DROPOFF|MF_FLOAT))</span>
+<span class="lineNum">     509 </span><span class="lineNoCov">          0 :              &amp;&amp; tmfloorz - tmdropoffz &gt; 24*FRACUNIT )</span>
+<span class="lineNum">     510 </span><span class="lineNoCov">          0 :             return false;       // don't stand over a dropoff</span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     512 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     513 </span><span class="lineNoCov">          0 :     // the move is ok,</span>
+<span class="lineNum">     514 </span><span class="lineNoCov">          0 :     // so link the thing into its new position</span>
+<span class="lineNum">     515 </span><span class="lineNoCov">          0 :     P_UnsetThingPosition (thing);</span>
+<span class="lineNum">     516 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     517 </span><span class="lineNoCov">          0 :     oldx = thing-&gt;x;</span>
+<span class="lineNum">     518 </span><span class="lineNoCov">          0 :     oldy = thing-&gt;y;</span>
+<span class="lineNum">     519 </span><span class="lineNoCov">          0 :     thing-&gt;floorz = tmfloorz;</span>
+<span class="lineNum">     520 </span><span class="lineNoCov">          0 :     thing-&gt;ceilingz = tmceilingz;    </span>
+<span class="lineNum">     521 </span><span class="lineNoCov">          0 :     thing-&gt;x = x;</span>
+<span class="lineNum">     522 </span><span class="lineNoCov">          0 :     thing-&gt;y = y;</span>
+<span class="lineNum">     523 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     524 </span><span class="lineNoCov">          0 :     P_SetThingPosition (thing);</span>
+<span class="lineNum">     525 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     526 </span><span class="lineNoCov">          0 :     // if any special lines were hit, do the effect</span>
+<span class="lineNum">     527 </span><span class="lineNoCov">          0 :     if (! (thing-&gt;flags&amp;(MF_TELEPORT|MF_NOCLIP)) )</span>
+<span class="lineNum">     528 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     529 </span><span class="lineNoCov">          0 :         while (numspechit--)</span>
+<span class="lineNum">     530 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     531 </span><span class="lineNoCov">          0 :             // see if the line was crossed</span>
+<span class="lineNum">     532 </span><span class="lineNoCov">          0 :             ld = spechit[numspechit];</span>
+<span class="lineNum">     533 </span><span class="lineNoCov">          0 :             side = P_PointOnLineSide (thing-&gt;x, thing-&gt;y, ld);</span>
+<span class="lineNum">     534 </span><span class="lineNoCov">          0 :             oldside = P_PointOnLineSide (oldx, oldy, ld);</span>
+<span class="lineNum">     535 </span><span class="lineNoCov">          0 :             if (side != oldside)</span>
+<span class="lineNum">     536 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     537 </span><span class="lineNoCov">          0 :                 if (ld-&gt;special)</span>
+<span class="lineNum">     538 </span><span class="lineNoCov">          0 :                     P_CrossSpecialLine (ld-lines, oldside, thing);</span>
+<span class="lineNum">     539 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     540 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     541 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     542 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     543 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     544 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     545 </span>            : 
+<span class="lineNum">     546 </span>            : 
+<span class="lineNum">     547 </span>            : //
+<span class="lineNum">     548 </span>            : // P_ThingHeightClip
+<span class="lineNum">     549 </span>            : // Takes a valid thing and adjusts the thing-&gt;floorz,
+<span class="lineNum">     550 </span>            : // thing-&gt;ceilingz, and possibly thing-&gt;z.
+<span class="lineNum">     551 </span>            : // This is called for all nearby monsters
+<span class="lineNum">     552 </span>            : // whenever a sector changes height.
+<span class="lineNum">     553 </span>            : // If the thing doesn't fit,
+<span class="lineNum">     554 </span>            : // the z will be set to the lowest value
+<span class="lineNum">     555 </span>            : // and false will be returned.
+<a name="556"><span class="lineNum">     556 </span>            : //</a>
+<span class="lineNum">     557 </span>            : boolean P_ThingHeightClip (mobj_t* thing)
+<span class="lineNum">     558 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     559 </span><span class="lineNoCov">          0 :     boolean             onfloor;</span>
+<span class="lineNum">     560 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     561 </span><span class="lineNoCov">          0 :     onfloor = (thing-&gt;z == thing-&gt;floorz);</span>
+<span class="lineNum">     562 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     563 </span><span class="lineNoCov">          0 :     P_CheckPosition (thing, thing-&gt;x, thing-&gt;y);  </span>
+<span class="lineNum">     564 </span><span class="lineNoCov">          0 :     // what about stranding a monster partially off an edge?</span>
+<span class="lineNum">     565 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     566 </span><span class="lineNoCov">          0 :     thing-&gt;floorz = tmfloorz;</span>
+<span class="lineNum">     567 </span><span class="lineNoCov">          0 :     thing-&gt;ceilingz = tmceilingz;</span>
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     569 </span><span class="lineNoCov">          0 :     if (onfloor)</span>
+<span class="lineNum">     570 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     571 </span><span class="lineNoCov">          0 :         // walking monsters rise and fall with the floor</span>
+<span class="lineNum">     572 </span><span class="lineNoCov">          0 :         thing-&gt;z = thing-&gt;floorz;</span>
+<span class="lineNum">     573 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     574 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     575 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     576 </span><span class="lineNoCov">          0 :         // don't adjust a floating monster unless forced to</span>
+<span class="lineNum">     577 </span><span class="lineNoCov">          0 :         if (thing-&gt;z+thing-&gt;height &gt; thing-&gt;ceilingz)</span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :             thing-&gt;z = thing-&gt;ceilingz - thing-&gt;height;</span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     580 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     581 </span><span class="lineNoCov">          0 :     if (thing-&gt;ceilingz - thing-&gt;floorz &lt; thing-&gt;height)</span>
+<span class="lineNum">     582 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     583 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     584 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">     585 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     586 </span>            : 
+<span class="lineNum">     587 </span>            : 
+<span class="lineNum">     588 </span>            : 
+<span class="lineNum">     589 </span>            : //
+<span class="lineNum">     590 </span>            : // SLIDE MOVE
+<span class="lineNum">     591 </span>            : // Allows the player to slide along any angled walls.
+<span class="lineNum">     592 </span>            : //
+<span class="lineNum">     593 </span>            : fixed_t         bestslidefrac;
+<span class="lineNum">     594 </span>            : fixed_t         secondslidefrac;
+<span class="lineNum">     595 </span>            : 
+<span class="lineNum">     596 </span>            : line_t*         bestslideline;
+<span class="lineNum">     597 </span>            : line_t*         secondslideline;
+<span class="lineNum">     598 </span>            : 
+<span class="lineNum">     599 </span>            : mobj_t*         slidemo;
+<span class="lineNum">     600 </span>            : 
+<span class="lineNum">     601 </span>            : fixed_t         tmxmove;
+<span class="lineNum">     602 </span>            : fixed_t         tmymove;
+<span class="lineNum">     603 </span>            : 
+<span class="lineNum">     604 </span>            : 
+<span class="lineNum">     605 </span>            : 
+<span class="lineNum">     606 </span>            : //
+<span class="lineNum">     607 </span>            : // P_HitSlideLine
+<span class="lineNum">     608 </span>            : // Adjusts the xmove / ymove
+<span class="lineNum">     609 </span>            : // so that the next move will slide along the wall.
+<a name="610"><span class="lineNum">     610 </span>            : //</a>
+<span class="lineNum">     611 </span>            : void P_HitSlideLine (line_t* ld)
+<span class="lineNum">     612 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 :     int                 side;</span>
+<span class="lineNum">     614 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     615 </span><span class="lineNoCov">          0 :     angle_t             lineangle;</span>
+<span class="lineNum">     616 </span><span class="lineNoCov">          0 :     angle_t             moveangle;</span>
+<span class="lineNum">     617 </span><span class="lineNoCov">          0 :     angle_t             deltaangle;</span>
+<span class="lineNum">     618 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     619 </span><span class="lineNoCov">          0 :     fixed_t             movelen;</span>
+<span class="lineNum">     620 </span><span class="lineNoCov">          0 :     fixed_t             newlen;</span>
+<span class="lineNum">     621 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     622 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     623 </span><span class="lineNoCov">          0 :     if (ld-&gt;slopetype == ST_HORIZONTAL)</span>
+<span class="lineNum">     624 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     625 </span><span class="lineNoCov">          0 :         tmymove = 0;</span>
+<span class="lineNum">     626 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     627 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     628 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     629 </span><span class="lineNoCov">          0 :     if (ld-&gt;slopetype == ST_VERTICAL)</span>
+<span class="lineNum">     630 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     631 </span><span class="lineNoCov">          0 :         tmxmove = 0;</span>
+<span class="lineNum">     632 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     633 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     634 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     635 </span><span class="lineNoCov">          0 :     side = P_PointOnLineSide (slidemo-&gt;x, slidemo-&gt;y, ld);</span>
+<span class="lineNum">     636 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     637 </span><span class="lineNoCov">          0 :     lineangle = R_PointToAngle2 (0,0, ld-&gt;dx, ld-&gt;dy);</span>
+<span class="lineNum">     638 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     639 </span><span class="lineNoCov">          0 :     if (side == 1)</span>
+<span class="lineNum">     640 </span><span class="lineNoCov">          0 :         lineangle += ANG180;</span>
+<span class="lineNum">     641 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     642 </span><span class="lineNoCov">          0 :     moveangle = R_PointToAngle2 (0,0, tmxmove, tmymove);</span>
+<span class="lineNum">     643 </span><span class="lineNoCov">          0 :     deltaangle = moveangle-lineangle;</span>
+<span class="lineNum">     644 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     645 </span><span class="lineNoCov">          0 :     if (deltaangle &gt; ANG180)</span>
+<span class="lineNum">     646 </span><span class="lineNoCov">          0 :         deltaangle += ANG180;</span>
+<span class="lineNum">     647 </span><span class="lineNoCov">          0 :     //  I_Error (&quot;SlideLine: ang&gt;ANG180&quot;);</span>
+<span class="lineNum">     648 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     649 </span><span class="lineNoCov">          0 :     lineangle &gt;&gt;= ANGLETOFINESHIFT;</span>
+<span class="lineNum">     650 </span><span class="lineNoCov">          0 :     deltaangle &gt;&gt;= ANGLETOFINESHIFT;</span>
+<span class="lineNum">     651 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     652 </span><span class="lineNoCov">          0 :     movelen = P_AproxDistance (tmxmove, tmymove);</span>
+<span class="lineNum">     653 </span><span class="lineNoCov">          0 :     newlen = FixedMul (movelen, finecosine[deltaangle]);</span>
+<span class="lineNum">     654 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     655 </span><span class="lineNoCov">          0 :     tmxmove = FixedMul (newlen, finecosine[lineangle]); </span>
+<span class="lineNum">     656 </span><span class="lineNoCov">          0 :     tmymove = FixedMul (newlen, finesine[lineangle]);   </span>
+<span class="lineNum">     657 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     658 </span>            : 
+<span class="lineNum">     659 </span>            : 
+<span class="lineNum">     660 </span>            : //
+<span class="lineNum">     661 </span>            : // PTR_SlideTraverse
+<a name="662"><span class="lineNum">     662 </span>            : //</a>
+<span class="lineNum">     663 </span>            : boolean PTR_SlideTraverse (intercept_t* in)
+<span class="lineNum">     664 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     665 </span><span class="lineNoCov">          0 :     line_t*     li;</span>
+<span class="lineNum">     666 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     667 </span><span class="lineNoCov">          0 :     if (!in-&gt;isaline)</span>
+<span class="lineNum">     668 </span><span class="lineNoCov">          0 :         I_Error (&quot;PTR_SlideTraverse: not a line?&quot;);</span>
+<span class="lineNum">     669 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     670 </span><span class="lineNoCov">          0 :     li = in-&gt;d.line;</span>
+<span class="lineNum">     671 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     672 </span><span class="lineNoCov">          0 :     if ( ! (li-&gt;flags &amp; ML_TWOSIDED) )</span>
+<span class="lineNum">     673 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     674 </span><span class="lineNoCov">          0 :         if (P_PointOnLineSide (slidemo-&gt;x, slidemo-&gt;y, li))</span>
+<span class="lineNum">     675 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     676 </span><span class="lineNoCov">          0 :             // don't hit the back side</span>
+<span class="lineNum">     677 </span><span class="lineNoCov">          0 :             return true;                </span>
+<span class="lineNum">     678 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     679 </span><span class="lineNoCov">          0 :         goto isblocking;</span>
+<span class="lineNum">     680 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     681 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     682 </span><span class="lineNoCov">          0 :     // set openrange, opentop, openbottom</span>
+<span class="lineNum">     683 </span><span class="lineNoCov">          0 :     P_LineOpening (li);</span>
+<span class="lineNum">     684 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     685 </span><span class="lineNoCov">          0 :     if (openrange &lt; slidemo-&gt;height)</span>
+<span class="lineNum">     686 </span><span class="lineNoCov">          0 :         goto isblocking;                // doesn't fit</span>
+<span class="lineNum">     687 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     688 </span><span class="lineNoCov">          0 :     if (opentop - slidemo-&gt;z &lt; slidemo-&gt;height)</span>
+<span class="lineNum">     689 </span><span class="lineNoCov">          0 :         goto isblocking;                // mobj is too high</span>
+<span class="lineNum">     690 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     691 </span><span class="lineNoCov">          0 :     if (openbottom - slidemo-&gt;z &gt; 24*FRACUNIT )</span>
+<span class="lineNum">     692 </span><span class="lineNoCov">          0 :         goto isblocking;                // too big a step up</span>
+<span class="lineNum">     693 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     694 </span><span class="lineNoCov">          0 :     // this line doesn't block movement</span>
+<span class="lineNum">     695 </span><span class="lineNoCov">          0 :     return true;                </span>
+<span class="lineNum">     696 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     697 </span><span class="lineNoCov">          0 :     // the line does block movement,</span>
+<span class="lineNum">     698 </span><span class="lineNoCov">          0 :     // see if it is closer than best so far</span>
+<span class="lineNum">     699 </span><span class="lineNoCov">          0 :   isblocking:           </span>
+<span class="lineNum">     700 </span><span class="lineNoCov">          0 :     if (in-&gt;frac &lt; bestslidefrac)</span>
+<span class="lineNum">     701 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     702 </span><span class="lineNoCov">          0 :         secondslidefrac = bestslidefrac;</span>
+<span class="lineNum">     703 </span><span class="lineNoCov">          0 :         secondslideline = bestslideline;</span>
+<span class="lineNum">     704 </span><span class="lineNoCov">          0 :         bestslidefrac = in-&gt;frac;</span>
+<span class="lineNum">     705 </span><span class="lineNoCov">          0 :         bestslideline = li;</span>
+<span class="lineNum">     706 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     707 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     708 </span><span class="lineNoCov">          0 :     return false;       // stop</span>
+<span class="lineNum">     709 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     710 </span>            : 
+<span class="lineNum">     711 </span>            : 
+<span class="lineNum">     712 </span>            : 
+<span class="lineNum">     713 </span>            : //
+<span class="lineNum">     714 </span>            : // P_SlideMove
+<span class="lineNum">     715 </span>            : // The momx / momy move is bad, so try to slide
+<span class="lineNum">     716 </span>            : // along a wall.
+<span class="lineNum">     717 </span>            : // Find the first line hit, move flush to it,
+<span class="lineNum">     718 </span>            : // and slide along it
+<span class="lineNum">     719 </span>            : //
+<span class="lineNum">     720 </span>            : // This is a kludgy mess.
+<a name="721"><span class="lineNum">     721 </span>            : //</a>
+<span class="lineNum">     722 </span>            : void P_SlideMove (mobj_t* mo)
+<span class="lineNum">     723 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     724 </span><span class="lineNoCov">          0 :     fixed_t             leadx;</span>
+<span class="lineNum">     725 </span><span class="lineNoCov">          0 :     fixed_t             leady;</span>
+<span class="lineNum">     726 </span><span class="lineNoCov">          0 :     fixed_t             trailx;</span>
+<span class="lineNum">     727 </span><span class="lineNoCov">          0 :     fixed_t             traily;</span>
+<span class="lineNum">     728 </span><span class="lineNoCov">          0 :     fixed_t             newx;</span>
+<span class="lineNum">     729 </span><span class="lineNoCov">          0 :     fixed_t             newy;</span>
+<span class="lineNum">     730 </span><span class="lineNoCov">          0 :     int                 hitcount;</span>
+<span class="lineNum">     731 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     732 </span><span class="lineNoCov">          0 :     slidemo = mo;</span>
+<span class="lineNum">     733 </span><span class="lineNoCov">          0 :     hitcount = 0;</span>
+<span class="lineNum">     734 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     735 </span><span class="lineNoCov">          0 :   retry:</span>
+<span class="lineNum">     736 </span><span class="lineNoCov">          0 :     if (++hitcount == 3)</span>
+<span class="lineNum">     737 </span><span class="lineNoCov">          0 :         goto stairstep;         // don't loop forever</span>
+<span class="lineNum">     738 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     739 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     740 </span><span class="lineNoCov">          0 :     // trace along the three leading corners</span>
+<span class="lineNum">     741 </span><span class="lineNoCov">          0 :     if (mo-&gt;momx &gt; 0)</span>
+<span class="lineNum">     742 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     743 </span><span class="lineNoCov">          0 :         leadx = mo-&gt;x + mo-&gt;radius;</span>
+<span class="lineNum">     744 </span><span class="lineNoCov">          0 :         trailx = mo-&gt;x - mo-&gt;radius;</span>
+<span class="lineNum">     745 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     746 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     747 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     748 </span><span class="lineNoCov">          0 :         leadx = mo-&gt;x - mo-&gt;radius;</span>
+<span class="lineNum">     749 </span><span class="lineNoCov">          0 :         trailx = mo-&gt;x + mo-&gt;radius;</span>
+<span class="lineNum">     750 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     751 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     752 </span><span class="lineNoCov">          0 :     if (mo-&gt;momy &gt; 0)</span>
+<span class="lineNum">     753 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     754 </span><span class="lineNoCov">          0 :         leady = mo-&gt;y + mo-&gt;radius;</span>
+<span class="lineNum">     755 </span><span class="lineNoCov">          0 :         traily = mo-&gt;y - mo-&gt;radius;</span>
+<span class="lineNum">     756 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     757 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">     758 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     759 </span><span class="lineNoCov">          0 :         leady = mo-&gt;y - mo-&gt;radius;</span>
+<span class="lineNum">     760 </span><span class="lineNoCov">          0 :         traily = mo-&gt;y + mo-&gt;radius;</span>
+<span class="lineNum">     761 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     762 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     763 </span><span class="lineNoCov">          0 :     bestslidefrac = FRACUNIT+1;</span>
+<span class="lineNum">     764 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     765 </span><span class="lineNoCov">          0 :     P_PathTraverse ( leadx, leady, leadx+mo-&gt;momx, leady+mo-&gt;momy,</span>
+<span class="lineNum">     766 </span><span class="lineNoCov">          0 :                      PT_ADDLINES, PTR_SlideTraverse );</span>
+<span class="lineNum">     767 </span><span class="lineNoCov">          0 :     P_PathTraverse ( trailx, leady, trailx+mo-&gt;momx, leady+mo-&gt;momy,</span>
+<span class="lineNum">     768 </span><span class="lineNoCov">          0 :                      PT_ADDLINES, PTR_SlideTraverse );</span>
+<span class="lineNum">     769 </span><span class="lineNoCov">          0 :     P_PathTraverse ( leadx, traily, leadx+mo-&gt;momx, traily+mo-&gt;momy,</span>
+<span class="lineNum">     770 </span><span class="lineNoCov">          0 :                      PT_ADDLINES, PTR_SlideTraverse );</span>
+<span class="lineNum">     771 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     772 </span><span class="lineNoCov">          0 :     // move up to the wall</span>
+<span class="lineNum">     773 </span><span class="lineNoCov">          0 :     if (bestslidefrac == FRACUNIT+1)</span>
+<span class="lineNum">     774 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     775 </span><span class="lineNoCov">          0 :         // the move most have hit the middle, so stairstep</span>
+<span class="lineNum">     776 </span><span class="lineNoCov">          0 :       stairstep:</span>
+<span class="lineNum">     777 </span><span class="lineNoCov">          0 :         if (!P_TryMove (mo, mo-&gt;x, mo-&gt;y + mo-&gt;momy))</span>
+<span class="lineNum">     778 </span><span class="lineNoCov">          0 :             P_TryMove (mo, mo-&gt;x + mo-&gt;momx, mo-&gt;y);</span>
+<span class="lineNum">     779 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     780 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     781 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     782 </span><span class="lineNoCov">          0 :     // fudge a bit to make sure it doesn't hit</span>
+<span class="lineNum">     783 </span><span class="lineNoCov">          0 :     bestslidefrac -= 0x800;     </span>
+<span class="lineNum">     784 </span><span class="lineNoCov">          0 :     if (bestslidefrac &gt; 0)</span>
+<span class="lineNum">     785 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     786 </span><span class="lineNoCov">          0 :         newx = FixedMul (mo-&gt;momx, bestslidefrac);</span>
+<span class="lineNum">     787 </span><span class="lineNoCov">          0 :         newy = FixedMul (mo-&gt;momy, bestslidefrac);</span>
+<span class="lineNum">     788 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     789 </span><span class="lineNoCov">          0 :         if (!P_TryMove (mo, mo-&gt;x+newx, mo-&gt;y+newy))</span>
+<span class="lineNum">     790 </span><span class="lineNoCov">          0 :             goto stairstep;</span>
+<span class="lineNum">     791 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     792 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     793 </span><span class="lineNoCov">          0 :     // Now continue along the wall.</span>
+<span class="lineNum">     794 </span><span class="lineNoCov">          0 :     // First calculate remainder.</span>
+<span class="lineNum">     795 </span><span class="lineNoCov">          0 :     bestslidefrac = FRACUNIT-(bestslidefrac+0x800);</span>
+<span class="lineNum">     796 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     797 </span><span class="lineNoCov">          0 :     if (bestslidefrac &gt; FRACUNIT)</span>
+<span class="lineNum">     798 </span><span class="lineNoCov">          0 :         bestslidefrac = FRACUNIT;</span>
+<span class="lineNum">     799 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     800 </span><span class="lineNoCov">          0 :     if (bestslidefrac &lt;= 0)</span>
+<span class="lineNum">     801 </span><span class="lineNoCov">          0 :         return;</span>
+<span class="lineNum">     802 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     803 </span><span class="lineNoCov">          0 :     tmxmove = FixedMul (mo-&gt;momx, bestslidefrac);</span>
+<span class="lineNum">     804 </span><span class="lineNoCov">          0 :     tmymove = FixedMul (mo-&gt;momy, bestslidefrac);</span>
+<span class="lineNum">     805 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     806 </span><span class="lineNoCov">          0 :     P_HitSlideLine (bestslideline);     // clip the moves</span>
+<span class="lineNum">     807 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     808 </span><span class="lineNoCov">          0 :     mo-&gt;momx = tmxmove;</span>
+<span class="lineNum">     809 </span><span class="lineNoCov">          0 :     mo-&gt;momy = tmymove;</span>
+<span class="lineNum">     810 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     811 </span><span class="lineNoCov">          0 :     if (!P_TryMove (mo, mo-&gt;x+tmxmove, mo-&gt;y+tmymove))</span>
+<span class="lineNum">     812 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     813 </span><span class="lineNoCov">          0 :         goto retry;</span>
+<span class="lineNum">     814 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     815 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     816 </span>            : 
+<span class="lineNum">     817 </span>            : 
+<span class="lineNum">     818 </span>            : //
+<span class="lineNum">     819 </span>            : // P_LineAttack
+<span class="lineNum">     820 </span>            : //
+<span class="lineNum">     821 </span>            : mobj_t*         linetarget;     // who got hit (or NULL)
+<span class="lineNum">     822 </span>            : mobj_t*         shootthing;
+<span class="lineNum">     823 </span>            : 
+<span class="lineNum">     824 </span>            : // Height if not aiming up or down
+<span class="lineNum">     825 </span>            : // ???: use slope for monsters?
+<span class="lineNum">     826 </span>            : fixed_t         shootz; 
+<span class="lineNum">     827 </span>            : 
+<span class="lineNum">     828 </span>            : int             la_damage;
+<span class="lineNum">     829 </span>            : fixed_t         attackrange;
+<span class="lineNum">     830 </span>            : 
+<span class="lineNum">     831 </span>            : fixed_t         aimslope;
+<span class="lineNum">     832 </span>            : 
+<span class="lineNum">     833 </span>            : // slopes to top and bottom of target
+<span class="lineNum">     834 </span>            : extern fixed_t  topslope;
+<span class="lineNum">     835 </span>            : extern fixed_t  bottomslope;    
+<span class="lineNum">     836 </span>            : 
+<span class="lineNum">     837 </span>            : 
+<span class="lineNum">     838 </span>            : //
+<span class="lineNum">     839 </span>            : // PTR_AimTraverse
+<span class="lineNum">     840 </span>            : // Sets linetaget and aimslope when a target is aimed at.
+<span class="lineNum">     841 </span>            : //
+<a name="842"><span class="lineNum">     842 </span>            : boolean</a>
+<span class="lineNum">     843 </span>            : PTR_AimTraverse (intercept_t* in)
+<span class="lineNum">     844 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     845 </span><span class="lineNoCov">          0 :     line_t*             li;</span>
+<span class="lineNum">     846 </span><span class="lineNoCov">          0 :     mobj_t*             th;</span>
+<span class="lineNum">     847 </span><span class="lineNoCov">          0 :     fixed_t             slope;</span>
+<span class="lineNum">     848 </span><span class="lineNoCov">          0 :     fixed_t             thingtopslope;</span>
+<span class="lineNum">     849 </span><span class="lineNoCov">          0 :     fixed_t             thingbottomslope;</span>
+<span class="lineNum">     850 </span><span class="lineNoCov">          0 :     fixed_t             dist;</span>
+<span class="lineNum">     851 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     852 </span><span class="lineNoCov">          0 :     if (in-&gt;isaline)</span>
+<span class="lineNum">     853 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     854 </span><span class="lineNoCov">          0 :         li = in-&gt;d.line;</span>
+<span class="lineNum">     855 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     856 </span><span class="lineNoCov">          0 :         if ( !(li-&gt;flags &amp; ML_TWOSIDED) )</span>
+<span class="lineNum">     857 </span><span class="lineNoCov">          0 :             return false;               // stop</span>
+<span class="lineNum">     858 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     859 </span><span class="lineNoCov">          0 :         // Crosses a two sided line.</span>
+<span class="lineNum">     860 </span><span class="lineNoCov">          0 :         // A two sided line will restrict</span>
+<span class="lineNum">     861 </span><span class="lineNoCov">          0 :         // the possible target ranges.</span>
+<span class="lineNum">     862 </span><span class="lineNoCov">          0 :         P_LineOpening (li);</span>
+<span class="lineNum">     863 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     864 </span><span class="lineNoCov">          0 :         if (openbottom &gt;= opentop)</span>
+<span class="lineNum">     865 </span><span class="lineNoCov">          0 :             return false;               // stop</span>
+<span class="lineNum">     866 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     867 </span><span class="lineNoCov">          0 :         dist = FixedMul (attackrange, in-&gt;frac);</span>
+<span class="lineNum">     868 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     869 </span><span class="lineNoCov">          0 :         if (li-&gt;backsector == NULL</span>
+<span class="lineNum">     870 </span><span class="lineNoCov">          0 :          || li-&gt;frontsector-&gt;floorheight != li-&gt;backsector-&gt;floorheight)</span>
+<span class="lineNum">     871 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     872 </span><span class="lineNoCov">          0 :             slope = FixedDiv (openbottom - shootz , dist);</span>
+<span class="lineNum">     873 </span><span class="lineNoCov">          0 :             if (slope &gt; bottomslope)</span>
+<span class="lineNum">     874 </span><span class="lineNoCov">          0 :                 bottomslope = slope;</span>
+<span class="lineNum">     875 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     876 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     877 </span><span class="lineNoCov">          0 :         if (li-&gt;backsector == NULL</span>
+<span class="lineNum">     878 </span><span class="lineNoCov">          0 :          || li-&gt;frontsector-&gt;ceilingheight != li-&gt;backsector-&gt;ceilingheight)</span>
+<span class="lineNum">     879 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     880 </span><span class="lineNoCov">          0 :             slope = FixedDiv (opentop - shootz , dist);</span>
+<span class="lineNum">     881 </span><span class="lineNoCov">          0 :             if (slope &lt; topslope)</span>
+<span class="lineNum">     882 </span><span class="lineNoCov">          0 :                 topslope = slope;</span>
+<span class="lineNum">     883 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     884 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     885 </span><span class="lineNoCov">          0 :         if (topslope &lt;= bottomslope)</span>
+<span class="lineNum">     886 </span><span class="lineNoCov">          0 :             return false;               // stop</span>
+<span class="lineNum">     887 </span><span class="lineNoCov">          0 :                         </span>
+<span class="lineNum">     888 </span><span class="lineNoCov">          0 :         return true;                    // shot continues</span>
+<span class="lineNum">     889 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">     890 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     891 </span><span class="lineNoCov">          0 :     // shoot a thing</span>
+<span class="lineNum">     892 </span><span class="lineNoCov">          0 :     th = in-&gt;d.thing;</span>
+<span class="lineNum">     893 </span><span class="lineNoCov">          0 :     if (th == shootthing)</span>
+<span class="lineNum">     894 </span><span class="lineNoCov">          0 :         return true;                    // can't shoot self</span>
+<span class="lineNum">     895 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     896 </span><span class="lineNoCov">          0 :     if (!(th-&gt;flags&amp;MF_SHOOTABLE))</span>
+<span class="lineNum">     897 </span><span class="lineNoCov">          0 :         return true;                    // corpse or something</span>
+<span class="lineNum">     898 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     899 </span><span class="lineNoCov">          0 :     // check angles to see if the thing can be aimed at</span>
+<span class="lineNum">     900 </span><span class="lineNoCov">          0 :     dist = FixedMul (attackrange, in-&gt;frac);</span>
+<span class="lineNum">     901 </span><span class="lineNoCov">          0 :     thingtopslope = FixedDiv (th-&gt;z+th-&gt;height - shootz , dist);</span>
+<span class="lineNum">     902 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     903 </span><span class="lineNoCov">          0 :     if (thingtopslope &lt; bottomslope)</span>
+<span class="lineNum">     904 </span><span class="lineNoCov">          0 :         return true;                    // shot over the thing</span>
+<span class="lineNum">     905 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     906 </span><span class="lineNoCov">          0 :     thingbottomslope = FixedDiv (th-&gt;z - shootz, dist);</span>
+<span class="lineNum">     907 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     908 </span><span class="lineNoCov">          0 :     if (thingbottomslope &gt; topslope)</span>
+<span class="lineNum">     909 </span><span class="lineNoCov">          0 :         return true;                    // shot under the thing</span>
+<span class="lineNum">     910 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     911 </span><span class="lineNoCov">          0 :     // this thing can be hit!</span>
+<span class="lineNum">     912 </span><span class="lineNoCov">          0 :     if (thingtopslope &gt; topslope)</span>
+<span class="lineNum">     913 </span><span class="lineNoCov">          0 :         thingtopslope = topslope;</span>
+<span class="lineNum">     914 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     915 </span><span class="lineNoCov">          0 :     if (thingbottomslope &lt; bottomslope)</span>
+<span class="lineNum">     916 </span><span class="lineNoCov">          0 :         thingbottomslope = bottomslope;</span>
+<span class="lineNum">     917 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     918 </span><span class="lineNoCov">          0 :     aimslope = (thingtopslope+thingbottomslope)/2;</span>
+<span class="lineNum">     919 </span><span class="lineNoCov">          0 :     linetarget = th;</span>
+<span class="lineNum">     920 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     921 </span><span class="lineNoCov">          0 :     return false;                       // don't go any farther</span>
+<span class="lineNum">     922 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">     923 </span>            : 
+<span class="lineNum">     924 </span>            : 
+<span class="lineNum">     925 </span>            : //
+<span class="lineNum">     926 </span>            : // PTR_ShootTraverse
+<a name="927"><span class="lineNum">     927 </span>            : //</a>
+<span class="lineNum">     928 </span>            : boolean PTR_ShootTraverse (intercept_t* in)
+<span class="lineNum">     929 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">     930 </span><span class="lineNoCov">          0 :     fixed_t             x;</span>
+<span class="lineNum">     931 </span><span class="lineNoCov">          0 :     fixed_t             y;</span>
+<span class="lineNum">     932 </span><span class="lineNoCov">          0 :     fixed_t             z;</span>
+<span class="lineNum">     933 </span><span class="lineNoCov">          0 :     fixed_t             frac;</span>
+<span class="lineNum">     934 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     935 </span><span class="lineNoCov">          0 :     line_t*             li;</span>
+<span class="lineNum">     936 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">     937 </span><span class="lineNoCov">          0 :     mobj_t*             th;</span>
+<span class="lineNum">     938 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     939 </span><span class="lineNoCov">          0 :     fixed_t             slope;</span>
+<span class="lineNum">     940 </span><span class="lineNoCov">          0 :     fixed_t             dist;</span>
+<span class="lineNum">     941 </span><span class="lineNoCov">          0 :     fixed_t             thingtopslope;</span>
+<span class="lineNum">     942 </span><span class="lineNoCov">          0 :     fixed_t             thingbottomslope;</span>
+<span class="lineNum">     943 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     944 </span><span class="lineNoCov">          0 :     if (in-&gt;isaline)</span>
+<span class="lineNum">     945 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">     946 </span><span class="lineNoCov">          0 :         li = in-&gt;d.line;</span>
+<span class="lineNum">     947 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     948 </span><span class="lineNoCov">          0 :         if (li-&gt;special)</span>
+<span class="lineNum">     949 </span><span class="lineNoCov">          0 :             P_ShootSpecialLine (shootthing, li);</span>
+<span class="lineNum">     950 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     951 </span><span class="lineNoCov">          0 :         if ( !(li-&gt;flags &amp; ML_TWOSIDED) )</span>
+<span class="lineNum">     952 </span><span class="lineNoCov">          0 :             goto hitline;</span>
+<span class="lineNum">     953 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     954 </span><span class="lineNoCov">          0 :         // crosses a two sided line</span>
+<span class="lineNum">     955 </span><span class="lineNoCov">          0 :         P_LineOpening (li);</span>
+<span class="lineNum">     956 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">     957 </span><span class="lineNoCov">          0 :         dist = FixedMul (attackrange, in-&gt;frac);</span>
+<span class="lineNum">     958 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     959 </span><span class="lineNoCov">          0 :         // e6y: emulation of missed back side on two-sided lines.</span>
+<span class="lineNum">     960 </span><span class="lineNoCov">          0 :         // backsector can be NULL when emulating missing back side.</span>
+<span class="lineNum">     961 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     962 </span><span class="lineNoCov">          0 :         if (li-&gt;backsector == NULL)</span>
+<span class="lineNum">     963 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     964 </span><span class="lineNoCov">          0 :             slope = FixedDiv (openbottom - shootz , dist);</span>
+<span class="lineNum">     965 </span><span class="lineNoCov">          0 :             if (slope &gt; aimslope)</span>
+<span class="lineNum">     966 </span><span class="lineNoCov">          0 :                 goto hitline;</span>
+<span class="lineNum">     967 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     968 </span><span class="lineNoCov">          0 :             slope = FixedDiv (opentop - shootz , dist);</span>
+<span class="lineNum">     969 </span><span class="lineNoCov">          0 :             if (slope &lt; aimslope)</span>
+<span class="lineNum">     970 </span><span class="lineNoCov">          0 :                 goto hitline;</span>
+<span class="lineNum">     971 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     972 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">     973 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">     974 </span><span class="lineNoCov">          0 :             if (li-&gt;frontsector-&gt;floorheight != li-&gt;backsector-&gt;floorheight)</span>
+<span class="lineNum">     975 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     976 </span><span class="lineNoCov">          0 :                 slope = FixedDiv (openbottom - shootz , dist);</span>
+<span class="lineNum">     977 </span><span class="lineNoCov">          0 :                 if (slope &gt; aimslope)</span>
+<span class="lineNum">     978 </span><span class="lineNoCov">          0 :                     goto hitline;</span>
+<span class="lineNum">     979 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     980 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     981 </span><span class="lineNoCov">          0 :             if (li-&gt;frontsector-&gt;ceilingheight != li-&gt;backsector-&gt;ceilingheight)</span>
+<span class="lineNum">     982 </span><span class="lineNoCov">          0 :             {</span>
+<span class="lineNum">     983 </span><span class="lineNoCov">          0 :                 slope = FixedDiv (opentop - shootz , dist);</span>
+<span class="lineNum">     984 </span><span class="lineNoCov">          0 :                 if (slope &lt; aimslope)</span>
+<span class="lineNum">     985 </span><span class="lineNoCov">          0 :                     goto hitline;</span>
+<span class="lineNum">     986 </span><span class="lineNoCov">          0 :             }</span>
+<span class="lineNum">     987 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">     988 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">     989 </span><span class="lineNoCov">          0 :         // shot continues</span>
+<span class="lineNum">     990 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">     991 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     992 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">     993 </span><span class="lineNoCov">          0 :         // hit line</span>
+<span class="lineNum">     994 </span><span class="lineNoCov">          0 :       hitline:</span>
+<span class="lineNum">     995 </span><span class="lineNoCov">          0 :         // position a bit closer</span>
+<span class="lineNum">     996 </span><span class="lineNoCov">          0 :         frac = in-&gt;frac - FixedDiv (4*FRACUNIT,attackrange);</span>
+<span class="lineNum">     997 </span><span class="lineNoCov">          0 :         x = trace.x + FixedMul (trace.dx, frac);</span>
+<span class="lineNum">     998 </span><span class="lineNoCov">          0 :         y = trace.y + FixedMul (trace.dy, frac);</span>
+<span class="lineNum">     999 </span><span class="lineNoCov">          0 :         z = shootz + FixedMul (aimslope, FixedMul(frac, attackrange));</span>
+<span class="lineNum">    1000 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1001 </span><span class="lineNoCov">          0 :         if (li-&gt;frontsector-&gt;ceilingpic == skyflatnum)</span>
+<span class="lineNum">    1002 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1003 </span><span class="lineNoCov">          0 :             // don't shoot the sky!</span>
+<span class="lineNum">    1004 </span><span class="lineNoCov">          0 :             if (z &gt; li-&gt;frontsector-&gt;ceilingheight)</span>
+<span class="lineNum">    1005 </span><span class="lineNoCov">          0 :                 return false;</span>
+<span class="lineNum">    1006 </span><span class="lineNoCov">          0 :             </span>
+<span class="lineNum">    1007 </span><span class="lineNoCov">          0 :             // it's a sky hack wall</span>
+<span class="lineNum">    1008 </span><span class="lineNoCov">          0 :             if  (li-&gt;backsector &amp;&amp; li-&gt;backsector-&gt;ceilingpic == skyflatnum)</span>
+<span class="lineNum">    1009 </span><span class="lineNoCov">          0 :                 return false;           </span>
+<span class="lineNum">    1010 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1011 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1012 </span><span class="lineNoCov">          0 :         // Spawn bullet puffs.</span>
+<span class="lineNum">    1013 </span><span class="lineNoCov">          0 :         P_SpawnPuff (x,y,z);</span>
+<span class="lineNum">    1014 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1015 </span><span class="lineNoCov">          0 :         // don't go any farther</span>
+<span class="lineNum">    1016 </span><span class="lineNoCov">          0 :         return false;   </span>
+<span class="lineNum">    1017 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1018 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1019 </span><span class="lineNoCov">          0 :     // shoot a thing</span>
+<span class="lineNum">    1020 </span><span class="lineNoCov">          0 :     th = in-&gt;d.thing;</span>
+<span class="lineNum">    1021 </span><span class="lineNoCov">          0 :     if (th == shootthing)</span>
+<span class="lineNum">    1022 </span><span class="lineNoCov">          0 :         return true;            // can't shoot self</span>
+<span class="lineNum">    1023 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1024 </span><span class="lineNoCov">          0 :     if (!(th-&gt;flags&amp;MF_SHOOTABLE))</span>
+<span class="lineNum">    1025 </span><span class="lineNoCov">          0 :         return true;            // corpse or something</span>
+<span class="lineNum">    1026 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">    1027 </span><span class="lineNoCov">          0 :     // check angles to see if the thing can be aimed at</span>
+<span class="lineNum">    1028 </span><span class="lineNoCov">          0 :     dist = FixedMul (attackrange, in-&gt;frac);</span>
+<span class="lineNum">    1029 </span><span class="lineNoCov">          0 :     thingtopslope = FixedDiv (th-&gt;z+th-&gt;height - shootz , dist);</span>
+<span class="lineNum">    1030 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1031 </span><span class="lineNoCov">          0 :     if (thingtopslope &lt; aimslope)</span>
+<span class="lineNum">    1032 </span><span class="lineNoCov">          0 :         return true;            // shot over the thing</span>
+<span class="lineNum">    1033 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1034 </span><span class="lineNoCov">          0 :     thingbottomslope = FixedDiv (th-&gt;z - shootz, dist);</span>
+<span class="lineNum">    1035 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1036 </span><span class="lineNoCov">          0 :     if (thingbottomslope &gt; aimslope)</span>
+<span class="lineNum">    1037 </span><span class="lineNoCov">          0 :         return true;            // shot under the thing</span>
+<span class="lineNum">    1038 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1039 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1040 </span><span class="lineNoCov">          0 :     // hit thing</span>
+<span class="lineNum">    1041 </span><span class="lineNoCov">          0 :     // position a bit closer</span>
+<span class="lineNum">    1042 </span><span class="lineNoCov">          0 :     frac = in-&gt;frac - FixedDiv (10*FRACUNIT,attackrange);</span>
+<span class="lineNum">    1043 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1044 </span><span class="lineNoCov">          0 :     x = trace.x + FixedMul (trace.dx, frac);</span>
+<span class="lineNum">    1045 </span><span class="lineNoCov">          0 :     y = trace.y + FixedMul (trace.dy, frac);</span>
+<span class="lineNum">    1046 </span><span class="lineNoCov">          0 :     z = shootz + FixedMul (aimslope, FixedMul(frac, attackrange));</span>
+<span class="lineNum">    1047 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1048 </span><span class="lineNoCov">          0 :     // Spawn bullet puffs or blod spots,</span>
+<span class="lineNum">    1049 </span><span class="lineNoCov">          0 :     // depending on target type.</span>
+<span class="lineNum">    1050 </span><span class="lineNoCov">          0 :     if (in-&gt;d.thing-&gt;flags &amp; MF_NOBLOOD)</span>
+<span class="lineNum">    1051 </span><span class="lineNoCov">          0 :         P_SpawnPuff (x,y,z);</span>
+<span class="lineNum">    1052 </span><span class="lineNoCov">          0 :     else</span>
+<span class="lineNum">    1053 </span><span class="lineNoCov">          0 :         P_SpawnBlood (x,y,z, la_damage);</span>
+<span class="lineNum">    1054 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1055 </span><span class="lineNoCov">          0 :     if (la_damage)</span>
+<span class="lineNum">    1056 </span><span class="lineNoCov">          0 :         P_DamageMobj (th, shootthing, shootthing, la_damage);</span>
+<span class="lineNum">    1057 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1058 </span><span class="lineNoCov">          0 :     // don't go any farther</span>
+<span class="lineNum">    1059 </span><span class="lineNoCov">          0 :     return false;</span>
+<span class="lineNum">    1060 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1061 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1062 </span>            : 
+<span class="lineNum">    1063 </span>            : 
+<span class="lineNum">    1064 </span>            : //
+<span class="lineNum">    1065 </span>            : // P_AimLineAttack
+<span class="lineNum">    1066 </span>            : //
+<span class="lineNum">    1067 </span>            : fixed_t
+<span class="lineNum">    1068 </span>            : P_AimLineAttack
+<span class="lineNum">    1069 </span>            : ( mobj_t*       t1,
+<a name="1070"><span class="lineNum">    1070 </span>            :   angle_t       angle,</a>
+<span class="lineNum">    1071 </span>            :   fixed_t       distance )
+<span class="lineNum">    1072 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1073 </span><span class="lineNoCov">          0 :     fixed_t     x2;</span>
+<span class="lineNum">    1074 </span><span class="lineNoCov">          0 :     fixed_t     y2;</span>
+<span class="lineNum">    1075 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1076 </span><span class="lineNoCov">          0 :     t1 = P_SubstNullMobj(t1);</span>
+<span class="lineNum">    1077 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1078 </span><span class="lineNoCov">          0 :     angle &gt;&gt;= ANGLETOFINESHIFT;</span>
+<span class="lineNum">    1079 </span><span class="lineNoCov">          0 :     shootthing = t1;</span>
+<span class="lineNum">    1080 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1081 </span><span class="lineNoCov">          0 :     x2 = t1-&gt;x + (distance&gt;&gt;FRACBITS)*finecosine[angle];</span>
+<span class="lineNum">    1082 </span><span class="lineNoCov">          0 :     y2 = t1-&gt;y + (distance&gt;&gt;FRACBITS)*finesine[angle];</span>
+<span class="lineNum">    1083 </span><span class="lineNoCov">          0 :     shootz = t1-&gt;z + (t1-&gt;height&gt;&gt;1) + 8*FRACUNIT;</span>
+<span class="lineNum">    1084 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1085 </span><span class="lineNoCov">          0 :     // can't shoot outside view angles</span>
+<span class="lineNum">    1086 </span><span class="lineNoCov">          0 :     topslope = (SCREENHEIGHT/2)*FRACUNIT/(SCREENWIDTH/2);       </span>
+<span class="lineNum">    1087 </span><span class="lineNoCov">          0 :     bottomslope = -(SCREENHEIGHT/2)*FRACUNIT/(SCREENWIDTH/2);</span>
+<span class="lineNum">    1088 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1089 </span><span class="lineNoCov">          0 :     attackrange = distance;</span>
+<span class="lineNum">    1090 </span><span class="lineNoCov">          0 :     linetarget = NULL;</span>
+<span class="lineNum">    1091 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1092 </span><span class="lineNoCov">          0 :     P_PathTraverse ( t1-&gt;x, t1-&gt;y,</span>
+<span class="lineNum">    1093 </span><span class="lineNoCov">          0 :                      x2, y2,</span>
+<span class="lineNum">    1094 </span><span class="lineNoCov">          0 :                      PT_ADDLINES|PT_ADDTHINGS,</span>
+<span class="lineNum">    1095 </span><span class="lineNoCov">          0 :                      PTR_AimTraverse );</span>
+<span class="lineNum">    1096 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">    1097 </span><span class="lineNoCov">          0 :     if (linetarget)</span>
+<span class="lineNum">    1098 </span><span class="lineNoCov">          0 :         return aimslope;</span>
+<span class="lineNum">    1099 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1100 </span><span class="lineNoCov">          0 :     return 0;</span>
+<span class="lineNum">    1101 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1102 </span>            :  
+<span class="lineNum">    1103 </span>            : 
+<span class="lineNum">    1104 </span>            : //
+<span class="lineNum">    1105 </span>            : // P_LineAttack
+<span class="lineNum">    1106 </span>            : // If damage == 0, it is just a test trace
+<span class="lineNum">    1107 </span>            : // that will leave linetarget set.
+<span class="lineNum">    1108 </span>            : //
+<span class="lineNum">    1109 </span>            : void
+<span class="lineNum">    1110 </span>            : P_LineAttack
+<span class="lineNum">    1111 </span>            : ( mobj_t*       t1,
+<span class="lineNum">    1112 </span>            :   angle_t       angle,
+<span class="lineNum">    1113 </span>            :   fixed_t       distance,
+<a name="1114"><span class="lineNum">    1114 </span>            :   fixed_t       slope,</a>
+<span class="lineNum">    1115 </span>            :   int           damage )
+<span class="lineNum">    1116 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1117 </span><span class="lineNoCov">          0 :     fixed_t     x2;</span>
+<span class="lineNum">    1118 </span><span class="lineNoCov">          0 :     fixed_t     y2;</span>
+<span class="lineNum">    1119 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1120 </span><span class="lineNoCov">          0 :     angle &gt;&gt;= ANGLETOFINESHIFT;</span>
+<span class="lineNum">    1121 </span><span class="lineNoCov">          0 :     shootthing = t1;</span>
+<span class="lineNum">    1122 </span><span class="lineNoCov">          0 :     la_damage = damage;</span>
+<span class="lineNum">    1123 </span><span class="lineNoCov">          0 :     x2 = t1-&gt;x + (distance&gt;&gt;FRACBITS)*finecosine[angle];</span>
+<span class="lineNum">    1124 </span><span class="lineNoCov">          0 :     y2 = t1-&gt;y + (distance&gt;&gt;FRACBITS)*finesine[angle];</span>
+<span class="lineNum">    1125 </span><span class="lineNoCov">          0 :     shootz = t1-&gt;z + (t1-&gt;height&gt;&gt;1) + 8*FRACUNIT;</span>
+<span class="lineNum">    1126 </span><span class="lineNoCov">          0 :     attackrange = distance;</span>
+<span class="lineNum">    1127 </span><span class="lineNoCov">          0 :     aimslope = slope;</span>
+<span class="lineNum">    1128 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">    1129 </span><span class="lineNoCov">          0 :     P_PathTraverse ( t1-&gt;x, t1-&gt;y,</span>
+<span class="lineNum">    1130 </span><span class="lineNoCov">          0 :                      x2, y2,</span>
+<span class="lineNum">    1131 </span><span class="lineNoCov">          0 :                      PT_ADDLINES|PT_ADDTHINGS,</span>
+<span class="lineNum">    1132 </span><span class="lineNoCov">          0 :                      PTR_ShootTraverse );</span>
+<span class="lineNum">    1133 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1134 </span>            :  
+<span class="lineNum">    1135 </span>            : 
+<span class="lineNum">    1136 </span>            : 
+<span class="lineNum">    1137 </span>            : //
+<span class="lineNum">    1138 </span>            : // USE LINES
+<span class="lineNum">    1139 </span>            : //
+<span class="lineNum">    1140 </span>            : mobj_t*         usething;
+<a name="1141"><span class="lineNum">    1141 </span>            : </a>
+<span class="lineNum">    1142 </span>            : boolean PTR_UseTraverse (intercept_t* in)
+<span class="lineNum">    1143 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1144 </span><span class="lineNoCov">          0 :     int         side;</span>
+<span class="lineNum">    1145 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1146 </span><span class="lineNoCov">          0 :     if (!in-&gt;d.line-&gt;special)</span>
+<span class="lineNum">    1147 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1148 </span><span class="lineNoCov">          0 :         P_LineOpening (in-&gt;d.line);</span>
+<span class="lineNum">    1149 </span><span class="lineNoCov">          0 :         if (openrange &lt;= 0)</span>
+<span class="lineNum">    1150 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1151 </span><span class="lineNoCov">          0 :             S_StartSound (usething, sfx_noway);</span>
+<span class="lineNum">    1152 </span><span class="lineNoCov">          0 :             </span>
+<span class="lineNum">    1153 </span><span class="lineNoCov">          0 :             // can't use through a wall</span>
+<span class="lineNum">    1154 </span><span class="lineNoCov">          0 :             return false;       </span>
+<span class="lineNum">    1155 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1156 </span><span class="lineNoCov">          0 :         // not a special line, but keep checking</span>
+<span class="lineNum">    1157 </span><span class="lineNoCov">          0 :         return true ;           </span>
+<span class="lineNum">    1158 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1159 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1160 </span><span class="lineNoCov">          0 :     side = 0;</span>
+<span class="lineNum">    1161 </span><span class="lineNoCov">          0 :     if (P_PointOnLineSide (usething-&gt;x, usething-&gt;y, in-&gt;d.line) == 1)</span>
+<span class="lineNum">    1162 </span><span class="lineNoCov">          0 :         side = 1;</span>
+<span class="lineNum">    1163 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1164 </span><span class="lineNoCov">          0 :     //  return false;           // don't use back side</span>
+<span class="lineNum">    1165 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1166 </span><span class="lineNoCov">          0 :     P_UseSpecialLine (usething, in-&gt;d.line, side);</span>
+<span class="lineNum">    1167 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1168 </span><span class="lineNoCov">          0 :     // can't use for than one special line in a row</span>
+<span class="lineNum">    1169 </span><span class="lineNoCov">          0 :     return false;</span>
+<span class="lineNum">    1170 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1171 </span>            : 
+<span class="lineNum">    1172 </span>            : 
+<span class="lineNum">    1173 </span>            : //
+<span class="lineNum">    1174 </span>            : // P_UseLines
+<span class="lineNum">    1175 </span>            : // Looks for special lines in front of the player to activate.
+<a name="1176"><span class="lineNum">    1176 </span>            : //</a>
+<span class="lineNum">    1177 </span>            : void P_UseLines (player_t*      player) 
+<span class="lineNum">    1178 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1179 </span><span class="lineNoCov">          0 :     int         angle;</span>
+<span class="lineNum">    1180 </span><span class="lineNoCov">          0 :     fixed_t     x1;</span>
+<span class="lineNum">    1181 </span><span class="lineNoCov">          0 :     fixed_t     y1;</span>
+<span class="lineNum">    1182 </span><span class="lineNoCov">          0 :     fixed_t     x2;</span>
+<span class="lineNum">    1183 </span><span class="lineNoCov">          0 :     fixed_t     y2;</span>
+<span class="lineNum">    1184 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1185 </span><span class="lineNoCov">          0 :     usething = player-&gt;mo;</span>
+<span class="lineNum">    1186 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">    1187 </span><span class="lineNoCov">          0 :     angle = player-&gt;mo-&gt;angle &gt;&gt; ANGLETOFINESHIFT;</span>
+<span class="lineNum">    1188 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1189 </span><span class="lineNoCov">          0 :     x1 = player-&gt;mo-&gt;x;</span>
+<span class="lineNum">    1190 </span><span class="lineNoCov">          0 :     y1 = player-&gt;mo-&gt;y;</span>
+<span class="lineNum">    1191 </span><span class="lineNoCov">          0 :     x2 = x1 + (USERANGE&gt;&gt;FRACBITS)*finecosine[angle];</span>
+<span class="lineNum">    1192 </span><span class="lineNoCov">          0 :     y2 = y1 + (USERANGE&gt;&gt;FRACBITS)*finesine[angle];</span>
+<span class="lineNum">    1193 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1194 </span><span class="lineNoCov">          0 :     P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse );</span>
+<span class="lineNum">    1195 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1196 </span>            : 
+<span class="lineNum">    1197 </span>            : 
+<span class="lineNum">    1198 </span>            : //
+<span class="lineNum">    1199 </span>            : // RADIUS ATTACK
+<span class="lineNum">    1200 </span>            : //
+<span class="lineNum">    1201 </span>            : mobj_t*         bombsource;
+<span class="lineNum">    1202 </span>            : mobj_t*         bombspot;
+<span class="lineNum">    1203 </span>            : int             bombdamage;
+<span class="lineNum">    1204 </span>            : 
+<span class="lineNum">    1205 </span>            : 
+<span class="lineNum">    1206 </span>            : //
+<span class="lineNum">    1207 </span>            : // PIT_RadiusAttack
+<span class="lineNum">    1208 </span>            : // &quot;bombsource&quot; is the creature
+<span class="lineNum">    1209 </span>            : // that caused the explosion at &quot;bombspot&quot;.
+<a name="1210"><span class="lineNum">    1210 </span>            : //</a>
+<span class="lineNum">    1211 </span>            : boolean PIT_RadiusAttack (mobj_t* thing)
+<span class="lineNum">    1212 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1213 </span><span class="lineNoCov">          0 :     fixed_t     dx;</span>
+<span class="lineNum">    1214 </span><span class="lineNoCov">          0 :     fixed_t     dy;</span>
+<span class="lineNum">    1215 </span><span class="lineNoCov">          0 :     fixed_t     dist;</span>
+<span class="lineNum">    1216 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1217 </span><span class="lineNoCov">          0 :     if (!(thing-&gt;flags &amp; MF_SHOOTABLE) )</span>
+<span class="lineNum">    1218 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">    1219 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1220 </span><span class="lineNoCov">          0 :     // Boss spider and cyborg</span>
+<span class="lineNum">    1221 </span><span class="lineNoCov">          0 :     // take no damage from concussion.</span>
+<span class="lineNum">    1222 </span><span class="lineNoCov">          0 :     if (thing-&gt;type == MT_CYBORG</span>
+<span class="lineNum">    1223 </span><span class="lineNoCov">          0 :         || thing-&gt;type == MT_SPIDER)</span>
+<span class="lineNum">    1224 </span><span class="lineNoCov">          0 :         return true;    </span>
+<span class="lineNum">    1225 </span><span class="lineNoCov">          0 :                 </span>
+<span class="lineNum">    1226 </span><span class="lineNoCov">          0 :     dx = abs(thing-&gt;x - bombspot-&gt;x);</span>
+<span class="lineNum">    1227 </span><span class="lineNoCov">          0 :     dy = abs(thing-&gt;y - bombspot-&gt;y);</span>
+<span class="lineNum">    1228 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1229 </span><span class="lineNoCov">          0 :     dist = dx&gt;dy ? dx : dy;</span>
+<span class="lineNum">    1230 </span><span class="lineNoCov">          0 :     dist = (dist - thing-&gt;radius) &gt;&gt; FRACBITS;</span>
+<span class="lineNum">    1231 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1232 </span><span class="lineNoCov">          0 :     if (dist &lt; 0)</span>
+<span class="lineNum">    1233 </span><span class="lineNoCov">          0 :         dist = 0;</span>
+<span class="lineNum">    1234 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1235 </span><span class="lineNoCov">          0 :     if (dist &gt;= bombdamage)</span>
+<span class="lineNum">    1236 </span><span class="lineNoCov">          0 :         return true;    // out of range</span>
+<span class="lineNum">    1237 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1238 </span><span class="lineNoCov">          0 :     if ( P_CheckSight (thing, bombspot) )</span>
+<span class="lineNum">    1239 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1240 </span><span class="lineNoCov">          0 :         // must be in direct path</span>
+<span class="lineNum">    1241 </span><span class="lineNoCov">          0 :         P_DamageMobj (thing, bombspot, bombsource, bombdamage - dist);</span>
+<span class="lineNum">    1242 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1243 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1244 </span><span class="lineNoCov">          0 :     return true;</span>
+<span class="lineNum">    1245 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1246 </span>            : 
+<span class="lineNum">    1247 </span>            : 
+<span class="lineNum">    1248 </span>            : //
+<span class="lineNum">    1249 </span>            : // P_RadiusAttack
+<span class="lineNum">    1250 </span>            : // Source is the creature that caused the explosion at spot.
+<span class="lineNum">    1251 </span>            : //
+<span class="lineNum">    1252 </span>            : void
+<span class="lineNum">    1253 </span>            : P_RadiusAttack
+<span class="lineNum">    1254 </span>            : ( mobj_t*       spot,
+<a name="1255"><span class="lineNum">    1255 </span>            :   mobj_t*       source,</a>
+<span class="lineNum">    1256 </span>            :   int           damage )
+<span class="lineNum">    1257 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1258 </span><span class="lineNoCov">          0 :     int         x;</span>
+<span class="lineNum">    1259 </span><span class="lineNoCov">          0 :     int         y;</span>
+<span class="lineNum">    1260 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1261 </span><span class="lineNoCov">          0 :     int         xl;</span>
+<span class="lineNum">    1262 </span><span class="lineNoCov">          0 :     int         xh;</span>
+<span class="lineNum">    1263 </span><span class="lineNoCov">          0 :     int         yl;</span>
+<span class="lineNum">    1264 </span><span class="lineNoCov">          0 :     int         yh;</span>
+<span class="lineNum">    1265 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1266 </span><span class="lineNoCov">          0 :     fixed_t     dist;</span>
+<span class="lineNum">    1267 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1268 </span><span class="lineNoCov">          0 :     dist = (damage+MAXRADIUS)&lt;&lt;FRACBITS;</span>
+<span class="lineNum">    1269 </span><span class="lineNoCov">          0 :     yh = (spot-&gt;y + dist - bmaporgy)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">    1270 </span><span class="lineNoCov">          0 :     yl = (spot-&gt;y - dist - bmaporgy)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">    1271 </span><span class="lineNoCov">          0 :     xh = (spot-&gt;x + dist - bmaporgx)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">    1272 </span><span class="lineNoCov">          0 :     xl = (spot-&gt;x - dist - bmaporgx)&gt;&gt;MAPBLOCKSHIFT;</span>
+<span class="lineNum">    1273 </span><span class="lineNoCov">          0 :     bombspot = spot;</span>
+<span class="lineNum">    1274 </span><span class="lineNoCov">          0 :     bombsource = source;</span>
+<span class="lineNum">    1275 </span><span class="lineNoCov">          0 :     bombdamage = damage;</span>
+<span class="lineNum">    1276 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1277 </span><span class="lineNoCov">          0 :     for (y=yl ; y&lt;=yh ; y++)</span>
+<span class="lineNum">    1278 </span><span class="lineNoCov">          0 :         for (x=xl ; x&lt;=xh ; x++)</span>
+<span class="lineNum">    1279 </span><span class="lineNoCov">          0 :             P_BlockThingsIterator (x, y, PIT_RadiusAttack );</span>
+<span class="lineNum">    1280 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1281 </span>            : 
+<span class="lineNum">    1282 </span>            : 
+<span class="lineNum">    1283 </span>            : 
+<span class="lineNum">    1284 </span>            : //
+<span class="lineNum">    1285 </span>            : // SECTOR HEIGHT CHANGING
+<span class="lineNum">    1286 </span>            : // After modifying a sectors floor or ceiling height,
+<span class="lineNum">    1287 </span>            : // call this routine to adjust the positions
+<span class="lineNum">    1288 </span>            : // of all things that touch the sector.
+<span class="lineNum">    1289 </span>            : //
+<span class="lineNum">    1290 </span>            : // If anything doesn't fit anymore, true will be returned.
+<span class="lineNum">    1291 </span>            : // If crunch is true, they will take damage
+<span class="lineNum">    1292 </span>            : //  as they are being crushed.
+<span class="lineNum">    1293 </span>            : // If Crunch is false, you should set the sector height back
+<span class="lineNum">    1294 </span>            : //  the way it was and call P_ChangeSector again
+<span class="lineNum">    1295 </span>            : //  to undo the changes.
+<span class="lineNum">    1296 </span>            : //
+<span class="lineNum">    1297 </span>            : boolean         crushchange;
+<span class="lineNum">    1298 </span>            : boolean         nofit;
+<span class="lineNum">    1299 </span>            : 
+<span class="lineNum">    1300 </span>            : 
+<span class="lineNum">    1301 </span>            : //
+<span class="lineNum">    1302 </span>            : // PIT_ChangeSector
+<a name="1303"><span class="lineNum">    1303 </span>            : //</a>
+<span class="lineNum">    1304 </span>            : boolean PIT_ChangeSector (mobj_t*       thing)
+<span class="lineNum">    1305 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1306 </span><span class="lineNoCov">          0 :     mobj_t*     mo;</span>
+<span class="lineNum">    1307 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1308 </span><span class="lineNoCov">          0 :     if (P_ThingHeightClip (thing))</span>
+<span class="lineNum">    1309 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1310 </span><span class="lineNoCov">          0 :         // keep checking</span>
+<span class="lineNum">    1311 </span><span class="lineNoCov">          0 :         return true;</span>
+<span class="lineNum">    1312 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1313 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1314 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1315 </span><span class="lineNoCov">          0 :     // crunch bodies to giblets</span>
+<span class="lineNum">    1316 </span><span class="lineNoCov">          0 :     if (thing-&gt;health &lt;= 0)</span>
+<span class="lineNum">    1317 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1318 </span><span class="lineNoCov">          0 :         P_SetMobjState (thing, S_GIBS);</span>
+<span class="lineNum">    1319 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1320 </span><span class="lineNoCov">          0 :     if (gameversion &gt; exe_doom_1_2)</span>
+<span class="lineNum">    1321 </span><span class="lineNoCov">          0 :             thing-&gt;flags &amp;= ~MF_SOLID;</span>
+<span class="lineNum">    1322 </span><span class="lineNoCov">          0 :         thing-&gt;height = 0;</span>
+<span class="lineNum">    1323 </span><span class="lineNoCov">          0 :         thing-&gt;radius = 0;</span>
+<span class="lineNum">    1324 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1325 </span><span class="lineNoCov">          0 :         // keep checking</span>
+<span class="lineNum">    1326 </span><span class="lineNoCov">          0 :         return true;            </span>
+<span class="lineNum">    1327 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1328 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1329 </span><span class="lineNoCov">          0 :     // crunch dropped items</span>
+<span class="lineNum">    1330 </span><span class="lineNoCov">          0 :     if (thing-&gt;flags &amp; MF_DROPPED)</span>
+<span class="lineNum">    1331 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1332 </span><span class="lineNoCov">          0 :         P_RemoveMobj (thing);</span>
+<span class="lineNum">    1333 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1334 </span><span class="lineNoCov">          0 :         // keep checking</span>
+<span class="lineNum">    1335 </span><span class="lineNoCov">          0 :         return true;            </span>
+<span class="lineNum">    1336 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1337 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1338 </span><span class="lineNoCov">          0 :     if (! (thing-&gt;flags &amp; MF_SHOOTABLE) )</span>
+<span class="lineNum">    1339 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1340 </span><span class="lineNoCov">          0 :         // assume it is bloody gibs or something</span>
+<span class="lineNum">    1341 </span><span class="lineNoCov">          0 :         return true;                    </span>
+<span class="lineNum">    1342 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1343 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1344 </span><span class="lineNoCov">          0 :     nofit = true;</span>
+<span class="lineNum">    1345 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1346 </span><span class="lineNoCov">          0 :     if (crushchange &amp;&amp; !(leveltime&amp;3) )</span>
+<span class="lineNum">    1347 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1348 </span><span class="lineNoCov">          0 :         P_DamageMobj(thing,NULL,NULL,10);</span>
+<span class="lineNum">    1349 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1350 </span><span class="lineNoCov">          0 :         // spray blood in a random direction</span>
+<span class="lineNum">    1351 </span><span class="lineNoCov">          0 :         mo = P_SpawnMobj (thing-&gt;x,</span>
+<span class="lineNum">    1352 </span><span class="lineNoCov">          0 :                           thing-&gt;y,</span>
+<span class="lineNum">    1353 </span><span class="lineNoCov">          0 :                           thing-&gt;z + thing-&gt;height/2, MT_BLOOD);</span>
+<span class="lineNum">    1354 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1355 </span><span class="lineNoCov">          0 :         mo-&gt;momx = P_SubRandom() &lt;&lt; 12;</span>
+<span class="lineNum">    1356 </span><span class="lineNoCov">          0 :         mo-&gt;momy = P_SubRandom() &lt;&lt; 12;</span>
+<span class="lineNum">    1357 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1358 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1359 </span><span class="lineNoCov">          0 :     // keep checking (crush other things)       </span>
+<span class="lineNum">    1360 </span><span class="lineNoCov">          0 :     return true;        </span>
+<span class="lineNum">    1361 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1362 </span>            : 
+<span class="lineNum">    1363 </span>            : 
+<span class="lineNum">    1364 </span>            : 
+<span class="lineNum">    1365 </span>            : //
+<span class="lineNum">    1366 </span>            : // P_ChangeSector
+<span class="lineNum">    1367 </span>            : //
+<span class="lineNum">    1368 </span>            : boolean
+<span class="lineNum">    1369 </span>            : P_ChangeSector
+<a name="1370"><span class="lineNum">    1370 </span>            : ( sector_t*     sector,</a>
+<span class="lineNum">    1371 </span>            :   boolean       crunch )
+<span class="lineNum">    1372 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1373 </span><span class="lineNoCov">          0 :     int         x;</span>
+<span class="lineNum">    1374 </span><span class="lineNoCov">          0 :     int         y;</span>
+<span class="lineNum">    1375 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1376 </span><span class="lineNoCov">          0 :     nofit = false;</span>
+<span class="lineNum">    1377 </span><span class="lineNoCov">          0 :     crushchange = crunch;</span>
+<span class="lineNum">    1378 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1379 </span><span class="lineNoCov">          0 :     // re-check heights for all things near the moving sector</span>
+<span class="lineNum">    1380 </span><span class="lineNoCov">          0 :     for (x=sector-&gt;blockbox[BOXLEFT] ; x&lt;= sector-&gt;blockbox[BOXRIGHT] ; x++)</span>
+<span class="lineNum">    1381 </span><span class="lineNoCov">          0 :         for (y=sector-&gt;blockbox[BOXBOTTOM];y&lt;= sector-&gt;blockbox[BOXTOP] ; y++)</span>
+<span class="lineNum">    1382 </span><span class="lineNoCov">          0 :             P_BlockThingsIterator (x, y, PIT_ChangeSector);</span>
+<span class="lineNum">    1383 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1384 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1385 </span><span class="lineNoCov">          0 :     return nofit;</span>
+<span class="lineNum">    1386 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1387 </span>            : 
+<span class="lineNum">    1388 </span>            : // Code to emulate the behavior of Vanilla Doom when encountering an overrun
+<span class="lineNum">    1389 </span>            : // of the spechit array.  This is by Andrey Budko (e6y) and comes from his
+<span class="lineNum">    1390 </span>            : // PrBoom plus port.  A big thanks to Andrey for this.
+<a name="1391"><span class="lineNum">    1391 </span>            : </a>
+<span class="lineNum">    1392 </span>            : static void SpechitOverrun(line_t *ld)
+<span class="lineNum">    1393 </span><span class="lineNoCov">          0 : {</span>
+<span class="lineNum">    1394 </span><span class="lineNoCov">          0 :     static unsigned int baseaddr = 0;</span>
+<span class="lineNum">    1395 </span><span class="lineNoCov">          0 :     unsigned int addr;</span>
+<span class="lineNum">    1396 </span><span class="lineNoCov">          0 :    </span>
+<span class="lineNum">    1397 </span><span class="lineNoCov">          0 :     if (baseaddr == 0)</span>
+<span class="lineNum">    1398 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1399 </span><span class="lineNoCov">          0 :         int p;</span>
+<span class="lineNum">    1400 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1401 </span><span class="lineNoCov">          0 :         // This is the first time we have had an overrun.  Work out</span>
+<span class="lineNum">    1402 </span><span class="lineNoCov">          0 :         // what base address we are going to use.</span>
+<span class="lineNum">    1403 </span><span class="lineNoCov">          0 :         // Allow a spechit value to be specified on the command line.</span>
+<span class="lineNum">    1404 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1405 </span><span class="lineNoCov">          0 :         //!</span>
+<span class="lineNum">    1406 </span><span class="lineNoCov">          0 :         // @category compat</span>
+<span class="lineNum">    1407 </span><span class="lineNoCov">          0 :         // @arg &lt;n&gt;</span>
+<span class="lineNum">    1408 </span><span class="lineNoCov">          0 :         //</span>
+<span class="lineNum">    1409 </span><span class="lineNoCov">          0 :         // Use the specified magic value when emulating spechit overruns.</span>
+<span class="lineNum">    1410 </span><span class="lineNoCov">          0 :         //</span>
+<span class="lineNum">    1411 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1412 </span><span class="lineNoCov">          0 :         p = M_CheckParmWithArgs(&quot;-spechit&quot;, 1);</span>
+<span class="lineNum">    1413 </span><span class="lineNoCov">          0 :         </span>
+<span class="lineNum">    1414 </span><span class="lineNoCov">          0 :         if (p &gt; 0)</span>
+<span class="lineNum">    1415 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1416 </span><span class="lineNoCov">          0 :             M_StrToInt(myargv[p+1], (int *) &amp;baseaddr);</span>
+<span class="lineNum">    1417 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1418 </span><span class="lineNoCov">          0 :         else</span>
+<span class="lineNum">    1419 </span><span class="lineNoCov">          0 :         {</span>
+<span class="lineNum">    1420 </span><span class="lineNoCov">          0 :             baseaddr = DEFAULT_SPECHIT_MAGIC;</span>
+<span class="lineNum">    1421 </span><span class="lineNoCov">          0 :         }</span>
+<span class="lineNum">    1422 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1423 </span><span class="lineNoCov">          0 :     </span>
+<span class="lineNum">    1424 </span><span class="lineNoCov">          0 :     // Calculate address used in doom2.exe</span>
+<span class="lineNum">    1425 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1426 </span><span class="lineNoCov">          0 :     addr = baseaddr + (ld - lines) * 0x3E;</span>
+<span class="lineNum">    1427 </span><span class="lineNoCov">          0 : </span>
+<span class="lineNum">    1428 </span><span class="lineNoCov">          0 :     switch(numspechit)</span>
+<span class="lineNum">    1429 </span><span class="lineNoCov">          0 :     {</span>
+<span class="lineNum">    1430 </span><span class="lineNoCov">          0 :         case 9: </span>
+<span class="lineNum">    1431 </span><span class="lineNoCov">          0 :         case 10:</span>
+<span class="lineNum">    1432 </span><span class="lineNoCov">          0 :         case 11:</span>
+<span class="lineNum">    1433 </span><span class="lineNoCov">          0 :         case 12:</span>
+<span class="lineNum">    1434 </span><span class="lineNoCov">          0 :             tmbbox[numspechit-9] = addr;</span>
+<span class="lineNum">    1435 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1436 </span><span class="lineNoCov">          0 :         case 13: </span>
+<span class="lineNum">    1437 </span><span class="lineNoCov">          0 :             crushchange = addr; </span>
+<span class="lineNum">    1438 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1439 </span><span class="lineNoCov">          0 :         case 14: </span>
+<span class="lineNum">    1440 </span><span class="lineNoCov">          0 :             nofit = addr; </span>
+<span class="lineNum">    1441 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1442 </span><span class="lineNoCov">          0 :         default:</span>
+<span class="lineNum">    1443 </span><span class="lineNoCov">          0 :             fprintf(stderr, &quot;SpechitOverrun: Warning: unable to emulate&quot;</span>
+<span class="lineNum">    1444 </span><span class="lineNoCov">          0 :                             &quot;an overrun where numspechit=%i\n&quot;,</span>
+<span class="lineNum">    1445 </span><span class="lineNoCov">          0 :                             numspechit);</span>
+<span class="lineNum">    1446 </span><span class="lineNoCov">          0 :             break;</span>
+<span class="lineNum">    1447 </span><span class="lineNoCov">          0 :     }</span>
+<span class="lineNum">    1448 </span><span class="lineNoCov">          0 : }</span>
+<span class="lineNum">    1449 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
